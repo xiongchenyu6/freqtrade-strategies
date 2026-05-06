@@ -2729,7 +2729,7 @@
 	<title>{t(lang, 'live.title')} · Crypto Quant</title>
 </svelte:head>
 
-<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
+<main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 	<div class="mb-4 flex flex-wrap items-start justify-between gap-3">
 		<div>
 			<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'live.title')}</h1>

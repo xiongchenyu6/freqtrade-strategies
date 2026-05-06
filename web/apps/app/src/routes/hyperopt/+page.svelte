@@ -2257,7 +2257,7 @@
 	<title>{t(lang, 'hyperopt.title')} · Crypto Quant</title>
 </svelte:head>
 
-<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
+<main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 	<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'hyperopt.title')}</h1>
 	<p class="mt-1 max-w-3xl text-sm text-muted-foreground">{t(lang, 'hyperopt.subtitle')}</p>
 

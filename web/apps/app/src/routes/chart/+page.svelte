@@ -94,7 +94,7 @@
 	<title>Chart · Crypto Quant</title>
 </svelte:head>
 
-<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
+<main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 	<div class="mb-4 flex items-baseline justify-between">
 		<div>
 			<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'chart.title')}</h1>

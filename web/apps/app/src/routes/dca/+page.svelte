@@ -2159,7 +2159,7 @@
 
 <svelte:head><title>{t(lang, 'dca.title')}</title></svelte:head>
 
-<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
+<main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 	<header class="mb-8">
 		<h1 class="text-3xl font-semibold tracking-tight">{t(lang, 'dca.title')}</h1>
 		<p class="mt-2 max-w-3xl text-sm text-muted-foreground">{t(lang, 'dca.subtitle')}</p>
