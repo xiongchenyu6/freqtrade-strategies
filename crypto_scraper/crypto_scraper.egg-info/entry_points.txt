@@ -1,0 +1,2 @@
+[scrapy]
+settings = crypto_scraper.settings

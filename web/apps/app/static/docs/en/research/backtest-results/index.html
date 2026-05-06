@@ -1,0 +1,526 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-4ruuvvwp"> <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Backtest results summary | Crypto Quant Docs</title><link rel="canonical" href="https://quant.panda.qzz.io/docs/en/research/backtest-results/"/><link rel="alternate" hreflang="zh-CN" href="https://quant.panda.qzz.io/docs/research/backtest-results/"/><link rel="alternate" hreflang="en" href="https://quant.panda.qzz.io/docs/en/research/backtest-results/"/><link rel="sitemap" href="/docs/sitemap-index.xml"/><link rel="preconnect" href="https://rsms.me"/><link rel="stylesheet" href="https://rsms.me/inter/inter.css"/><script>(function(){var l=location.pathname.indexOf('/docs/en/')===0?'en':'zh';document.cookie='lang='+l+'; path=/; max-age=31536000; SameSite=Lax';})();</script><link rel="shortcut icon" href="/docs/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v6.1.9"/><meta name="generator" content="Starlight v0.38.3"/><meta property="og:title" content="Backtest results summary"/><meta property="og:type" content="article"/><meta property="og:url" content="https://quant.panda.qzz.io/docs/en/research/backtest-results/"/><meta property="og:locale" content="en"/><meta property="og:description" content="BACKTEST_RESULTS"/><meta property="og:site_name" content="Crypto Quant Docs"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="BACKTEST_RESULTS"/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/docs/_astro/print.DNXP8c50.css" media="print"><link rel="stylesheet" href="/docs/_astro/common.su1fjEss.css"><script type="module" src="/docs/_astro/page.BIhdncjw.js"></script></head> <body class="astro-4ruuvvwp"> <a href="#_top" class="astro-xpv6lynr">Skip to content</a> <div class="page sl-flex astro-zp36l2nb"> <header class="header astro-zp36l2nb"><div class="header astro-llbjze6x"> <div class="title-wrapper sl-flex astro-llbjze6x"> <a href="/docs/en/" class="site-title sl-flex astro-jhwabqvq">  <span class="astro-jhwabqvq" translate="no"> Crypto Quant Docs </span> </a> </div> <div class="sl-flex print:hidden astro-llbjze6x"> <site-search class="astro-llbjze6x astro-xp6qd2vt" data-translations="{&#34;placeholder&#34;:&#34;Search&#34;}"> <button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-xp6qd2vt"> <svg aria-hidden="true" class="astro-xp6qd2vt astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg> <span class="sl-hidden md:sl-block astro-xp6qd2vt" aria-hidden="true">Search</span> <kbd class="sl-hidden md:sl-flex astro-xp6qd2vt" style="display: none;"> <kbd class="astro-xp6qd2vt">Ctrl</kbd><kbd class="astro-xp6qd2vt">K</kbd> </kbd> </button> <dialog style="padding:0" aria-label="Search" class="astro-xp6qd2vt"> <div class="dialog-frame sl-flex astro-xp6qd2vt">  <button data-close-modal class="sl-flex md:sl-hidden astro-xp6qd2vt"> Cancel </button> <div class="search-container astro-xp6qd2vt"> <div id="starlight__search" class="astro-xp6qd2vt"></div> </div> </div> </dialog> </site-search>  <script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script> <script type="module" src="/docs/_astro/Search.astro_astro_type_script_index_0_lang.CL8ZkIsP.js"></script>  </div> <div class="sl-hidden md:sl-flex print:hidden right-group astro-llbjze6x"> <div class="sl-flex social-icons astro-llbjze6x"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">Select theme</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">Dark</option><option value="light" class="astro-kuaodigf">Light</option><option value="auto" selected class="astro-kuaodigf">Auto</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script> <script type="module">const r="starlight-theme",o=e=>e==="auto"||e==="dark"||e==="light"?e:"auto",c=()=>o(typeof localStorage<"u"&&localStorage.getItem(r));function n(e){typeof localStorage<"u"&&localStorage.setItem(r,e==="light"||e==="dark"?e:"")}const l=()=>matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";function t(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e==="auto"?l():e,n(e)}matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{c()==="auto"&&t("auto")});class s extends HTMLElement{constructor(){super(),t(c()),this.querySelector("select")?.addEventListener("change",a=>{a.currentTarget instanceof HTMLSelectElement&&t(o(a.currentTarget.value))})}}customElements.define("starlight-theme-select",s);</script> <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">Select language</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/research/backtest-results/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/research/backtest-results/" selected class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select><script type="module">class s extends HTMLElement{constructor(){super();const e=this.querySelector("select");e&&(e.addEventListener("change",t=>{t.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=t.currentTarget.value)}),window.addEventListener("pageshow",t=>{if(!t.persisted)return;const n=e.querySelector("option[selected]")?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}}customElements.define("starlight-lang-select",s);</script> </div> </div></header> <nav class="sidebar print:hidden astro-zp36l2nb" aria-label="Main"> <starlight-menu-button class="print:hidden astro-l5x2bu6d"> <button aria-expanded="false" aria-label="Menu" aria-controls="starlight__sidebar" class="sl-flex md:sl-hidden astro-l5x2bu6d"> <svg aria-hidden="true" class="open-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg> <svg aria-hidden="true" class="close-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg> </button> </starlight-menu-button> <script type="module">class s extends HTMLElement{constructor(){super(),this.btn=this.querySelector("button"),this.btn.addEventListener("click",()=>this.toggleExpanded());const t=this.closest("nav");t&&t.addEventListener("keyup",e=>this.closeOnEscape(e))}setExpanded(t){this.setAttribute("aria-expanded",String(t)),document.body.toggleAttribute("data-mobile-menu-expanded",t)}toggleExpanded(){this.setExpanded(this.getAttribute("aria-expanded")!=="true")}closeOnEscape(t){t.code==="Escape"&&(this.setExpanded(!1),this.btn.focus())}}customElements.define("starlight-menu-button",s);</script>  <div id="starlight__sidebar" class="sidebar-pane astro-zp36l2nb"> <div class="sidebar-content sl-flex astro-zp36l2nb"> <sl-sidebar-state-persist data-hash="030v2ip" class="astro-fc352qub"> <script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script>  <ul class="top-level astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/" class="large astro-4wlzolwh" target="_self"> <span class="astro-4wlzolwh">← Back to Dashboard</span>  </a> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">Getting started</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="0"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/architecture/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Architecture</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">Strategies</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="1"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/strategies/event-dca/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Event DCA daemon</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/strategies/factor-design/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">12-factor design</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/strategies/honest-trend-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">HonestTrend full validation report</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/strategies/phase-b-futures-short/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase B: futures hedge</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/strategies/strategy-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v1</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/strategies/strategy-report-v2/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v2</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">Tuning &amp; research</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="2"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/research/backtest-results/" aria-current="page" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Backtest results summary</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/research/experiments-dca-and-pyramid/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">DCA + Pyramid aggressive experiments</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/research/hyperopt-pyramid-tuning/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Hyperopt Pyramid tuning</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/research/optimization-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase 3 optimization (archived)</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/research/visualization-guide/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Visualization guide</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/research/walk-forward-full-history/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">8-regime Walk-Forward</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">Operations</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="3"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/ops/dryrun-handbook/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Dry-Run operations handbook</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/ops/go-live-checklist/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Go-Live checklist</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/en/ops/implementation-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Implementation plan (archived)</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">History &amp; lessons</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="4"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/en/history/retired-strategies/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Retired strategies</span>  </a> </li> </ul> </details> </li> </ul>  <script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script> </sl-sidebar-state-persist> <div class="md:sl-hidden"> <div class="mobile-preferences sl-flex astro-wchfylfk"> <div class="social-icons astro-wchfylfk"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">Select theme</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">Dark</option><option value="light" class="astro-kuaodigf">Light</option><option value="auto" selected class="astro-kuaodigf">Auto</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script>  <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">Select language</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/research/backtest-results/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/research/backtest-results/" selected class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select> </div> </div> </div> </div> </nav> <div class="main-frame astro-zp36l2nb">  <script type="module">const a=document.getElementById("starlight__sidebar"),n=a?.querySelector("sl-sidebar-state-persist"),o="sl-sidebar-state",i=()=>{let t=[];const e=n?.dataset.hash||"";try{const s=sessionStorage.getItem(o),r=JSON.parse(s||"{}");Array.isArray(r.open)&&r.hash===e&&(t=r.open)}catch{}return{hash:e,open:t,scroll:a?.scrollTop||0}},c=t=>{try{sessionStorage.setItem(o,JSON.stringify(t))}catch{}},d=()=>c(i()),l=(t,e)=>{const s=i();s.open[e]=t,c(s)};n?.addEventListener("click",t=>{if(!(t.target instanceof Element))return;const e=t.target.closest("summary")?.closest("details");if(!e)return;const s=e.querySelector("sl-sidebar-restore"),r=parseInt(s?.dataset.index||"");isNaN(r)||l(!e.open,r)});addEventListener("visibilitychange",()=>{document.visibilityState==="hidden"&&d()});addEventListener("pageHide",d);</script> <div class="lg:sl-flex astro-xj7zo36l"> <aside class="right-sidebar-container print:hidden astro-xj7zo36l"> <div class="right-sidebar astro-xj7zo36l"> <div class="lg:sl-hidden astro-c2ifca2l"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-zcdjqatf"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-zcdjqatf"><details id="starlight__mobile-toc" class="astro-zcdjqatf"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-zcdjqatf"><span class="toggle sl-flex astro-zcdjqatf">On this page<svg aria-hidden="true" class="caret astro-zcdjqatf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-zcdjqatf"></span></summary><div class="dropdown astro-zcdjqatf"><ul class="isMobile astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Overview</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#8-year-backtest-2018-02--2026-01-real-llm--fng-10k-usdt-start" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">8-Year Backtest (2018-02 ~ 2026-01, Real LLM + FnG, 10K USDT start)</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward-5-periods" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-Forward 5 Periods</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#with-btc-cycle-factors-halving-pi-cycle-200w-ma-mvrv-proxy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">With BTC Cycle Factors (halving, Pi Cycle, 200W MA, MVRV proxy)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#architecture-insight-gate-vs-blend" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Architecture Insight: Gate vs Blend</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#final-conclusion--v1-original-is-the-best-strategy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">FINAL CONCLUSION — V1 (original) is the best strategy</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#full-version-history" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Full Version History</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#contrarian-llm-design" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Contrarian LLM Design</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#strategy-comparison-2023-07--2026-01-01-fee-10k-usdt-start" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Strategy Comparison (2023-07 ~ 2026-01, 0.1% fee, 10K USDT start)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#walk-forward-validation" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Walk-Forward Validation</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#entry-tag-analysis-sentimenttrendbt" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Entry Tag Analysis (SentimentTrendBT)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#key-findings" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Key Findings</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#data-sources-used-in-backtest" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Data Sources Used in Backtest</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#historical-sentiment-data-summary" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Historical Sentiment Data Summary</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#methodology-notes" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Methodology Notes</span> </a>  </li> </ul></div></details></nav></mobile-starlight-toc><script type="module" src="/docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.hwBsy0Mo.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-c2ifca2l"><div class="sl-container astro-c2ifca2l"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Overview</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#8-year-backtest-2018-02--2026-01-real-llm--fng-10k-usdt-start" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">8-Year Backtest (2018-02 ~ 2026-01, Real LLM + FnG, 10K USDT start)</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward-5-periods" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-Forward 5 Periods</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#with-btc-cycle-factors-halving-pi-cycle-200w-ma-mvrv-proxy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">With BTC Cycle Factors (halving, Pi Cycle, 200W MA, MVRV proxy)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#architecture-insight-gate-vs-blend" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Architecture Insight: Gate vs Blend</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#final-conclusion--v1-original-is-the-best-strategy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">FINAL CONCLUSION — V1 (original) is the best strategy</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#full-version-history" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Full Version History</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#contrarian-llm-design" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Contrarian LLM Design</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#strategy-comparison-2023-07--2026-01-01-fee-10k-usdt-start" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Strategy Comparison (2023-07 ~ 2026-01, 0.1% fee, 10K USDT start)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#walk-forward-validation" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Walk-Forward Validation</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#entry-tag-analysis-sentimenttrendbt" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Entry Tag Analysis (SentimentTrendBT)</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#key-findings" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Key Findings</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#data-sources-used-in-backtest" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Data Sources Used in Backtest</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#historical-sentiment-data-summary" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Historical Sentiment Data Summary</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#methodology-notes" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">Methodology Notes</span> </a>  </li> </ul></nav></starlight-toc><script type="module" src="/docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.FuRcXuRY.js"></script></div></div> </div> </aside> <div class="main-pane astro-xj7zo36l">  <main data-pagefind-body class="astro-4ruuvvwp" lang="en" dir="ltr">    <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <h1 id="_top" class="astro-nskwttlr">Backtest results summary</h1> </div> </div> <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <div class="sl-markdown-content"> <div class="sl-heading-wrapper level-h1"><h1 id="backtest-results--final-2026-04-18">Backtest Results — Final (2026-04-18)</h1><a class="sl-anchor-link" href="#backtest-results--final-2026-04-18"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Backtest Results — Final (2026-04-18)”</span></a></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="8-year-backtest-2018-02--2026-01-real-llm--fng-10k-usdt-start">8-Year Backtest (2018-02 ~ 2026-01, Real LLM + FnG, 10K USDT start)</h2><a class="sl-anchor-link" href="#8-year-backtest-2018-02--2026-01-real-llm--fng-10k-usdt-start"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “8-Year Backtest (2018-02 ~ 2026-01, Real LLM + FnG, 10K USDT start)”</span></a></div>
+<p><strong>SentimentTrendBT: +941,903 USDT (+9,419%) over 8 years, 96 trades</strong></p>
+<div class="sl-heading-wrapper level-h3"><h3 id="walk-forward-5-periods">Walk-Forward 5 Periods</h3><a class="sl-anchor-link" href="#walk-forward-5-periods"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Walk-Forward 5 Periods”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Period</th><th>Market</th><th>Profit</th><th>Trades</th><th>Win%</th><th>Max DD</th></tr></thead><tbody><tr><td>P1 2018-2019H1</td><td>BTC crash $20K→$3K</td><td><strong>+48.9%</strong></td><td>6</td><td>33.3%</td><td>11.3%</td></tr><tr><td>P2 2019H2-2020</td><td>Recovery + COVID + DeFi</td><td><strong>+70.3%</strong></td><td>16</td><td>37.5%</td><td>31.2%</td></tr><tr><td>P3 2021-2022H1</td><td>BTC ATH $69K + correction</td><td><strong>+42.0%</strong></td><td>18</td><td>33.3%</td><td>20.1%</td></tr><tr><td>P4 2022H2-2023</td><td>LUNA/FTX crash → recovery</td><td><strong>+126.2%</strong></td><td>30</td><td>33.3%</td><td>26.6%</td></tr><tr><td>P5 2024-2025</td><td>New bull + correction</td><td>-15.4%</td><td>28</td><td>39.3%</td><td>28.7%</td></tr></tbody></table>
+<p>4 out of 5 periods profitable, including both bear markets (2018 and 2022).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="with-btc-cycle-factors-halving-pi-cycle-200w-ma-mvrv-proxy">With BTC Cycle Factors (halving, Pi Cycle, 200W MA, MVRV proxy)</h3><a class="sl-anchor-link" href="#with-btc-cycle-factors-halving-pi-cycle-200w-ma-mvrv-proxy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “With BTC Cycle Factors (halving, Pi Cycle, 200W MA, MVRV proxy)”</span></a></div>
+<p><strong>Full Period: +546,782 USDT (+5,468%), 100 trades, Calmar 82.5, Sharpe 1.03</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Period</th><th>Market</th><th>Profit</th><th>Trades</th><th>Win%</th><th>Max DD</th></tr></thead><tbody><tr><td>P1 2018H2-2019H1</td><td>BTC $6K→$3K→$10K</td><td><strong>+53.0%</strong></td><td>5</td><td>40.0%</td><td>7.2%</td></tr><tr><td>P2 2019H2-2020</td><td>Recovery+COVID+DeFi</td><td><strong>+70.3%</strong></td><td>16</td><td>37.5%</td><td>31.2%</td></tr><tr><td>P3 2021-2022H1</td><td>BTC ATH $69K, crash</td><td><strong>-23.4%</strong></td><td>20</td><td>25.0%</td><td>23.4%</td></tr><tr><td>P4 2022H2-2023</td><td>LUNA/FTX→recovery</td><td><strong>+79.4%</strong></td><td>29</td><td>34.5%</td><td>24.8%</td></tr><tr><td>P5 2024-2025</td><td>New cycle</td><td><strong>+2.4%</strong></td><td>31</td><td>45.2%</td><td>33.2%</td></tr></tbody></table>
+<p>4/5 periods profitable. P3 (2021 bull peak) is the only loss — BTC cycle correctly
+identified peak_zone but some trades still entered. This is expected: the strategy
+is conservative during distribution phases but can’t predict exact tops.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="architecture-insight-gate-vs-blend">Architecture Insight: Gate vs Blend</h3><a class="sl-anchor-link" href="#architecture-insight-gate-vs-blend"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Architecture Insight: Gate vs Blend”</span></a></div>
+<p>BTC cycle factors work best as <strong>hard gates</strong> (block/boost at extremes), not as
+blended scores. When blended into daily signals, they dilute the LLM signal which
+is the primary alpha driver.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Approach</th><th>Total Profit</th><th>P3 (Bull Top)</th><th>P4 (Recovery)</th><th>P5 (New Cycle)</th></tr></thead><tbody><tr><td>No BTC cycle (LLM only)</td><td>+941K (9419%)</td><td>+42%</td><td>+126%</td><td>-15%</td></tr><tr><td>BTC cycle blended</td><td>+676K (6761%)</td><td>-23%</td><td>+143%</td><td>+6%</td></tr><tr><td>BTC cycle as gate</td><td>+599K (5994%)</td><td>-22%</td><td>+140%</td><td>+6%</td></tr></tbody></table>
+<p><strong>Key Finding</strong>: The +941K result was inflated because without LLM history, the
+strategy defaulted to conservative behavior during 2021 (no LLM → no “long” signals
+→ FnG greed block worked). With real LLM history, Claude said “long” during the
+2021 bubble because news was overwhelmingly bullish. <strong>LLM cannot identify bubble
+tops from news alone</strong> — this is the fundamental limitation.</p>
+<p><strong>Lesson</strong>: FnG extreme greed (>75) + Pi Cycle Top + MVRV >3.5 are the only
+reliable top signals. LLM sentiment follows the crowd at tops.</p>
+<p>Best architecture for live trading:</p>
+<ul>
+<li><strong>Daily signals</strong>: Contrarian LLM + FnG + KOL + Futures (this is the alpha)</li>
+<li><strong>Structural gates</strong>: Pi Cycle + MVRV extreme → hard block (prevents bubble tops)</li>
+<li><strong>BTC cycle position</strong>: informational context, not a trading signal</li>
+<li><strong>Contrarian LLM</strong>: Claude now receives structural data (MVRV, power law, funding rate)
+and is instructed to think OPPOSITE to the crowd at extremes. Tested against
+2021 Nov euphoria: old LLM said “long 80%”, new contrarian LLM says “short 78%, SELL”.</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="final-conclusion--v1-original-is-the-best-strategy">FINAL CONCLUSION — V1 (original) is the best strategy</h3><a class="sl-anchor-link" href="#final-conclusion--v1-original-is-the-best-strategy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “FINAL CONCLUSION — V1 (original) is the best strategy”</span></a></div>
+<p>After 6 iterations of optimization:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Version</th><th>Total Profit</th><th>PF</th><th>Calmar</th><th>Approach</th></tr></thead><tbody><tr><td><strong>v1 original</strong></td><td><strong>+194% (36 trades)</strong></td><td><strong>2.47</strong></td><td><strong>16.35</strong></td><td>LLM + FnG + EMA, no BTC cycle</td></tr><tr><td>v4 code contrarian</td><td>+177K (101 trades)</td><td>1.95</td><td>30.39</td><td>v1 LLM + flip at extremes</td></tr><tr><td>v5 altcoin filter</td><td>+28K (68 trades)</td><td>1.45</td><td>3.54</td><td>+ block altcoins late cycle</td></tr><tr><td>v6 Pi Cycle gate</td><td>+39K (96 trades)</td><td>1.54</td><td>3.93</td><td>+ Pi Cycle hard block only</td></tr></tbody></table>
+<p><strong>V1 wins on quality metrics</strong> (Profit Factor, Calmar, per-trade profit).
+Adding complexity (BTC cycle, altcoin filters, contrarian prompts) all made it worse.</p>
+<p>The alpha comes from: <strong>LLM reads news → FnG filters extremes → EMA confirms trend</strong>.
+Everything else is noise that dilutes the signal.</p>
+<p>For LIVE trading, BTC cycle data is kept as <strong>informational context</strong> in Telegram reports
+and Supabase, but does NOT influence trade decisions.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="full-version-history">Full Version History</h3><a class="sl-anchor-link" href="#full-version-history"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Full Version History”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Version</th><th>Approach</th><th>Total</th><th>P1 Bear</th><th>P2 Recovery</th><th>P3 Bull Top</th><th>P4 Winter</th><th>P5 New</th></tr></thead><tbody><tr><td>v1</td><td>Follow crowd LLM</td><td>+599K</td><td>+92%</td><td>+57%</td><td>-28%</td><td>+140%</td><td>-8%</td></tr><tr><td>v2</td><td>Always contrarian LLM</td><td>+177K</td><td>+165%</td><td>+129%</td><td>-47%</td><td>+197%</td><td>-20%</td></tr><tr><td>v3</td><td>Contrarian at extremes (prompt)</td><td>+48K</td><td>+141%</td><td>+129%</td><td>-47%</td><td>+197%</td><td>-20%</td></tr><tr><td>v4</td><td>Code-level flip at extremes</td><td>+177K</td><td>+165%</td><td>+129%</td><td>-47%</td><td>+197%</td><td>-20%</td></tr></tbody></table>
+<p><strong>Key Insight</strong>: The P3 loss is NOT caused by LLM or contrarian logic. It’s caused by
+<strong>altcoin drawdowns</strong> (AVAX -26%, FIL -35%, LINK -24%) while BTC itself was profitable
+(+1.3%). The strategy trades 19 pairs, and altcoins crash much harder than BTC in bear markets.</p>
+<p><strong>Possible fixes for P3</strong>:</p>
+<ol>
+<li>During distribution phase, only trade BTC/ETH (drop altcoins)</li>
+<li>Add relative strength filter: only trade coins outperforming BTC</li>
+<li>Reduce position sizes when halving cycle > 0.45</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="contrarian-llm-design">Contrarian LLM Design</h3><a class="sl-anchor-link" href="#contrarian-llm-design"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Contrarian LLM Design”</span></a></div>
+<p>The LLM prompt now enforces:</p>
+<ol>
+<li>If >70% of headlines are bullish → contrarian sell signal</li>
+<li>If FnG > 75 → DO NOT say “buy” regardless of news</li>
+<li>If FnG &#x3C; 25 → DO NOT say “sell” regardless of news</li>
+<li>Structural data (MVRV, power law, funding rate) overrides news sentiment</li>
+<li>Two outputs: “crowd thinks X” vs “contrarian should do Y”</li>
+<li><code dir="auto">contrarian_flag=true</code> when signal opposes the crowd → strategy treats as hard block</li>
+</ol>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="strategy-comparison-2023-07--2026-01-01-fee-10k-usdt-start">Strategy Comparison (2023-07 ~ 2026-01, 0.1% fee, 10K USDT start)</h2><a class="sl-anchor-link" href="#strategy-comparison-2023-07--2026-01-01-fee-10k-usdt-start"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Strategy Comparison (2023-07 ~ 2026-01, 0.1% fee, 10K USDT start)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Strategy</th><th>Profit</th><th>CAGR</th><th>Trades</th><th>Win%</th><th>Max DD</th><th>PF</th><th>Calmar</th><th>Sharpe</th></tr></thead><tbody><tr><td>TrendFollowEMA</td><td>+131.6%</td><td>—</td><td>34</td><td>35.3%</td><td>24.1%</td><td>1.38</td><td>2.05</td><td>0.59</td></tr><tr><td>DonchianBreakout</td><td>+174.6%</td><td>—</td><td>45</td><td>51.1%</td><td>15.2%</td><td>—</td><td>—</td><td>1.24</td></tr><tr><td><strong>SentimentTrendBT</strong></td><td><strong>+193.8%</strong></td><td><strong>55.1%</strong></td><td>36</td><td><strong>44.4%</strong></td><td>25.3%</td><td><strong>2.47</strong></td><td><strong>16.35</strong></td><td>0.93</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="walk-forward-validation">Walk-Forward Validation</h2><a class="sl-anchor-link" href="#walk-forward-validation"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Walk-Forward Validation”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Period</th><th>Market</th><th>SentimentTrendBT</th><th>TrendFollowEMA</th><th>DonchianBreakout</th></tr></thead><tbody><tr><td>P1 2023-2024H1</td><td>Bull early</td><td><strong>+233.6%</strong> (DD 2.5%)</td><td>+124.8%</td><td>+107.2%</td></tr><tr><td>P2 2024H2-2025Q1</td><td>Bull peak</td><td>-8.9% (DD 18%)</td><td>+37.3%</td><td>+46.2%</td></tr><tr><td>P3 2025Q1-2026Q1</td><td>Bear</td><td><strong>+4.7%</strong> (DD 5.8%)</td><td>-16.7%</td><td>-29.2%</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="entry-tag-analysis-sentimenttrendbt">Entry Tag Analysis (SentimentTrendBT)</h2><a class="sl-anchor-link" href="#entry-tag-analysis-sentimenttrendbt"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Entry Tag Analysis (SentimentTrendBT)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Tag</th><th>Entries</th><th>Avg Profit</th><th>Total</th><th>Win%</th><th>Note</th></tr></thead><tbody><tr><td>buy_ema</td><td>33</td><td>+31.4%</td><td>+18,704 USDT</td><td>42.4%</td><td>Fear regime EMA cross — profit engine</td></tr><tr><td>buy_rsi_dip</td><td>3</td><td>+4.3%</td><td>+673 USDT</td><td>66.7%</td><td>RSI oversold in fear — high win rate</td></tr><tr><td>neutral_ema</td><td>0</td><td>—</td><td>—</td><td>—</td><td>LLM filtered these out (previously -25%)</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="key-findings">Key Findings</h2><a class="sl-anchor-link" href="#key-findings"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Key Findings”</span></a></div>
+<ol>
+<li><strong>LLM sentiment improved total profit from +139% to +194%</strong> — 40% improvement</li>
+<li><strong>P3 bear market: only strategy that was profitable</strong> (+4.7% vs -17%/-29%)</li>
+<li><strong>LLM eliminated neutral_ema entries</strong> which were the main loss source</li>
+<li><strong>Profit Factor 2.47</strong> = every $1 lost produces $2.47 in wins</li>
+<li><strong>Calmar 16.35</strong> = exceptional return/risk ratio</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="data-sources-used-in-backtest">Data Sources Used in Backtest</h2><a class="sl-anchor-link" href="#data-sources-used-in-backtest"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Data Sources Used in Backtest”</span></a></div>
+<ul>
+<li>Fear &#x26; Greed Index: <strong>REAL historical</strong> (2018-02 to 2026-04, API data)</li>
+<li>LLM Sentiment: <strong>REAL historical</strong> (Claude analyzed 1106 days of Google News headlines)</li>
+<li>KOL Detection: <strong>REAL historical</strong> (Trump/Musk/BlackRock mentions from headlines)</li>
+<li>OHLCV: Binance spot, daily candles, 19 pairs</li>
+<li>Fees: 0.1% per trade (Binance default)</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="historical-sentiment-data-summary">Historical Sentiment Data Summary</h2><a class="sl-anchor-link" href="#historical-sentiment-data-summary"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Historical Sentiment Data Summary”</span></a></div>
+<ul>
+<li>Total days analyzed: 1106 (2023-01-01 to 2026-01-10)</li>
+<li>Signal distribution: 63% long, 25% short, 12% neutral</li>
+<li>Average confidence: 69%</li>
+<li>Average KOL mentions/day: 5.0</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="methodology-notes">Methodology Notes</h2><a class="sl-anchor-link" href="#methodology-notes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Methodology Notes”</span></a></div>
+<ul>
+<li>Walk-forward: train period not used for optimization, pure out-of-sample</li>
+<li>No hyperopt applied — using default parameters throughout</li>
+<li>Sentiment regime determines entry conditions and position sizing</li>
+<li>No stoploss (spot only, long-term bullish thesis)</li>
+<li>Exit: EMA 21/55 crossover only</li>
+</ul> </div> <footer class="sl-flex astro-ospshcon"> <div class="meta sl-flex astro-ospshcon">   </div> <div class="pagination-links print:hidden astro-bvyhghzn" dir="ltr"> <a href="/docs/en/strategies/strategy-report-v2/" rel="prev" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg> <span class="astro-bvyhghzn"> Previous <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">Strategy Report v2</span> </span> </a> <a href="/docs/en/research/experiments-dca-and-pyramid/" rel="next" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg> <span class="astro-bvyhghzn"> Next <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">DCA + Pyramid aggressive experiments</span> </span> </a> </div>  </footer> </div> </div>  </main> </div> </div> </div> </div> </body></html>

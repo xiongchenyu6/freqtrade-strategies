@@ -1,0 +1,539 @@
+<!DOCTYPE html><html lang="zh-CN" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-4ruuvvwp"> <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Dry-Run 操作手册 | Crypto Quant Docs</title><link rel="canonical" href="https://quant.panda.qzz.io/docs/ops/dryrun-handbook/"/><link rel="alternate" hreflang="zh-CN" href="https://quant.panda.qzz.io/docs/ops/dryrun-handbook/"/><link rel="alternate" hreflang="en" href="https://quant.panda.qzz.io/docs/en/ops/dryrun-handbook/"/><link rel="sitemap" href="/docs/sitemap-index.xml"/><link rel="preconnect" href="https://rsms.me"/><link rel="stylesheet" href="https://rsms.me/inter/inter.css"/><script>(function(){var l=location.pathname.indexOf('/docs/en/')===0?'en':'zh';document.cookie='lang='+l+'; path=/; max-age=31536000; SameSite=Lax';})();</script><link rel="shortcut icon" href="/docs/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v6.1.9"/><meta name="generator" content="Starlight v0.38.3"/><meta property="og:title" content="Dry-Run 操作手册"/><meta property="og:type" content="article"/><meta property="og:url" content="https://quant.panda.qzz.io/docs/ops/dryrun-handbook/"/><meta property="og:locale" content="zh-CN"/><meta property="og:description" content="DRYRUN_HANDBOOK"/><meta property="og:site_name" content="Crypto Quant Docs"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="DRYRUN_HANDBOOK"/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/docs/_astro/print.DNXP8c50.css" media="print"><link rel="stylesheet" href="/docs/_astro/common.su1fjEss.css"><script type="module" src="/docs/_astro/page.BIhdncjw.js"></script></head> <body class="astro-4ruuvvwp"> <a href="#_top" class="astro-xpv6lynr">跳转到内容</a> <div class="page sl-flex astro-zp36l2nb"> <header class="header astro-zp36l2nb"><div class="header astro-llbjze6x"> <div class="title-wrapper sl-flex astro-llbjze6x"> <a href="/docs/" class="site-title sl-flex astro-jhwabqvq">  <span class="astro-jhwabqvq" translate="no"> Crypto Quant Docs </span> </a> </div> <div class="sl-flex print:hidden astro-llbjze6x"> <site-search class="astro-llbjze6x astro-xp6qd2vt" data-translations="{&#34;placeholder&#34;:&#34;搜索&#34;}"> <button data-open-modal disabled aria-label="搜索" aria-keyshortcuts="Control+K" class="astro-xp6qd2vt"> <svg aria-hidden="true" class="astro-xp6qd2vt astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg> <span class="sl-hidden md:sl-block astro-xp6qd2vt" aria-hidden="true">搜索</span> <kbd class="sl-hidden md:sl-flex astro-xp6qd2vt" style="display: none;"> <kbd class="astro-xp6qd2vt">Ctrl</kbd><kbd class="astro-xp6qd2vt">K</kbd> </kbd> </button> <dialog style="padding:0" aria-label="搜索" class="astro-xp6qd2vt"> <div class="dialog-frame sl-flex astro-xp6qd2vt">  <button data-close-modal class="sl-flex md:sl-hidden astro-xp6qd2vt"> 取消 </button> <div class="search-container astro-xp6qd2vt"> <div id="starlight__search" class="astro-xp6qd2vt"></div> </div> </div> </dialog> </site-search>  <script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script> <script type="module" src="/docs/_astro/Search.astro_astro_type_script_index_0_lang.CL8ZkIsP.js"></script>  </div> <div class="sl-hidden md:sl-flex print:hidden right-group astro-llbjze6x"> <div class="sl-flex social-icons astro-llbjze6x"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择主题</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">深色</option><option value="light" class="astro-kuaodigf">浅色</option><option value="auto" selected class="astro-kuaodigf">自动</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script> <script type="module">const r="starlight-theme",o=e=>e==="auto"||e==="dark"||e==="light"?e:"auto",c=()=>o(typeof localStorage<"u"&&localStorage.getItem(r));function n(e){typeof localStorage<"u"&&localStorage.setItem(r,e==="light"||e==="dark"?e:"")}const l=()=>matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";function t(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e==="auto"?l():e,n(e)}matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{c()==="auto"&&t("auto")});class s extends HTMLElement{constructor(){super(),t(c()),this.querySelector("select")?.addEventListener("change",a=>{a.currentTarget instanceof HTMLSelectElement&&t(o(a.currentTarget.value))})}}customElements.define("starlight-theme-select",s);</script> <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择语言</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/ops/dryrun-handbook/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/ops/dryrun-handbook/" class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select><script type="module">class s extends HTMLElement{constructor(){super();const e=this.querySelector("select");e&&(e.addEventListener("change",t=>{t.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=t.currentTarget.value)}),window.addEventListener("pageshow",t=>{if(!t.persisted)return;const n=e.querySelector("option[selected]")?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}}customElements.define("starlight-lang-select",s);</script> </div> </div></header> <nav class="sidebar print:hidden astro-zp36l2nb" aria-label="主要"> <starlight-menu-button class="print:hidden astro-l5x2bu6d"> <button aria-expanded="false" aria-label="菜单" aria-controls="starlight__sidebar" class="sl-flex md:sl-hidden astro-l5x2bu6d"> <svg aria-hidden="true" class="open-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg> <svg aria-hidden="true" class="close-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg> </button> </starlight-menu-button> <script type="module">class s extends HTMLElement{constructor(){super(),this.btn=this.querySelector("button"),this.btn.addEventListener("click",()=>this.toggleExpanded());const t=this.closest("nav");t&&t.addEventListener("keyup",e=>this.closeOnEscape(e))}setExpanded(t){this.setAttribute("aria-expanded",String(t)),document.body.toggleAttribute("data-mobile-menu-expanded",t)}toggleExpanded(){this.setExpanded(this.getAttribute("aria-expanded")!=="true")}closeOnEscape(t){t.code==="Escape"&&(this.setExpanded(!1),this.btn.focus())}}customElements.define("starlight-menu-button",s);</script>  <div id="starlight__sidebar" class="sidebar-pane astro-zp36l2nb"> <div class="sidebar-content sl-flex astro-zp36l2nb"> <sl-sidebar-state-persist data-hash="07wdv4r" class="astro-fc352qub"> <script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script>  <ul class="top-level astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/" class="large astro-4wlzolwh" target="_self"> <span class="astro-4wlzolwh">← 返回 Dashboard</span>  </a> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">起步</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="0"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/architecture/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">架构总览</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">策略</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="1"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/strategies/event-dca/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">事件 DCA daemon</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/factor-design/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">12 因子设计</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/honest-trend-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">HonestTrend 完整验证报告</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/phase-b-futures-short/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase B：期货对冲</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/strategy-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v1</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/strategy-report-v2/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v2</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">调优与实验</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="2"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/research/backtest-results/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">回测结果汇总</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/experiments-dca-and-pyramid/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">DCA + Pyramid 激进实验</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/hyperopt-pyramid-tuning/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Hyperopt Pyramid 调优</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/optimization-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase 3 优化（归档）</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/visualization-guide/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">可视化指南</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/walk-forward-full-history/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">8-Regime Walk-Forward</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">运维</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="3"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/ops/dryrun-handbook/" aria-current="page" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Dry-Run 操作手册</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/ops/go-live-checklist/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Go-Live 清单</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/ops/implementation-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">架构演进（归档）</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">历史 &amp; 教训</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="4"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/history/retired-strategies/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">退役策略记录</span>  </a> </li> </ul> </details> </li> </ul>  <script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script> </sl-sidebar-state-persist> <div class="md:sl-hidden"> <div class="mobile-preferences sl-flex astro-wchfylfk"> <div class="social-icons astro-wchfylfk"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择主题</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">深色</option><option value="light" class="astro-kuaodigf">浅色</option><option value="auto" selected class="astro-kuaodigf">自动</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script>  <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择语言</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/ops/dryrun-handbook/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/ops/dryrun-handbook/" class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select> </div> </div> </div> </div> </nav> <div class="main-frame astro-zp36l2nb">  <script type="module">const a=document.getElementById("starlight__sidebar"),n=a?.querySelector("sl-sidebar-state-persist"),o="sl-sidebar-state",i=()=>{let t=[];const e=n?.dataset.hash||"";try{const s=sessionStorage.getItem(o),r=JSON.parse(s||"{}");Array.isArray(r.open)&&r.hash===e&&(t=r.open)}catch{}return{hash:e,open:t,scroll:a?.scrollTop||0}},c=t=>{try{sessionStorage.setItem(o,JSON.stringify(t))}catch{}},d=()=>c(i()),l=(t,e)=>{const s=i();s.open[e]=t,c(s)};n?.addEventListener("click",t=>{if(!(t.target instanceof Element))return;const e=t.target.closest("summary")?.closest("details");if(!e)return;const s=e.querySelector("sl-sidebar-restore"),r=parseInt(s?.dataset.index||"");isNaN(r)||l(!e.open,r)});addEventListener("visibilitychange",()=>{document.visibilityState==="hidden"&&d()});addEventListener("pageHide",d);</script> <div class="lg:sl-flex astro-xj7zo36l"> <aside class="right-sidebar-container print:hidden astro-xj7zo36l"> <div class="right-sidebar astro-xj7zo36l"> <div class="lg:sl-hidden astro-c2ifca2l"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-zcdjqatf"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-zcdjqatf"><details id="starlight__mobile-toc" class="astro-zcdjqatf"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-zcdjqatf"><span class="toggle sl-flex astro-zcdjqatf">本页内容<svg aria-hidden="true" class="caret astro-zcdjqatf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-zcdjqatf"></span></summary><div class="dropdown astro-zcdjqatf"><ul class="isMobile astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">概述</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#一当前运行的-bot3-个-dry-run-并行" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">一、当前运行的 bot（3 个 dry-run 并行）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#二策略逻辑信号规则" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">二、策略逻辑（信号规则）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#入场同时满足以下-6-个条件才买" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">入场（同时满足以下 6 个条件才买）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#出场任一触发即卖" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">出场（任一触发即卖）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#futures-short-专属规则" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Futures short 专属规则</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#三预期数据你接下来会看到什么" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">三、预期数据（你接下来会看到什么）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#触发后的典型交易流" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">触发后的典型交易流</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#四每日-5-分钟检查清单" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">四、每日 5 分钟检查清单</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#五telegram-能看到哪些消息" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">五、Telegram 能看到哪些消息</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#freqtrade-bot-本身由-honesttrend15mdry-发" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Freqtrade bot 本身（由 HonestTrend15mDry 发）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#risk-monitor由-scriptsrisk_monitorpy-每-4h-发" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Risk Monitor（由 scripts/risk_monitor.py 每 4h 发）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward每月-1-号-0600scriptswalk_forward_checkpy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-Forward（每月 1 号 06:00，scripts/walk_forward_check.py）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#kol-alerts独立于本策略strategiestelegram_alertspy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">KOL Alerts（独立于本策略，strategies/telegram_alerts.py）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#六什么是正常" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">六、什么是”正常”？</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-这些都正常不要紧张" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">✅ 这些都正常（不要紧张）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#️-这些要关注不一定马上行动" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">⚠️ 这些要关注（不一定马上行动）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-这些是红线必须立刻看" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">🚨 这些是红线（必须立刻看）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#七如何干预应急手册" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">七、如何干预（应急手册）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#暂停新仓不影响现有持仓" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">暂停新仓（不影响现有持仓）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#完全退役需要手动-reset-才能恢复" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">完全退役（需要手动 reset 才能恢复）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#重置为-active慎用" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">重置为 ACTIVE（慎用）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#停止-bot-进程" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">停止 bot 进程</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#重启-bot" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">重启 bot</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#强平某笔交易" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">强平某笔交易</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#查看实时日志" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">查看实时日志</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#八从-dry-run-过渡到实盘路线图" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">八、从 dry-run 过渡到实盘（路线图）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#过渡检查清单" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">过渡检查清单</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#过渡步骤" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">过渡步骤</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#九常见问题自问自答" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">九、常见问题自问自答</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十相关文件索引" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十、相关文件索引</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十一smart-dca-双通道btc-专属" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十一、Smart DCA 双通道（BTC 专属）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#周定投时间驱动" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">周定投（时间驱动）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#事件驱动websocket-daemon" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">事件驱动（WebSocket daemon）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十二核心原则一句话版" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十二、核心原则（一句话版）</span> </a>  </li> </ul></div></details></nav></mobile-starlight-toc><script type="module" src="/docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.hwBsy0Mo.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-c2ifca2l"><div class="sl-container astro-c2ifca2l"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">本页内容</h2><ul class="astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">概述</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#一当前运行的-bot3-个-dry-run-并行" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">一、当前运行的 bot（3 个 dry-run 并行）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#二策略逻辑信号规则" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">二、策略逻辑（信号规则）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#入场同时满足以下-6-个条件才买" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">入场（同时满足以下 6 个条件才买）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#出场任一触发即卖" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">出场（任一触发即卖）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#futures-short-专属规则" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Futures short 专属规则</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#三预期数据你接下来会看到什么" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">三、预期数据（你接下来会看到什么）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#触发后的典型交易流" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">触发后的典型交易流</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#四每日-5-分钟检查清单" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">四、每日 5 分钟检查清单</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#五telegram-能看到哪些消息" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">五、Telegram 能看到哪些消息</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#freqtrade-bot-本身由-honesttrend15mdry-发" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Freqtrade bot 本身（由 HonestTrend15mDry 发）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#risk-monitor由-scriptsrisk_monitorpy-每-4h-发" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Risk Monitor（由 scripts/risk_monitor.py 每 4h 发）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward每月-1-号-0600scriptswalk_forward_checkpy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-Forward（每月 1 号 06:00，scripts/walk_forward_check.py）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#kol-alerts独立于本策略strategiestelegram_alertspy" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">KOL Alerts（独立于本策略，strategies/telegram_alerts.py）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#六什么是正常" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">六、什么是”正常”？</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-这些都正常不要紧张" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">✅ 这些都正常（不要紧张）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#️-这些要关注不一定马上行动" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">⚠️ 这些要关注（不一定马上行动）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-这些是红线必须立刻看" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">🚨 这些是红线（必须立刻看）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#七如何干预应急手册" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">七、如何干预（应急手册）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#暂停新仓不影响现有持仓" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">暂停新仓（不影响现有持仓）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#完全退役需要手动-reset-才能恢复" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">完全退役（需要手动 reset 才能恢复）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#重置为-active慎用" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">重置为 ACTIVE（慎用）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#停止-bot-进程" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">停止 bot 进程</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#重启-bot" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">重启 bot</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#强平某笔交易" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">强平某笔交易</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#查看实时日志" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">查看实时日志</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#八从-dry-run-过渡到实盘路线图" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">八、从 dry-run 过渡到实盘（路线图）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#过渡检查清单" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">过渡检查清单</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#过渡步骤" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">过渡步骤</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#九常见问题自问自答" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">九、常见问题自问自答</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十相关文件索引" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十、相关文件索引</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十一smart-dca-双通道btc-专属" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十一、Smart DCA 双通道（BTC 专属）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#周定投时间驱动" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">周定投（时间驱动）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#事件驱动websocket-daemon" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">事件驱动（WebSocket daemon）</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#十二核心原则一句话版" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">十二、核心原则（一句话版）</span> </a>  </li> </ul></nav></starlight-toc><script type="module" src="/docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.FuRcXuRY.js"></script></div></div> </div> </aside> <div class="main-pane astro-xj7zo36l">  <main data-pagefind-body class="astro-4ruuvvwp" lang="zh-CN" dir="ltr">    <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <h1 id="_top" class="astro-nskwttlr">Dry-Run 操作手册</h1> </div> </div> <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <div class="sl-markdown-content"> <div class="sl-heading-wrapper level-h1"><h1 id="dry-run-操作手册--honesttrend-全家桶">Dry-Run 操作手册 — HonestTrend 全家桶</h1><a class="sl-anchor-link" href="#dry-run-操作手册--honesttrend-全家桶"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Dry-Run 操作手册 — HonestTrend 全家桶”</span></a></div>
+<p><strong>这是给你每天 5 分钟扫一眼用的文档。</strong>
+完整技术分析看 <a href="HONEST_TREND_REPORT.md"><code dir="auto">HONEST_TREND_REPORT.md</code></a> 与 <a href="PHASE_B_FUTURES_SHORT.md"><code dir="auto">PHASE_B_FUTURES_SHORT.md</code></a>。</p>
+<blockquote>
+<p><strong>2026-04-22 架构更新</strong>：采纳 Phase A（BTC→DCA，trend → ETH/BNB/SOL alts）+ Phase B（futures L+S 对冲）。下面 pair list 和 port 分配反映最新状态。</p>
+</blockquote>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="一当前运行的-bot3-个-dry-run-并行">一、当前运行的 bot（3 个 dry-run 并行）</h2><a class="sl-anchor-link" href="#一当前运行的-bot3-个-dry-run-并行"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “一、当前运行的 bot（3 个 dry-run 并行）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>策略</th><th>Config</th><th>Market</th><th>方向</th><th>Pairs</th><th align="right">Port</th></tr></thead><tbody><tr><td><code dir="auto">HonestTrend15mDry</code></td><td><code dir="auto">config_dryrun_honest15m.json</code></td><td>spot</td><td>long-only</td><td>ETH/BNB/SOL</td><td align="right">8082</td></tr><tr><td><code dir="auto">HonestTrend1mMTF</code></td><td><code dir="auto">config_dryrun_honest1mmtf.json</code></td><td>spot 1m+4h gate</td><td>long-only</td><td>ETH/BNB/SOL</td><td align="right">8083</td></tr><tr><td><code dir="auto">HonestTrendFutures</code></td><td><code dir="auto">config_dryrun_honestfutures15m.json</code></td><td><strong>futures</strong></td><td><strong>long+short</strong></td><td>ETH/BNB/SOL</td><td align="right"><strong>8084</strong></td></tr></tbody></table>
+<p>所有三个共用参数：</p>
+<ul>
+<li>父类 <code dir="auto">HonestTrendGeneric</code></li>
+<li>模拟资金 <strong>10,000 USDT</strong></li>
+<li>最大同时持仓 3</li>
+<li>Stake 1500 USDT/trade（pyramid 后可达 3900）</li>
+<li>SQLite DB <code dir="auto">user_data/tradesv3_&#x3C;name>_dryrun.sqlite</code></li>
+<li>日志目录 <code dir="auto">logs/&#x3C;name>_dryrun_*.log</code></li>
+</ul>
+<p><strong>BTC 不在 trend 池子里</strong> —— BTC 的 alpha 通过 Smart DCA 双通道累积（见本文最末节）。</p>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="二策略逻辑信号规则">二、策略逻辑（信号规则）</h2><a class="sl-anchor-link" href="#二策略逻辑信号规则"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “二、策略逻辑（信号规则）”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="入场同时满足以下-6-个条件才买">入场（<strong>同时满足以下 6 个条件</strong>才买）</h3><a class="sl-anchor-link" href="#入场同时满足以下-6-个条件才买"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “入场（同时满足以下 6 个条件才买）”</span></a></div>
+<ol>
+<li><strong>EMA 金叉</strong>：EMA(94, 15m) 上穿 EMA(139, 15m)
+<ul>
+<li>94 根 15m 蜡烛 = 23.5 小时</li>
+<li>139 根 15m 蜡烛 = 34.75 小时</li>
+<li>比率 1.48x（不是经典 2x，Stage 1-3 验证这个比率更 robust）</li>
+</ul>
+</li>
+<li><strong>+DI > −DI</strong>（趋势方向确认）</li>
+<li><strong>ADX > 18</strong>（趋势强度足够）</li>
+<li><strong>成交量 > 过去 24h 均值</strong>（量能确认）</li>
+<li><strong>恐惧贪婪指数 FnG &#x3C; 80</strong>（唯一被数据验证的情绪防御规则）</li>
+<li>当前 bar 成交量 > 0（非空 bar）</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="出场任一触发即卖">出场（<strong>任一触发即卖</strong>）</h3><a class="sl-anchor-link" href="#出场任一触发即卖"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “出场（任一触发即卖）”</span></a></div>
+<ol>
+<li><strong>EMA 死叉</strong>：EMA(94) 下穿 EMA(139)
+<ul>
+<li>同时要求持仓 ≥ 12 小时（避免 15m 噪声触发）</li>
+</ul>
+</li>
+<li>手动 force exit（Telegram <code dir="auto">/forcesell</code>）</li>
+<li><strong>止损</strong>：
+<ul>
+<li>Spot bots (15mDry / 1mMTF)：<strong>无止损</strong>（<code dir="auto">stoploss = -0.99</code>），Stage 1 证明紧止损会抹杀趋势跟随 edge</li>
+<li>Futures bot：<strong>−8% 硬止损</strong>（期货不能像 spot 那样裸奔，防强平）</li>
+</ul>
+</li>
+<li>风控：<code dir="auto">risk_manager.py</code> 的账户级别回撤 kill-switch（15% pause / 20% retire）</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="futures-short-专属规则">Futures short 专属规则</h3><a class="sl-anchor-link" href="#futures-short-专属规则"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Futures short 专属规则”</span></a></div>
+<p>只有 <code dir="auto">HonestTrendFutures</code> 会做空：</p>
+<ul>
+<li><strong>空入场</strong>：EMA 死叉 + <code dir="auto">minus_di > plus_di</code> + ADX > 18 + FnG <strong>&#x3C; 70</strong></li>
+<li><strong>FnG > 70 禁空</strong>（不在 euphoria 里被轧空）</li>
+<li><strong>FnG &#x3C; 30 softly 放大</strong>（恐慌底做空效率高）</li>
+<li><strong>杠杆 1x</strong>（无强平风险，纯吃方向 alpha）</li>
+<li><strong>Funding 成本</strong>：约年化 4% 拖累（backtest 已含）</li>
+</ul>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="三预期数据你接下来会看到什么">三、预期数据（你接下来会看到什么）</h2><a class="sl-anchor-link" href="#三预期数据你接下来会看到什么"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “三、预期数据（你接下来会看到什么）”</span></a></div>
+<p>基于 2024-01 到 2026-04 回测（OOS 段 2025-07 到 2026-04）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>指标</th><th>预期范围</th></tr></thead><tbody><tr><td>每周交易次数</td><td><strong>1–3 笔</strong>（大约）</td></tr><tr><td>月交易次数</td><td>4–10 笔</td></tr><tr><td>平均单笔持仓</td><td><strong>2–3 天</strong></td></tr><tr><td>胜率</td><td><strong>35–45%</strong>（典型 40%）</td></tr><tr><td>平均盈利交易</td><td>+3% 到 +10%</td></tr><tr><td>平均亏损交易</td><td>−1% 到 −4%</td></tr><tr><td>最差单笔</td><td><strong>−23%</strong>（历史极值，1% 概率）</td></tr><tr><td>最长连败</td><td><strong>7 笔</strong>（历史极值）</td></tr><tr><td>单月盈亏方差</td><td>很大 — <strong>允许单月亏损</strong>，看半年滚动 PF</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="触发后的典型交易流">触发后的典型交易流</h3><a class="sl-anchor-link" href="#触发后的典型交易流"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “触发后的典型交易流”</span></a></div>
+<div class="expressive-code"><link rel="stylesheet" href="/docs/_astro/ec.v4551.css"><script type="module" src="/docs/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[Telegram: Entry Fill] BTC/USDT at 93,250 USDT — 3,160 USDT stake (trend_15m tag)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">↓</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">  </span></span><span style="--0:#d6deeb;--1:#403f53">(持仓 2–3 天，EMA 94 保持在 EMA 139 之上)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">    </span></span><span style="--0:#d6deeb;--1:#403f53">↓</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[Telegram: Exit Fill] BTC/USDT at 95,800 USDT — +2.7% profit (trend_exit tag)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Telegram: Entry Fill] BTC/USDT at 93,250 USDT — 3,160 USDT stake (trend_15m tag)    ↓  (持仓 2–3 天，EMA 94 保持在 EMA 139 之上)    ↓[Telegram: Exit Fill] BTC/USDT at 95,800 USDT — +2.7% profit (trend_exit tag)"><div></div></button></div></figure></div>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="四每日-5-分钟检查清单">四、每日 5 分钟检查清单</h2><a class="sl-anchor-link" href="#四每日-5-分钟检查清单"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “四、每日 5 分钟检查清单”</span></a></div>
+<p><strong>每天做</strong>（1 分钟）：</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> 扫一眼 Telegram，是否有 <code dir="auto">🚨 Risk State Change</code> 告警？
+<ul>
+<li>没有 → 继续。有 → 立刻看 §七</li>
+</ul>
+</li>
+<li class="task-list-item"><input type="checkbox" disabled> 有 Entry/Exit 推送吗？大致符合预期频率（一周 1-3 笔）吗？</li>
+</ul>
+<p><strong>每周做</strong>（3 分钟）：</p>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 看当前状态</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C5E478;--1:#3B61B0">$PROJECT_DIR</span><span style="--0:#ECC48D;--1:#3B61B0">/scripts/risk_monitor.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">status</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 或者 Telegram 发 /status 给 bot，它会回：</span></div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F">#   Current balance / Open trades / Total profit</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="python $PROJECT_DIR/scripts/risk_monitor.py status"><div></div></button></div></figure></div>
+<p>期望看到：</p>
+<ul>
+<li>Status: <code dir="auto">ACTIVE</code></li>
+<li>Drawdown: <strong>&#x3C; 10%</strong>（正常）；10-15% → 警惕；≥15% → 自动 PAUSE</li>
+<li>Rolling PF (50 trades): <strong>> 1.2</strong> 后期；≥1.0 前期积累中；&#x3C;1.0 警惕</li>
+</ul>
+<p><strong>每月做</strong>（10 分钟）：</p>
+<ul>
+<li>1 号 06:00 会自动运行 walk-forward check，Telegram 告警如果 &#x3C;50% 窗口盈利</li>
+<li>主动对比：实盘 dry-run 统计 vs 最新 walk-forward backtest
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">curl</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-s</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">http://127.0.0.1:8082/api/v1/profit</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#7FDBCA;--1:#096E72">|</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">jq</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl -s http://127.0.0.1:8082/api/v1/profit | jq"><div></div></button></div></figure></div>
+</li>
+</ul>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="五telegram-能看到哪些消息">五、Telegram 能看到哪些消息</h2><a class="sl-anchor-link" href="#五telegram-能看到哪些消息"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “五、Telegram 能看到哪些消息”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="freqtrade-bot-本身由-honesttrend15mdry-发">Freqtrade bot 本身（由 HonestTrend15mDry 发）</h3><a class="sl-anchor-link" href="#freqtrade-bot-本身由-honesttrend15mdry-发"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Freqtrade bot 本身（由 HonestTrend15mDry 发）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>触发</th><th>示例</th></tr></thead><tbody><tr><td>Startup</td><td><code dir="auto">Exchange: binance / Timeframe: 15m / Strategy: HonestTrend15mDry</code></td></tr><tr><td>入场（下单）</td><td><code dir="auto">Buying BTC/USDT at 93250 USDT, tag: trend</code></td></tr><tr><td>入场成交</td><td><code dir="auto">New trade filled BTC/USDT at 93250 USDT — 3160 USDT stake</code></td></tr><tr><td>出场</td><td><code dir="auto">Selling BTC/USDT at 95800 USDT — +2.7% profit, tag: trend_exit</code></td></tr><tr><td>出场成交</td><td><code dir="auto">Trade closed BTC/USDT: +2.7% (+86 USDT)</code></td></tr><tr><td>Warning</td><td><code dir="auto">Dry run is enabled. All trades are simulated.</code>（启动时一次）</td></tr><tr><td>Protection triggered</td><td>某个 pair 被冷却（当前策略没有 protection 配置，不会出现）</td></tr></tbody></table>
+<p>交互命令（发给 bot）：</p>
+<ul>
+<li><code dir="auto">/status</code> — 当前开仓</li>
+<li><code dir="auto">/profit</code> — 累计盈亏</li>
+<li><code dir="auto">/daily</code> / <code dir="auto">/weekly</code> / <code dir="auto">/monthly</code> — 周期统计</li>
+<li><code dir="auto">/trades</code> — 最近交易列表</li>
+<li><code dir="auto">/performance</code> — 按 pair 的表现</li>
+<li><code dir="auto">/balance</code> — 模拟钱包余额</li>
+<li><code dir="auto">/forceexit &#x3C;trade_id></code> — 强制平某笔（dry-run 也有效）</li>
+<li><code dir="auto">/stopentry</code> — 暂停开新仓（不影响现有持仓）</li>
+<li><code dir="auto">/help</code> — 完整命令列表</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="risk-monitor由-scriptsrisk_monitorpy-每-4h-发">Risk Monitor（由 <code dir="auto">scripts/risk_monitor.py</code> 每 4h 发）</h3><a class="sl-anchor-link" href="#risk-monitor由-scriptsrisk_monitorpy-每-4h-发"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Risk Monitor（由 scripts/risk_monitor.py 每 4h 发）”</span></a></div>
+<p><strong>只在状态变化时发</strong>，正常不会刷屏。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>触发</th><th>消息样式</th></tr></thead><tbody><tr><td>DD 首次 ≥ 15%</td><td><code dir="auto">🚨 Risk State Change: ACTIVE → PAUSED. Drawdown 15.2% ≥ 15%...</code></td></tr><tr><td>DD 恢复到 &#x3C;10%</td><td><code dir="auto">🚨 Risk State Change: PAUSED → ACTIVE. Drawdown recovered to 9.0%...</code></td></tr><tr><td>DD ≥ 20%</td><td><code dir="auto">🚨 Risk State Change: ACTIVE → RETIRED. Drawdown 21.3% ≥ 20%. Manual reset required.</code></td></tr><tr><td>6 个月 + PF&#x3C;1.2</td><td><code dir="auto">🚨 Risk State Change: ACTIVE → RETIRED. After 180d live, rolling PF 1.10 &#x3C; 1.20.</code></td></tr><tr><td>手动 pause/retire</td><td><code dir="auto">⏸ Manual PAUSE</code> / <code dir="auto">🛑 Manual RETIRE</code></td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="walk-forward每月-1-号-0600scriptswalk_forward_checkpy">Walk-Forward（每月 1 号 06:00，<code dir="auto">scripts/walk_forward_check.py</code>）</h3><a class="sl-anchor-link" href="#walk-forward每月-1-号-0600scriptswalk_forward_checkpy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Walk-Forward（每月 1 号 06:00，scripts/walk_forward_check.py）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>健康度</th><th>消息</th></tr></thead><tbody><tr><td>≥50% 窗口盈利</td><td>不告警（静默通过）</td></tr><tr><td>&#x3C;50% 窗口盈利</td><td><code dir="auto">⚠️ EDGE DEGRADING: &#x3C;50% windows profitable</code></td></tr><tr><td>0/4 窗口盈利</td><td><code dir="auto">🚨 EDGE DEAD: 0 windows profitable. Consider retiring.</code></td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="kol-alerts独立于本策略strategiestelegram_alertspy">KOL Alerts（独立于本策略，<code dir="auto">strategies/telegram_alerts.py</code>）</h3><a class="sl-anchor-link" href="#kol-alerts独立于本策略strategiestelegram_alertspy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “KOL Alerts（独立于本策略，strategies/telegram_alerts.py）”</span></a></div>
+<p>每 30 分钟跑一次。<strong>新的修复</strong>：每条告警现在都是可点击链接 → 跳到原文 Google News 验证。</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">🟢 TRUMP (+0.50)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[Trump endorses crypto at rally](https://news.google.com/rss/articles/...)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="🟢 TRUMP (+0.50)[Trump endorses crypto at rally](https://news.google.com/rss/articles/...)"><div></div></button></div></figure></div>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="六什么是正常">六、什么是”正常”？</h2><a class="sl-anchor-link" href="#六什么是正常"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “六、什么是”正常”？”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="-这些都正常不要紧张">✅ 这些都正常（不要紧张）</h3><a class="sl-anchor-link" href="#-这些都正常不要紧张"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “✅ 这些都正常（不要紧张）”</span></a></div>
+<ul>
+<li><strong>连续 1-2 周没开仓</strong> — EMA 还没交叉，市场没给信号。策略设计就是等好机会。</li>
+<li><strong>某一天 BTC 暴跌 10% 但 bot 没反应</strong> — 只有 EMA 死叉时才退出。不设止损是刻意的。</li>
+<li><strong>单笔交易亏 5-10%</strong> — 在分布范围内，CVaR 95% = −9.13%</li>
+<li><strong>某个月整体亏损</strong> — 正常，看半年/年滚动</li>
+<li><strong>FnG > 80 时完全不开仓</strong> — 这是规则，极度贪婪期更容易回撤</li>
+<li><strong>跟 BTC 同涨跌，但幅度小</strong> — 策略偏 beta，不是全天候对冲</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="️-这些要关注不一定马上行动">⚠️ 这些要关注（不一定马上行动）</h3><a class="sl-anchor-link" href="#️-这些要关注不一定马上行动"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “⚠️ 这些要关注（不一定马上行动）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>现象</th><th>合理解释 / 行动</th></tr></thead><tbody><tr><td>连续 5 笔亏损</td><td>正常范围（历史最多 7 连亏），继续观察</td></tr><tr><td>DD 10-15%</td><td>接近 PAUSE 阈值，查一下 <code dir="auto">risk_monitor.py status</code>，别干预</td></tr><tr><td>一个月没任何交易</td><td>FnG 长期 > 80，或 ADX &#x3C; 18。查 Fear &#x26; Greed 和 BTC 趋势</td></tr><tr><td>某笔持仓超过 10 天没动</td><td>极少见，检查 EMA 值</td></tr><tr><td>滑点 > 0.1%（实盘启动后）</td><td>盘口深度不够，考虑降低交易对数量</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="-这些是红线必须立刻看">🚨 这些是红线（必须立刻看）</h3><a class="sl-anchor-link" href="#-这些是红线必须立刻看"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “🚨 这些是红线（必须立刻看）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>现象</th><th>行动</th></tr></thead><tbody><tr><td>Telegram 收到 <code dir="auto">RETIRED</code> 告警</td><td>策略已自动退役，<strong>不要直接 reset</strong>，先调查原因</td></tr><tr><td>DD ≥ 15% 且 PAUSED</td><td>等自动 resume（DD 恢复到 &#x3C;10%），不要手动 reset</td></tr><tr><td>单笔亏 >25%（超过历史最差）</td><td>有 black swan 事件，手动 pause，检查市场</td></tr><tr><td>连续 2+ 月 walk-forward 告警</td><td>Edge 在衰退，考虑 retire</td></tr><tr><td>Bot 进程消失（<code dir="auto">pgrep</code> 无结果）</td><td>查日志，重启 bot，看 journald 看崩溃原因</td></tr><tr><td>实盘 vs dry-run 盈亏差 >3%/月</td><td>滑点/延迟比预期大，考虑减仓或换策略</td></tr></tbody></table>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="七如何干预应急手册">七、如何干预（应急手册）</h2><a class="sl-anchor-link" href="#七如何干预应急手册"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “七、如何干预（应急手册）”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="暂停新仓不影响现有持仓">暂停新仓（不影响现有持仓）</h3><a class="sl-anchor-link" href="#暂停新仓不影响现有持仓"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “暂停新仓（不影响现有持仓）”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 方法 1：通过 risk manager（推荐，会发 Telegram 告警）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#C5E478;--1:#3B61B0">cd</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C5E478;--1:#3B61B0">$PROJECT_DIR</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">scripts/risk_monitor.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">pause</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">--note</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">你的原因</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 方法 2：通过 Telegram 命令</span></div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 给 bot 发：/stopentry</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cd $PROJECT_DIRpython scripts/risk_monitor.py pause --note &#x22;你的原因&#x22;"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="完全退役需要手动-reset-才能恢复">完全退役（需要手动 reset 才能恢复）</h3><a class="sl-anchor-link" href="#完全退役需要手动-reset-才能恢复"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “完全退役（需要手动 reset 才能恢复）”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">scripts/risk_monitor.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">retire</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">--note</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">你的原因</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="python scripts/risk_monitor.py retire --note &#x22;你的原因&#x22;"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="重置为-active慎用">重置为 ACTIVE（慎用）</h3><a class="sl-anchor-link" href="#重置为-active慎用"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “重置为 ACTIVE（慎用）”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">scripts/risk_monitor.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">reset</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">--note</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">你的原因</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="python scripts/risk_monitor.py reset --note &#x22;你的原因&#x22;"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="停止-bot-进程">停止 bot 进程</h3><a class="sl-anchor-link" href="#停止-bot-进程"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “停止 bot 进程”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">pkill</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-TERM</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-f</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">config_dryrun_honest15m</span><span style="--0:#D9F5DD;--1:#111111">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 等待 5-10 秒完全退出</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">pgrep</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-af</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">config_dryrun_honest15m</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53">  </span><span style="--0:#919F9F;--1:#5F636F"># 确认退出</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pkill -TERM -f &#x22;config_dryrun_honest15m&#x22;pgrep -af &#x22;config_dryrun_honest15m&#x22;  # 确认退出"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="重启-bot">重启 bot</h3><a class="sl-anchor-link" href="#重启-bot"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “重启 bot”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#C5E478;--1:#3B61B0">cd</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C5E478;--1:#3B61B0">$PROJECT_DIR</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">./scripts/start_honest_trend.sh</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">dryrun</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cd $PROJECT_DIR./scripts/start_honest_trend.sh dryrun"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="强平某笔交易">强平某笔交易</h3><a class="sl-anchor-link" href="#强平某笔交易"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “强平某笔交易”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># Telegram 发：/forceexit &#x3C;trade_id></span></div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 或 curl API：</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">curl</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-X</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">POST</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">http://127.0.0.1:8082/api/v1/forceexit</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">-H</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#ECC48D;--1:#984E4D">Content-Type: application/json</span><span style="--0:#D9F5DD;--1:#111111">"</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">-d</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">{"tradeid": "1"}</span><span style="--0:#D9F5DD;--1:#111111">'</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl -X POST http://127.0.0.1:8082/api/v1/forceexit \  -H &#x22;Content-Type: application/json&#x22; \  -d &#x27;{&#x22;tradeid&#x22;: &#x22;1&#x22;}&#x27;"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="查看实时日志">查看实时日志</h3><a class="sl-anchor-link" href="#查看实时日志"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “查看实时日志”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">tail</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">-f</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#C5E478;--1:#3B61B0">$PROJECT_DIR</span><span style="--0:#ECC48D;--1:#3B61B0">/logs/honest15m_dryrun_</span><span style="--0:#7FDBCA;--1:#096E72">*</span><span style="--0:#ECC48D;--1:#3B61B0">.log</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="tail -f $PROJECT_DIR/logs/honest15m_dryrun_*.log"><div></div></button></div></figure></div>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="八从-dry-run-过渡到实盘路线图">八、从 dry-run 过渡到实盘（路线图）</h2><a class="sl-anchor-link" href="#八从-dry-run-过渡到实盘路线图"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “八、从 dry-run 过渡到实盘（路线图）”</span></a></div>
+<p><strong>不要着急开实盘。先让 dry-run 跑至少 2-4 周验证以下条件</strong>：</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="过渡检查清单">过渡检查清单</h3><a class="sl-anchor-link" href="#过渡检查清单"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “过渡检查清单”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> dry-run 累计 ≥ <strong>20 笔交易</strong>（统计意义）</li>
+<li class="task-list-item"><input type="checkbox" disabled> Rolling PF ≥ <strong>1.2</strong></li>
+<li class="task-list-item"><input type="checkbox" disabled> 最大 DD &#x3C; <strong>12%</strong></li>
+<li class="task-list-item"><input type="checkbox" disabled> 没有任何 RETIRED 事件</li>
+<li class="task-list-item"><input type="checkbox" disabled> 没有任何 “实盘 vs dry-run” 偏离（dry-run 只能拿来和回测对比）</li>
+<li class="task-list-item"><input type="checkbox" disabled> Walk-forward 月度 check 至少一次 4/4 通过</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="过渡步骤">过渡步骤</h3><a class="sl-anchor-link" href="#过渡步骤"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “过渡步骤”</span></a></div>
+<ol>
+<li><strong>把 Binance API key 加入 SOPS</strong>（见部署文档）</li>
+<li>启动实盘：<code dir="auto">./scripts/start_honest_trend.sh live</code></li>
+<li><strong>保持 dry-run 同时运行</strong> — 15m dry-run 作为 shadow validator，对比延迟/滑点</li>
+<li>实盘首月：<strong>只用 1,000 USDT</strong>（不要一开始就 10K）</li>
+<li>每月用 risk_monitor 检查，稳定才逐步增加到 10K</li>
+</ol>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="九常见问题自问自答">九、常见问题自问自答</h2><a class="sl-anchor-link" href="#九常见问题自问自答"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “九、常见问题自问自答”</span></a></div>
+<p><strong>Q: 为什么 1 周了还没开仓？</strong>
+A: EMA 94/139 需要非常明确的上升趋势。看 BTC 15m 图，EMA 94 和 139 要从下方穿过上方。如果市场在震荡/下跌，就不会开仓。这是 feature，不是 bug。</p>
+<p><strong>Q: FnG 目前是多少可以查？</strong>
+A: Dashboard <code dir="auto">http://localhost:3000</code> 实时显示。或 <code dir="auto">curl https://api.alternative.me/fng/?limit=1</code>。当前 ≥ 80 时 bot 完全不开仓。</p>
+<p><strong>Q: Dry-run 和回测的差别会有多大？</strong>
+A: 理论上应该很小（都用同一套市场数据）。实盘才会有显著差别（真实成交延迟、盘口深度、手续费分层）。Dry-run 主要验证策略<strong>逻辑没 bug</strong>，而非盈亏精度。</p>
+<p><strong>Q: 1m live 什么时候启动？</strong>
+A: 由你决定。建议等 dry-run 跑 2-4 周确认稳定后启动。命令已 ready：<code dir="auto">./scripts/start_honest_trend.sh live</code>（前提 SOPS 有 Binance key）。</p>
+<p><strong>Q: 如果 dry-run 持续亏钱怎么办？</strong>
+A: 看是哪种亏：</p>
+<ul>
+<li><strong>单月亏，半年 PF 仍 >1.2</strong> → 正常，不动。</li>
+<li><strong>半年 PF &#x3C; 1.0，交易数 > 50</strong> → 实盘不要启动。考虑退役或换策略。</li>
+<li><strong>DD > 15%</strong> → risk_monitor 自动 pause，看 state，不要人工 reset。</li>
+</ul>
+<p><strong>Q: 我能同时跑多个策略吗？</strong>
+A: 可以，当前 3 个 bot 并行（15m spot 8082 / 1m MTF spot 8083 / 15m futures L+S 8084）+ 2 个 daemon（event_reactor + event_dca_bot）。每个 bot 独立端口 + 独立 SQLite DB。Telegram 共用一个 chat（各 bot 通过 bot_name 区分自己的消息）。</p>
+<p><strong>Q: 为什么选 ETH/BNB/SOL？为啥不要 BTC？</strong>
+A: Phase A (2026-04-22) 采纳：BTC 走 DCA 累积（周+事件），不在 trend 池子里。原因：BTC 在 trend 策略上的回报低于它自己的 DCA baseline，且用户长期看涨 BTC（DCA 积累更合适）。ETH/BNB/SOL 是高 beta alts，trend 策略在这里发挥更好。</p>
+<p><strong>Q: 之前说 SOL 不适合，为啥现在又加回来？</strong>
+A: 之前的结论是在老框架（BTC 为主）下。Phase A 切到 spot alts-only 后重新 walk-forward：SOL 作为高 beta alts 吃到更多 alpha（W4 2021 +143%）。另外 futures L+S 能对冲 SOL 的下行风险（W5 2022 LUNA，SOL spot 亏 17%，futures L+S 反赚 48%）。</p>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="十相关文件索引">十、相关文件索引</h2><a class="sl-anchor-link" href="#十相关文件索引"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “十、相关文件索引”</span></a></div>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">主要文档</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── docs/HONEST_TREND_REPORT.md     完整技术分析（为什么选这个策略）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── docs/DRYRUN_HANDBOOK.md         ← 你现在读的这个（日常操作）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── risk_state.json                 当前 risk manager 状态（运行时生成）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── walk_forward_history/           月度 walk-forward 归档</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">活跃策略</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/HonestTrendGeneric.py    基类（所有 HonestTrend* 继承）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/HonestTrend15mDry.py     15m spot long-only（port 8082）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/HonestTrend1mMTF.py      1m MTF spot long-only（port 8083）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/HonestTrendFutures.py    15m futures L+S（port 8084，Phase B）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/HonestTrend1mLive.py     1m 实盘（旧 pair list，待切 A5）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/dca_executor.py          DCA 执行引擎（周/事件共用）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/event_dca_bot.py         事件驱动 DCA daemon（WebSocket）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/risk_manager.py          状态机</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── strategies/telegram_alerts.py       告警模块</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Config</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/config_dryrun_honest15m.json           A5 spot long</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/config_dryrun_honest1mmtf.json         A5 spot 1m MTF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/config_dryrun_honestfutures15m.json    Phase B futures L+S</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/config_live_honest1m.json              旧 live（未切 A5）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/backtest/config_backtest_15m_alts_a5.json     A5 回测</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/backtest/config_backtest_15m_futures_a5.json  Phase B 回测</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── configs/backtest/config_backtest_*.json        其它</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Scripts</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── scripts/start_honest_trend.sh       启动脚本</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── scripts/risk_monitor.py             监控 + CLI</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── scripts/walk_forward_check.py       月度验证</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Systemd timers（每 4h / 每月）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── ~/.config/systemd/user/crypto-risk-monitor.{service,timer}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── ~/.config/systemd/user/crypto-walkforward.{service,timer}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">归档（don't touch，且已 .gitignore 不进公共库）</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">├── docs/RETIRED_STRATEGIES.md          退役策略记录（代码已删，只留原因+教训）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="主要文档├── docs/HONEST_TREND_REPORT.md     完整技术分析（为什么选这个策略）├── docs/DRYRUN_HANDBOOK.md         ← 你现在读的这个（日常操作）├── risk_state.json                 当前 risk manager 状态（运行时生成）├── walk_forward_history/           月度 walk-forward 归档活跃策略├── strategies/HonestTrendGeneric.py    基类（所有 HonestTrend* 继承）├── strategies/HonestTrend15mDry.py     15m spot long-only（port 8082）├── strategies/HonestTrend1mMTF.py      1m MTF spot long-only（port 8083）├── strategies/HonestTrendFutures.py    15m futures L+S（port 8084，Phase B）├── strategies/HonestTrend1mLive.py     1m 实盘（旧 pair list，待切 A5）├── strategies/dca_executor.py          DCA 执行引擎（周/事件共用）├── strategies/event_dca_bot.py         事件驱动 DCA daemon（WebSocket）├── strategies/risk_manager.py          状态机├── strategies/telegram_alerts.py       告警模块Config├── configs/config_dryrun_honest15m.json           A5 spot long├── configs/config_dryrun_honest1mmtf.json         A5 spot 1m MTF├── configs/config_dryrun_honestfutures15m.json    Phase B futures L+S├── configs/config_live_honest1m.json              旧 live（未切 A5）├── configs/backtest/config_backtest_15m_alts_a5.json     A5 回测├── configs/backtest/config_backtest_15m_futures_a5.json  Phase B 回测├── configs/backtest/config_backtest_*.json        其它Scripts├── scripts/start_honest_trend.sh       启动脚本├── scripts/risk_monitor.py             监控 + CLI├── scripts/walk_forward_check.py       月度验证Systemd timers（每 4h / 每月）├── ~/.config/systemd/user/crypto-risk-monitor.{service,timer}├── ~/.config/systemd/user/crypto-walkforward.{service,timer}归档（don&#x27;t touch，且已 .gitignore 不进公共库）├── docs/RETIRED_STRATEGIES.md          退役策略记录（代码已删，只留原因+教训）"><div></div></button></div></figure></div>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="十一smart-dca-双通道btc-专属">十一、Smart DCA 双通道（BTC 专属）</h2><a class="sl-anchor-link" href="#十一smart-dca-双通道btc-专属"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “十一、Smart DCA 双通道（BTC 专属）”</span></a></div>
+<p>Trend 策略不碰 BTC，BTC 由这套 DCA 组合负责累积：</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="周定投时间驱动">周定投（时间驱动）</h3><a class="sl-anchor-link" href="#周定投时间驱动"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “周定投（时间驱动）”</span></a></div>
+<ul>
+<li>服务：<code dir="auto">crypto-dca.timer</code> → <code dir="auto">dca_executor.py</code></li>
+<li>频率：每周一 00:00 SGT</li>
+<li>金额：<code dir="auto">$500 base × multiplier (0.0-3.0)</code>，由 FnG + cycle factors + KOL 加权</li>
+<li>状态：dry-run（<code dir="auto">DCA_LIVE_ENABLED</code> 未设）</li>
+<li>日志：<code dir="auto">journalctl --user -u crypto-dca.service -f</code></li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="事件驱动websocket-daemon">事件驱动（WebSocket daemon）</h3><a class="sl-anchor-link" href="#事件驱动websocket-daemon"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “事件驱动（WebSocket daemon）”</span></a></div>
+<ul>
+<li>服务：<code dir="auto">crypto-event-dca.service</code> → <code dir="auto">event_dca_bot.py</code></li>
+<li>类型：always-on，监听 Binance aggTrade WebSocket</li>
+<li>触发：4 层信号（FLASH 1m>3% / FAST 5m>5% / SUSTAIN 24h>10% / CAPITUL 30d DD>25%）</li>
+<li>预算：每月 $2000 reserve，$700/trigger（FnG&#x3C;20 ×1.5, >60 ×0.7）</li>
+<li>限制：72h cooldown，最多 3 次/月</li>
+<li>状态文件：<code dir="auto">event_dca_state.json</code></li>
+<li>自检：<code dir="auto">python strategies/event_dca_bot.py --self-test</code></li>
+<li>详情：<a href="EVENT_DCA.md">EVENT_DCA.md</a></li>
+</ul>
+<p>两个通道<strong>预算独立</strong>（不共享），都调 <code dir="auto">dca_executor.py</code> 执行。<strong>打开 live</strong>：在 SOPS <code dir="auto">secrets.env</code> 加 <code dir="auto">DCA_LIVE_ENABLED=true</code> + Binance spot API key，两个通道同时生效。</p>
+<hr>
+<div class="sl-heading-wrapper level-h2"><h2 id="十二核心原则一句话版">十二、核心原则（一句话版）</h2><a class="sl-anchor-link" href="#十二核心原则一句话版"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “十二、核心原则（一句话版）”</span></a></div>
+<ol>
+<li><strong>Dry-run 积累样本，不急着开实盘</strong></li>
+<li><strong>每天扫 Telegram，每周看 status，每月看 walk-forward</strong></li>
+<li><strong>规则已编码，不要手动优化</strong></li>
+<li><strong>红线触发时相信状态机，不要急着 reset</strong></li>
+<li><strong>单月亏损正常，半年 PF &#x3C; 1.2 才是警报</strong></li>
+</ol>
+<p><strong>记住 Taleb 的话：策略不会慢慢死，是断崖式失效。</strong> 提前写好 kill-switch，断崖来时就是 kill-switch 救你，不是你的判断救你。</p>
+<hr>
+<p><em>最后更新: 2026-04-20. 出问题时先看这份文档，再看 <code dir="auto">HONEST_TREND_REPORT.md</code> 里的背景。</em></p> </div> <footer class="sl-flex astro-ospshcon"> <div class="meta sl-flex astro-ospshcon">   </div> <div class="pagination-links print:hidden astro-bvyhghzn" dir="ltr"> <a href="/docs/research/walk-forward-full-history/" rel="prev" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg> <span class="astro-bvyhghzn"> 上一页 <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">8-Regime Walk-Forward</span> </span> </a> <a href="/docs/ops/go-live-checklist/" rel="next" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg> <span class="astro-bvyhghzn"> 下一页 <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">Go-Live 清单</span> </span> </a> </div>  </footer> </div> </div>  </main> </div> </div> </div> </div> </body></html>

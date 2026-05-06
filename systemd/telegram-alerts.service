@@ -1,0 +1,10 @@
+[Unit]
+Description=Telegram Alert Daemon (DCA + Sentiment + Health)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/freeman.xiong/Documents/github/public/freqtrade-strategies
+ExecStart=/bin/bash -c 'eval $(sops --output-type dotenv decrypt secrets.env 2>/dev/null || sops --output-type dotenv decrypt secrets.yaml 2>/dev/null) && python strategies/telegram_alerts.py --all'
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,28 @@
+:root {
+	--sl-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	--sl-font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+}
+
+:root[data-theme='dark'] {
+	--sl-color-accent-low: #1e3a8a;
+	--sl-color-accent: #3b82f6;
+	--sl-color-accent-high: #93c5fd;
+	--sl-color-bg: #0d1117;
+	--sl-color-bg-nav: #161b22;
+	--sl-color-bg-sidebar: #161b22;
+	--sl-color-text: #c9d1d9;
+	--sl-color-text-accent: #58a6ff;
+	--sl-color-white: #f0f6fc;
+	--sl-color-gray-1: #c9d1d9;
+	--sl-color-gray-2: #b1bac4;
+	--sl-color-gray-3: #8b949e;
+	--sl-color-gray-4: #6e7681;
+	--sl-color-gray-5: #484f58;
+	--sl-color-gray-6: #30363d;
+	--sl-color-black: #0d1117;
+}
+
+body {
+	font-feature-settings: 'ss01' on, 'cv11' on;
+	font-variant-numeric: tabular-nums;
+}

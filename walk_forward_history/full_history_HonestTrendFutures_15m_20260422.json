@@ -1,0 +1,79 @@
+{
+  "strategy": "HonestTrendFutures",
+  "timeframe": "15m",
+  "run_date": "2026-04-22T03:40:03.805519+00:00",
+  "results": [
+    {
+      "label": "W1_2018_crash",
+      "start": "20180101",
+      "end": "20181231",
+      "status": "failed"
+    },
+    {
+      "label": "W2_2019_accumulation",
+      "start": "20190101",
+      "end": "20191231",
+      "status": "failed"
+    },
+    {
+      "trades": 96,
+      "avg_profit_pct": -0.85,
+      "tot_profit_usdt": 991.225,
+      "tot_profit_pct": 9.91,
+      "label": "W3_2020_covid",
+      "start": "20200101",
+      "end": "20201231",
+      "status": "ok"
+    },
+    {
+      "trades": 140,
+      "avg_profit_pct": 0.11,
+      "tot_profit_usdt": 9120.108,
+      "tot_profit_pct": 91.2,
+      "label": "W4_2021_bull_top",
+      "start": "20210101",
+      "end": "20211231",
+      "status": "ok"
+    },
+    {
+      "trades": 189,
+      "avg_profit_pct": -0.43,
+      "tot_profit_usdt": 4761.566,
+      "tot_profit_pct": 47.62,
+      "label": "W5_2022_luna_ftx",
+      "start": "20220101",
+      "end": "20221231",
+      "status": "ok"
+    },
+    {
+      "trades": 193,
+      "avg_profit_pct": -0.41,
+      "tot_profit_usdt": 1871.157,
+      "tot_profit_pct": 18.71,
+      "label": "W6_2023_recovery",
+      "start": "20230101",
+      "end": "20231231",
+      "status": "ok"
+    },
+    {
+      "trades": 127,
+      "avg_profit_pct": -0.5,
+      "tot_profit_usdt": 1714.516,
+      "tot_profit_pct": 17.15,
+      "label": "W7_2024_etf_bull",
+      "start": "20240101",
+      "end": "20241231",
+      "status": "ok"
+    },
+    {
+      "trades": 227,
+      "avg_profit_pct": -1.05,
+      "tot_profit_usdt": -643.452,
+      "tot_profit_pct": -6.43,
+      "label": "W8_2025_present",
+      "start": "20250101",
+      "end": "20260420",
+      "status": "ok"
+    }
+  ]
+}

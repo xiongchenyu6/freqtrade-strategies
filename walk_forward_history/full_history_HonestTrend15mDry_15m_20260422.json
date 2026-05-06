@@ -1,0 +1,87 @@
+{
+  "strategy": "HonestTrend15mDry",
+  "timeframe": "15m",
+  "run_date": "2026-04-22T02:44:32.118267+00:00",
+  "results": [
+    {
+      "trades": 70,
+      "avg_profit_pct": -1.45,
+      "tot_profit_usdt": 1231.289,
+      "tot_profit_pct": 12.31,
+      "label": "W1_2018_crash",
+      "start": "20180101",
+      "end": "20181231",
+      "status": "ok"
+    },
+    {
+      "trades": 79,
+      "avg_profit_pct": -0.9,
+      "tot_profit_usdt": 1038.006,
+      "tot_profit_pct": 10.38,
+      "label": "W2_2019_accumulation",
+      "start": "20190101",
+      "end": "20191231",
+      "status": "ok"
+    },
+    {
+      "trades": 61,
+      "avg_profit_pct": -0.42,
+      "tot_profit_usdt": 1494.142,
+      "tot_profit_pct": 14.94,
+      "label": "W3_2020_covid",
+      "start": "20200101",
+      "end": "20201231",
+      "status": "ok"
+    },
+    {
+      "trades": 108,
+      "avg_profit_pct": 2.16,
+      "tot_profit_usdt": 14330.031,
+      "tot_profit_pct": 143.3,
+      "label": "W4_2021_bull_top",
+      "start": "20210101",
+      "end": "20211231",
+      "status": "ok"
+    },
+    {
+      "trades": 96,
+      "avg_profit_pct": -1.92,
+      "tot_profit_usdt": -1692.59,
+      "tot_profit_pct": -16.93,
+      "label": "W5_2022_luna_ftx",
+      "start": "20220101",
+      "end": "20221231",
+      "status": "ok"
+    },
+    {
+      "trades": 118,
+      "avg_profit_pct": -0.29,
+      "tot_profit_usdt": 1827.28,
+      "tot_profit_pct": 18.27,
+      "label": "W6_2023_recovery",
+      "start": "20230101",
+      "end": "20231231",
+      "status": "ok"
+    },
+    {
+      "trades": 88,
+      "avg_profit_pct": 0.1,
+      "tot_profit_usdt": 2378.873,
+      "tot_profit_pct": 23.79,
+      "label": "W7_2024_etf_bull",
+      "start": "20240101",
+      "end": "20241231",
+      "status": "ok"
+    },
+    {
+      "trades": 129,
+      "avg_profit_pct": -0.88,
+      "tot_profit_usdt": -122.554,
+      "tot_profit_pct": -1.23,
+      "label": "W8_2025_present",
+      "start": "20250101",
+      "end": "20260420",
+      "status": "ok"
+    }
+  ]
+}

@@ -1,0 +1,423 @@
+"""
+Telegram Alert System
+
+1. KOL real-time alerts — when Trump/Musk/BlackRock moves, get notified fast
+2. Sentiment shift alerts — when combined_score changes significantly
+3. Bot health watchdog — alert if freqtrade process dies
+
+Run every 30 min via systemd timer (separate from the 4-hour pipeline).
+"""
+
+import json
+import logging
+import os
+import subprocess
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None  # type: ignore[assignment]
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("alerts")
+
+# Load from env or SOPS
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+PROJECT_DIR = Path(__file__).parent.parent
+
+# State file to track what we've already alerted on
+STATE_FILE = PROJECT_DIR / "sentiment_data" / "alert_state.json"
+
+
+def send_telegram(message: str) -> bool:
+    """Send a message via Telegram bot."""
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        # Try loading from SOPS
+        _load_telegram_from_sops()
+
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        logger.warning("Telegram not configured")
+        return False
+
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+            json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message,
+                "parse_mode": "Markdown",
+                "disable_web_page_preview": True,
+            },
+            timeout=10,
+        )
+        return resp.status_code == 200
+    except Exception as e:
+        logger.warning(f"Telegram send failed: {e}")
+        return False
+
+
+def _load_telegram_from_sops():
+    """Try to load Telegram credentials from SOPS."""
+    global TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
+    try:
+        result = subprocess.run(
+            ["sops", "decrypt", str(PROJECT_DIR / "secrets.yaml")],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            import yaml
+            secrets = yaml.safe_load(result.stdout)
+            TELEGRAM_TOKEN = secrets.get("telegram", {}).get("bot_token", "")
+            TELEGRAM_CHAT_ID = secrets.get("telegram", {}).get("chat_id", "")
+    except Exception:
+        pass
+
+
+def load_state() -> dict:
+    try:
+        with open(STATE_FILE) as f:
+            return json.loads(f.read())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"last_kol_hashes": [], "last_combined_score": 0.0, "last_check": ""}
+
+
+def save_state(state: dict):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
+
+
+# --------------------------------------------------------------------------
+# Alert 1: KOL Events
+# --------------------------------------------------------------------------
+def check_kol_alerts():
+    """Check for new high-impact KOL events and alert."""
+    from kol_tracker import KOLTracker
+
+    state = load_state()
+    seen = set(state.get("last_kol_hashes", []))
+
+    tracker = KOLTracker()
+    result = tracker.run()
+
+    new_alerts = []
+    new_hashes = []
+
+    for m in result.get("kol_mentions", []):
+        # Only alert on significant mentions
+        if abs(m.get("score", 0)) < 0.3:
+            continue
+
+        # Deduplicate by title hash
+        import hashlib
+        h = hashlib.sha256(m["title"].lower().strip().encode()).hexdigest()[:16]
+        new_hashes.append(h)
+
+        if h in seen:
+            continue
+
+        icon = "🟢" if m["score"] > 0 else "🔴"
+        title = m["title"][:140]
+        # Escape Markdown special chars in title (underscores, asterisks, brackets)
+        for ch in ("_", "*", "[", "]", "`"):
+            title = title.replace(ch, f"\\{ch}")
+        link = m.get("link", "").strip()
+        if link:
+            # Markdown inline link: [title](url) — user can tap to verify original
+            title_line = f"[{title}]({link})"
+        else:
+            title_line = title
+        new_alerts.append(
+            f"{icon} *{m['kol'].upper()}* ({m['score']:+.2f})\n{title_line}"
+        )
+
+    if new_alerts:
+        header = f"*KOL Alert* ({len(new_alerts)} new events)\n{'─' * 30}\n"
+        message = header + "\n\n".join(new_alerts[:5])  # max 5 per alert
+        send_telegram(message)
+        logger.info(f"Sent {len(new_alerts)} KOL alerts")
+
+    # Update state
+    state["last_kol_hashes"] = new_hashes[-50:]  # keep last 50
+    save_state(state)
+
+    return len(new_alerts)
+
+
+# --------------------------------------------------------------------------
+# Alert 2: Sentiment Shift
+# --------------------------------------------------------------------------
+def check_sentiment_shift():
+    """Alert when combined_score changes significantly."""
+    state = load_state()
+    last_score = state.get("last_combined_score", 0.0)
+
+    # Read latest
+    sentiment_file = PROJECT_DIR / "sentiment_data" / "latest_sentiment.json"
+    try:
+        with open(sentiment_file) as f:
+            data = json.loads(f.read())
+        current_score = data.get("combined_score", 0.0)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return
+
+    delta = current_score - last_score
+
+    # Alert on significant shifts (> 0.2 change)
+    if abs(delta) > 0.2:
+        direction = "📈 BULLISH" if delta > 0 else "📉 BEARISH"
+        message = (
+            f"*Sentiment Shift* {direction}\n"
+            f"{'─' * 30}\n"
+            f"Score: {last_score:+.2f} → *{current_score:+.2f}* ({delta:+.2f})\n"
+            f"FnG: {data.get('fng_value', '?')} ({data.get('fng_classification', '?')})\n"
+            f"KOL: {data.get('kol_score', 0):+.2f} ({data.get('kol_mentions', 0)} mentions)\n"
+            f"Signal: *{data.get('signal', '?').upper()}*"
+        )
+        send_telegram(message)
+        logger.info(f"Sentiment shift alert: {last_score:+.2f} → {current_score:+.2f}")
+
+    # Also alert on regime change
+    if current_score > 0.3 and last_score <= 0.3:
+        send_telegram("*Regime Change*: → BULLISH 🟢\nSentiment crossed above +0.3 threshold")
+    elif current_score < -0.3 and last_score >= -0.3:
+        send_telegram("*Regime Change*: → BEARISH 🔴\nSentiment crossed below -0.3 threshold")
+
+    state["last_combined_score"] = current_score
+    save_state(state)
+
+
+# --------------------------------------------------------------------------
+# Alert 3: Bot Health
+# --------------------------------------------------------------------------
+def check_bot_health():
+    """Check if freqtrade bot is still running."""
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "freqtrade trade"],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            send_telegram(
+                "*Bot Down* ⚠️\n"
+                "Freqtrade bot is not running!\n"
+                "Restart with:\n"
+                "`nohup python -m freqtrade trade ...`"
+            )
+            logger.warning("Bot is DOWN — alert sent")
+            return False
+        else:
+            logger.info(f"Bot healthy, PID={result.stdout.strip()}")
+            return True
+    except Exception as e:
+        logger.warning(f"Health check failed: {e}")
+        return False
+
+
+# --------------------------------------------------------------------------
+# Alert 4: Daily Report
+# --------------------------------------------------------------------------
+def send_daily_report():
+    """
+    Send daily summary: portfolio status, sentiment, KOL activity.
+    Call once per day (e.g., via --daily flag or at 00:00 UTC).
+    """
+    state = load_state()
+    last_report = state.get("last_daily_report", "")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if last_report == today:
+        logger.info("Daily report already sent today")
+        return
+
+    # Gather sentiment data
+    sentiment_file = PROJECT_DIR / "sentiment_data" / "latest_sentiment.json"
+    try:
+        with open(sentiment_file) as f:
+            s = json.loads(f.read())
+    except (FileNotFoundError, json.JSONDecodeError):
+        s = {}
+
+    fng = s.get("fng_value", "?")
+    fng_class = s.get("fng_classification", "?")
+    score = s.get("combined_score", 0)
+    kol = s.get("kol_score", 0)
+    kol_n = s.get("kol_mentions", 0)
+    btc = s.get("btc_price", 0)
+
+    # Get Supabase history
+    history_str = ""
+    try:
+        import os
+        su = os.environ.get("SUPABASE_URL", "")
+        sk = os.environ.get("SUPABASE_KEY", "")
+        if su and sk:
+            resp = requests.get(
+                f"{su}/rest/v1/sentiment_snapshots",
+                headers={"apikey": sk, "Authorization": f"Bearer {sk}"},
+                params={"select": "combined_score,signal", "order": "timestamp.desc", "limit": "6"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                hist = resp.json()
+                trend = " → ".join(f"{h['combined_score']:+.2f}" for h in reversed(hist))
+                history_str = f"\nTrend (24h): {trend}"
+    except Exception:
+        pass
+
+    # Get bot status via freqtrade API
+    bot_status = ""
+    try:
+        ft_user = os.environ.get("FREQTRADE_API_USER", "freqtrader")
+        ft_pass = os.environ.get("FREQTRADE_API_PASSWORD", "")
+        r = requests.get("http://127.0.0.1:8080/api/v1/profit", timeout=5,
+                        auth=(ft_user, ft_pass))
+        if r.status_code == 200:
+            p = r.json()
+            bot_status = (
+                f"\n*Bot P&L:*\n"
+                f"  Trades: {p.get('trade_count', 0)}\n"
+                f"  Profit: {p.get('profit_all_coin', 0):.2f} USDT ({p.get('profit_all_percent', 0):.1f}%)\n"
+                f"  Open: {p.get('open_trade_count', 0)} positions"
+            )
+    except Exception:
+        bot_status = "\n_Bot API unavailable_"
+
+    message = (
+        f"*Daily Report* 📊 {today}\n"
+        f"{'─' * 30}\n"
+        f"*Market:*\n"
+        f"  BTC: ${btc:,.0f}\n" if btc else ""
+        f"  Fear & Greed: {fng} ({fng_class})\n"
+        f"  Sentiment: {score:+.2f}\n"
+        f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)"
+        f"{history_str}"
+        f"{bot_status}"
+    )
+
+    send_telegram(message)
+    logger.info("Daily report sent")
+
+    state["last_daily_report"] = today
+    save_state(state)
+
+
+# --------------------------------------------------------------------------
+# Alert 5: DCA Triggers
+# --------------------------------------------------------------------------
+_DCA_KIND_EMOJI = {
+    "FLASH": "⚡",
+    "FAST": "🏃",
+    "SUSTAIN": "💪",
+    "CAPITUL": "💀",
+}
+
+
+def check_dca_triggers() -> int:
+    """
+    Query quant.event_dca_triggers for rows newer than last seen id, send a
+    Telegram message for each one, and persist the high-water mark.
+
+    :return: Number of new trigger messages sent.
+    """
+    if psycopg2 is None:
+        logger.warning("psycopg2 not installed — skipping DCA trigger check")
+        return 0
+
+    timescale_url = os.environ.get("TIMESCALE_URL", "")
+    if not timescale_url:
+        logger.info("TIMESCALE_URL not set — skipping DCA trigger check")
+        return 0
+
+    state = load_state()
+    last_id: int = state.get("last_trigger_id", 0)
+
+    try:
+        conn = psycopg2.connect(timescale_url)
+    except Exception as e:
+        logger.warning(f"DB connect failed: {e}")
+        return 0
+
+    rows = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, ts, kind, price, severity, fng, amount_usdt, mode"
+                " FROM quant.event_dca_triggers"
+                " WHERE id > %s ORDER BY id ASC LIMIT 10",
+                (last_id,),
+            )
+            rows = cur.fetchall()
+    except Exception as e:
+        logger.warning(f"DB query failed: {e}")
+        return 0
+    finally:
+        conn.close()
+
+    sent = 0
+    max_id = last_id
+
+    for row in rows:
+        row_id, ts, kind, price, severity, fng, amount_usdt, mode = row
+        emoji = _DCA_KIND_EMOJI.get(str(kind).upper(), "📌")
+        message = (
+            f"*DCA Trigger* {emoji} {kind}\n"
+            f"─────────────────────\n"
+            f"Time: {ts}\n"
+            f"BTC: ${float(price):,.0f}\n"
+            f"Severity: {severity}/5  FnG: {fng}\n"
+            f"Amount: ${amount_usdt} USDT  Mode: {mode}"
+        )
+        if send_telegram(message):
+            sent += 1
+        max_id = max(max_id, row_id)
+
+    if max_id > last_id:
+        state["last_trigger_id"] = max_id
+        save_state(state)
+
+    logger.info(f"DCA triggers: {sent} new sent (last_id={max_id})")
+    return sent
+
+
+# --------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--kol", action="store_true", help="Check KOL alerts only")
+    parser.add_argument("--sentiment", action="store_true", help="Check sentiment shift only")
+    parser.add_argument("--health", action="store_true", help="Check bot health only")
+    parser.add_argument("--daily", action="store_true", help="Send daily report")
+    parser.add_argument("--dca", action="store_true", help="Check DCA triggers")
+    parser.add_argument("--all", action="store_true", help="Run all checks (default)")
+    args = parser.parse_args()
+
+    run_all = args.all or not (args.kol or args.sentiment or args.health or args.daily or args.dca)
+
+    if args.dca or run_all:
+        n = check_dca_triggers()
+        print(f"DCA triggers: {n} new")
+
+    if args.kol or run_all:
+        n = check_kol_alerts()
+        print(f"KOL alerts: {n} new")
+
+    if args.sentiment or run_all:
+        check_sentiment_shift()
+        print("Sentiment shift: checked")
+
+    if args.health or run_all:
+        ok = check_bot_health()
+        print(f"Bot health: {'OK' if ok else 'DOWN'}")
+
+    if args.daily:
+        send_daily_report()
+        print("Daily report: sent")

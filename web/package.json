@@ -1,0 +1,11 @@
+{
+	"name": "quant-monorepo",
+	"private": true,
+	"packageManager": "pnpm@10.0.0",
+	"scripts": {
+		"dev": "pnpm --filter=@quant/app dev",
+		"dev:docs": "pnpm --filter=@quant/docs dev",
+		"build": "pnpm --filter=@quant/app build",
+		"deploy": "pnpm --filter=@quant/app deploy"
+	}
+}

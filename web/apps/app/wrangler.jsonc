@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "quant",
+	"account_id": "2764ae0fd9a5cb92c9ac67708620e54c",
+	"compatibility_date": "2025-04-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": ".svelte-kit/cloudflare/_worker.js",
+
+	"assets": {
+		"directory": ".svelte-kit/cloudflare",
+		"binding": "ASSETS",
+		"not_found_handling": "none"
+	},
+
+	"workers_dev": true,
+
+	"routes": [
+		{
+			"pattern": "quant.panda.qzz.io",
+			"custom_domain": true
+		}
+	],
+
+	"vars": {
+		"API_BASE": "https://api.panda.qzz.io",
+		"AUTH_BASE": "https://auth.panda.qzz.io",
+		"SUPABASE_URL": "https://rhweqsxothaezsbxjwaj.supabase.co",
+		"SUPABASE_ANON": "sb_publishable_RRSWxhXvvaUqk3S9nF7m9A_loMqoxxw",
+		"REALTIME_URL": "wss://quant.realtime.panda.qzz.io/socket",
+		"REALTIME_ANON_JWT": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJlZiI6InF1YW50IiwiaWF0IjoxNzc2OTM2NDk1LCJleHAiOjIwOTIyOTY0OTV9.rAObAeT1xqGAJncGoyVD_6GqGwjFVSUSE48dC-gWTSU"
+	},
+
+	"observability": {
+		"enabled": true
+	}
+}

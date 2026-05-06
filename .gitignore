@@ -1,0 +1,54 @@
+# Secrets - NEVER commit plaintext
+secrets.yaml.plaintext
+*.plaintext
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# Plaintext / scratch copies of sops files
+secrets.env.tmp
+secrets.env.new
+secrets.env.bak
+secrets.env.local
+secrets.yaml.tmp
+secrets.yaml.bak
+*.sops.tmp
+*.tmp
+
+# Legacy / large artifacts
+configs_legacy/
+models/
+hyperopt_results/
+user_data/
+freqaimodels/
+notebooks/
+data_bulk/
+reports/
+
+# Data
+data/
+sentiment_data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+backtest_results/
+
+# Local state
+risk_state.json
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# System
+.direnv/
+.DS_Store

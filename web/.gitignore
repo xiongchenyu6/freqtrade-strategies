@@ -1,0 +1,8 @@
+node_modules/
+.svelte-kit/
+.astro/
+dist/
+build/
+.wrangler/
+.env
+.env.local

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  
+  <defs>
+    <linearGradient id="bearBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C8C4E0"></stop>
+      <stop offset="60%" stop-color="#7C5CFF"></stop>
+      <stop offset="100%" stop-color="#4A30B8"></stop>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FFD27A"></stop>
+      <stop offset="60%" stop-color="#F5B340"></stop>
+      <stop offset="100%" stop-color="#F5B340" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+
+  
+  <g stroke="rgba(255,255,255,0.25)" stroke-width="0.5" stroke-linejoin="round">
+    
+    <polygon points="20,18 30,12 40,14 46,22 44,32 36,34 24,32 18,26" fill="url(#bearBody)"></polygon>
+    
+    <polygon points="18,16 22,10 26,14 22,18" fill="url(#bearBody)"></polygon>
+    <polygon points="38,12 42,8 46,14 42,16" fill="url(#bearBody)"></polygon>
+    
+    <polygon points="28,26 36,26 34,32 30,32" fill="#1B1A38"></polygon>
+    
+    <polygon points="14,32 22,30 34,32 50,30 54,40 48,52 38,54 22,52 12,46" fill="url(#bearBody)"></polygon>
+    
+    <polygon points="18,48 24,46 26,56 18,56" fill="#4A30B8"></polygon>
+    <polygon points="42,46 50,48 50,56 42,56" fill="#4A30B8"></polygon>
+    
+    <line x1="30" y1="12" x2="32" y2="26"></line>
+    <line x1="20" y1="18" x2="32" y2="26"></line>
+    <line x1="40" y1="14" x2="32" y2="26"></line>
+    <line x1="22" y1="30" x2="34" y2="40"></line>
+    <line x1="50" y1="30" x2="34" y2="40"></line>
+    <line x1="34" y1="40" x2="34" y2="52"></line>
+  </g>
+
+  
+  <circle cx="27" cy="22" r="3" fill="url(#eyeGlow)"></circle>
+  <circle cx="37" cy="22" r="3" fill="url(#eyeGlow)"></circle>
+  <circle cx="27" cy="22" r="1" fill="#FFF1EA"></circle>
+  <circle cx="37" cy="22" r="1" fill="#FFF1EA"></circle>
+</svg>

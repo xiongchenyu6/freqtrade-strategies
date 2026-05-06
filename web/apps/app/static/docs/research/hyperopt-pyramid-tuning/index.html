@@ -1,0 +1,555 @@
+<!DOCTYPE html><html lang="zh-CN" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-4ruuvvwp"> <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Hyperopt Pyramid 调优 | Crypto Quant Docs</title><link rel="canonical" href="https://quant.panda.qzz.io/docs/research/hyperopt-pyramid-tuning/"/><link rel="alternate" hreflang="zh-CN" href="https://quant.panda.qzz.io/docs/research/hyperopt-pyramid-tuning/"/><link rel="alternate" hreflang="en" href="https://quant.panda.qzz.io/docs/en/research/hyperopt-pyramid-tuning/"/><link rel="sitemap" href="/docs/sitemap-index.xml"/><link rel="preconnect" href="https://rsms.me"/><link rel="stylesheet" href="https://rsms.me/inter/inter.css"/><script>(function(){var l=location.pathname.indexOf('/docs/en/')===0?'en':'zh';document.cookie='lang='+l+'; path=/; max-age=31536000; SameSite=Lax';})();</script><link rel="shortcut icon" href="/docs/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v6.1.9"/><meta name="generator" content="Starlight v0.38.3"/><meta property="og:title" content="Hyperopt Pyramid 调优"/><meta property="og:type" content="article"/><meta property="og:url" content="https://quant.panda.qzz.io/docs/research/hyperopt-pyramid-tuning/"/><meta property="og:locale" content="zh-CN"/><meta property="og:description" content="HYPEROPT_PYRAMID_TUNING"/><meta property="og:site_name" content="Crypto Quant Docs"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="HYPEROPT_PYRAMID_TUNING"/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/docs/_astro/print.DNXP8c50.css" media="print"><link rel="stylesheet" href="/docs/_astro/common.su1fjEss.css"><script type="module" src="/docs/_astro/page.BIhdncjw.js"></script></head> <body class="astro-4ruuvvwp"> <a href="#_top" class="astro-xpv6lynr">跳转到内容</a> <div class="page sl-flex astro-zp36l2nb"> <header class="header astro-zp36l2nb"><div class="header astro-llbjze6x"> <div class="title-wrapper sl-flex astro-llbjze6x"> <a href="/docs/" class="site-title sl-flex astro-jhwabqvq">  <span class="astro-jhwabqvq" translate="no"> Crypto Quant Docs </span> </a> </div> <div class="sl-flex print:hidden astro-llbjze6x"> <site-search class="astro-llbjze6x astro-xp6qd2vt" data-translations="{&#34;placeholder&#34;:&#34;搜索&#34;}"> <button data-open-modal disabled aria-label="搜索" aria-keyshortcuts="Control+K" class="astro-xp6qd2vt"> <svg aria-hidden="true" class="astro-xp6qd2vt astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg> <span class="sl-hidden md:sl-block astro-xp6qd2vt" aria-hidden="true">搜索</span> <kbd class="sl-hidden md:sl-flex astro-xp6qd2vt" style="display: none;"> <kbd class="astro-xp6qd2vt">Ctrl</kbd><kbd class="astro-xp6qd2vt">K</kbd> </kbd> </button> <dialog style="padding:0" aria-label="搜索" class="astro-xp6qd2vt"> <div class="dialog-frame sl-flex astro-xp6qd2vt">  <button data-close-modal class="sl-flex md:sl-hidden astro-xp6qd2vt"> 取消 </button> <div class="search-container astro-xp6qd2vt"> <div id="starlight__search" class="astro-xp6qd2vt"></div> </div> </div> </dialog> </site-search>  <script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script> <script type="module" src="/docs/_astro/Search.astro_astro_type_script_index_0_lang.CL8ZkIsP.js"></script>  </div> <div class="sl-hidden md:sl-flex print:hidden right-group astro-llbjze6x"> <div class="sl-flex social-icons astro-llbjze6x"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择主题</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">深色</option><option value="light" class="astro-kuaodigf">浅色</option><option value="auto" selected class="astro-kuaodigf">自动</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script> <script type="module">const r="starlight-theme",o=e=>e==="auto"||e==="dark"||e==="light"?e:"auto",c=()=>o(typeof localStorage<"u"&&localStorage.getItem(r));function n(e){typeof localStorage<"u"&&localStorage.setItem(r,e==="light"||e==="dark"?e:"")}const l=()=>matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";function t(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e==="auto"?l():e,n(e)}matchMedia("(prefers-color-scheme: light)").addEventListener("change",()=>{c()==="auto"&&t("auto")});class s extends HTMLElement{constructor(){super(),t(c()),this.querySelector("select")?.addEventListener("change",a=>{a.currentTarget instanceof HTMLSelectElement&&t(o(a.currentTarget.value))})}}customElements.define("starlight-theme-select",s);</script> <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择语言</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/research/hyperopt-pyramid-tuning/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/research/hyperopt-pyramid-tuning/" class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select><script type="module">class s extends HTMLElement{constructor(){super();const e=this.querySelector("select");e&&(e.addEventListener("change",t=>{t.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=t.currentTarget.value)}),window.addEventListener("pageshow",t=>{if(!t.persisted)return;const n=e.querySelector("option[selected]")?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}}customElements.define("starlight-lang-select",s);</script> </div> </div></header> <nav class="sidebar print:hidden astro-zp36l2nb" aria-label="主要"> <starlight-menu-button class="print:hidden astro-l5x2bu6d"> <button aria-expanded="false" aria-label="菜单" aria-controls="starlight__sidebar" class="sl-flex md:sl-hidden astro-l5x2bu6d"> <svg aria-hidden="true" class="open-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg> <svg aria-hidden="true" class="close-menu astro-l5x2bu6d astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg> </button> </starlight-menu-button> <script type="module">class s extends HTMLElement{constructor(){super(),this.btn=this.querySelector("button"),this.btn.addEventListener("click",()=>this.toggleExpanded());const t=this.closest("nav");t&&t.addEventListener("keyup",e=>this.closeOnEscape(e))}setExpanded(t){this.setAttribute("aria-expanded",String(t)),document.body.toggleAttribute("data-mobile-menu-expanded",t)}toggleExpanded(){this.setExpanded(this.getAttribute("aria-expanded")!=="true")}closeOnEscape(t){t.code==="Escape"&&(this.setExpanded(!1),this.btn.focus())}}customElements.define("starlight-menu-button",s);</script>  <div id="starlight__sidebar" class="sidebar-pane astro-zp36l2nb"> <div class="sidebar-content sl-flex astro-zp36l2nb"> <sl-sidebar-state-persist data-hash="07wdv4r" class="astro-fc352qub"> <script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script>  <ul class="top-level astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/" class="large astro-4wlzolwh" target="_self"> <span class="astro-4wlzolwh">← 返回 Dashboard</span>  </a> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">起步</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="0"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/architecture/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">架构总览</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">策略</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="1"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/strategies/event-dca/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">事件 DCA daemon</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/factor-design/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">12 因子设计</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/honest-trend-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">HonestTrend 完整验证报告</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/phase-b-futures-short/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase B：期货对冲</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/strategy-report/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v1</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/strategies/strategy-report-v2/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Strategy Report v2</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details open class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">调优与实验</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="2"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/research/backtest-results/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">回测结果汇总</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/experiments-dca-and-pyramid/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">DCA + Pyramid 激进实验</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/hyperopt-pyramid-tuning/" aria-current="page" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Hyperopt Pyramid 调优</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/optimization-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Phase 3 优化（归档）</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/visualization-guide/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">可视化指南</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/research/walk-forward-full-history/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">8-Regime Walk-Forward</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">运维</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="3"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/ops/dryrun-handbook/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Dry-Run 操作手册</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/ops/go-live-checklist/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">Go-Live 清单</span>  </a> </li><li class="astro-4wlzolwh"> <a href="/docs/ops/implementation-plan/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">架构演进（归档）</span>  </a> </li> </ul> </details> </li><li class="astro-4wlzolwh"> <details class="astro-4wlzolwh"> <summary class="astro-4wlzolwh"> <span class="group-label astro-4wlzolwh"> <span class="large astro-4wlzolwh">历史 &amp; 教训</span>  </span> <svg aria-hidden="true" class="caret astro-4wlzolwh astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg> </summary> <sl-sidebar-restore data-index="4"></sl-sidebar-restore> <ul class="astro-4wlzolwh"> <li class="astro-4wlzolwh"> <a href="/docs/history/retired-strategies/" class="astro-4wlzolwh"> <span class="astro-4wlzolwh">退役策略记录</span>  </a> </li> </ul> </details> </li> </ul>  <script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script> </sl-sidebar-state-persist> <div class="md:sl-hidden"> <div class="mobile-preferences sl-flex astro-wchfylfk"> <div class="social-icons astro-wchfylfk"> <a href="https://github.com/xiongchenyu6/freqtrade-strategies" rel="me" class="sl-flex astro-cbbfxzte"><span class="sr-only astro-cbbfxzte">GitHub</span><svg aria-hidden="true" class="astro-cbbfxzte astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a> </div> <starlight-theme-select>  <label style="--sl-select-width: 6.25em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择主题</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="dark" class="astro-kuaodigf">深色</option><option value="light" class="astro-kuaodigf">浅色</option><option value="auto" selected class="astro-kuaodigf">自动</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label> </starlight-theme-select>  <script>
+	StarlightThemeProvider.updatePickers();
+</script>  <starlight-lang-select><label style="--sl-select-width: 7em" class="astro-kuaodigf"> <span class="sr-only astro-kuaodigf">选择语言</span> <svg aria-hidden="true" class="icon label-icon astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg> <select autocomplete="off" class="astro-kuaodigf"> <option value="/docs/research/hyperopt-pyramid-tuning/" class="astro-kuaodigf">简体中文</option><option value="/docs/en/research/hyperopt-pyramid-tuning/" class="astro-kuaodigf">English</option> </select> <svg aria-hidden="true" class="icon caret astro-kuaodigf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg> </label></starlight-lang-select> </div> </div> </div> </div> </nav> <div class="main-frame astro-zp36l2nb">  <script type="module">const a=document.getElementById("starlight__sidebar"),n=a?.querySelector("sl-sidebar-state-persist"),o="sl-sidebar-state",i=()=>{let t=[];const e=n?.dataset.hash||"";try{const s=sessionStorage.getItem(o),r=JSON.parse(s||"{}");Array.isArray(r.open)&&r.hash===e&&(t=r.open)}catch{}return{hash:e,open:t,scroll:a?.scrollTop||0}},c=t=>{try{sessionStorage.setItem(o,JSON.stringify(t))}catch{}},d=()=>c(i()),l=(t,e)=>{const s=i();s.open[e]=t,c(s)};n?.addEventListener("click",t=>{if(!(t.target instanceof Element))return;const e=t.target.closest("summary")?.closest("details");if(!e)return;const s=e.querySelector("sl-sidebar-restore"),r=parseInt(s?.dataset.index||"");isNaN(r)||l(!e.open,r)});addEventListener("visibilitychange",()=>{document.visibilityState==="hidden"&&d()});addEventListener("pageHide",d);</script> <div class="lg:sl-flex astro-xj7zo36l"> <aside class="right-sidebar-container print:hidden astro-xj7zo36l"> <div class="right-sidebar astro-xj7zo36l"> <div class="lg:sl-hidden astro-c2ifca2l"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-zcdjqatf"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-zcdjqatf"><details id="starlight__mobile-toc" class="astro-zcdjqatf"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-zcdjqatf"><span class="toggle sl-flex astro-zcdjqatf">本页内容<svg aria-hidden="true" class="caret astro-zcdjqatf astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-zcdjqatf"></span></summary><div class="dropdown astro-zcdjqatf"><ul class="isMobile astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">概述</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#方法论" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">方法论</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#1-参数空间" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">1. 参数空间</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#2-自定义-loss--honesthyperoptloss" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">2. 自定义 Loss — HonestHyperOptLoss</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#3-训练--验证切分" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">3. 训练 / 验证切分</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#结果" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">结果</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#最优参数epoch-42100" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">最优参数（epoch 42/100）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#训练集表现2022-01--2024-12" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">训练集表现（2022-01 → 2024-12）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#全历史对比2017-08--2026-04" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">全历史对比（2017-08 → 2026-04）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#8-regime-walk-forward-对比" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">8-Regime Walk-Forward 对比</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#结论值得采纳" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">结论：值得采纳</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#已应用" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">已应用</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验6-参数-hyperopt-被拒绝" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：6 参数 hyperopt（❌ 被拒绝）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#结果-1" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">结果</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward-8-窗口68看起来更好" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-forward 8 窗口：6/8（看起来更好！）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-但全历史是灾难" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">❌ 但全历史是灾难</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#为什么-walk-forward-好但全历史坏" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">为什么 walk-forward 好但全历史坏？</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#回退决定" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">回退决定</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验cmaessampler技术改进" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：CmaEsSampler（技术改进）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验honesttrend1mlive-单独-hyperopt-被拒绝" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：HonestTrend1mLive 单独 hyperopt（❌ 被拒绝）</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#设置" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">设置</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#最优参数epoch-3050" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">最优参数（epoch 30/50）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#训练集2024-单年" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">训练集（2024 单年）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#全历史-33-年对比2023-01--2026-04" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">全历史 3.3 年对比（2023-01 → 2026-04）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#回退决定-1" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">回退决定</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#为什么没改善" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">为什么没改善？</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#未来优化路线" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">未来优化路线</span> </a> <ul class="isMobile astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#短期" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">短期</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#不做" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">不做</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#关键教训" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">关键教训</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#复现" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">复现</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#参考" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">参考</span> </a>  </li> </ul></div></details></nav></mobile-starlight-toc><script type="module" src="/docs/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.hwBsy0Mo.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-c2ifca2l"><div class="sl-container astro-c2ifca2l"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">本页内容</h2><ul class="astro-cj4rfyob" style="--depth: 0;"> <li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#_top" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">概述</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#方法论" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">方法论</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#1-参数空间" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">1. 参数空间</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#2-自定义-loss--honesthyperoptloss" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">2. 自定义 Loss — HonestHyperOptLoss</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#3-训练--验证切分" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">3. 训练 / 验证切分</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#结果" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">结果</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#最优参数epoch-42100" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">最优参数（epoch 42/100）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#训练集表现2022-01--2024-12" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">训练集表现（2022-01 → 2024-12）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#全历史对比2017-08--2026-04" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">全历史对比（2017-08 → 2026-04）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#8-regime-walk-forward-对比" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">8-Regime Walk-Forward 对比</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#结论值得采纳" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">结论：值得采纳</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#已应用" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">已应用</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验6-参数-hyperopt-被拒绝" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：6 参数 hyperopt（❌ 被拒绝）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#结果-1" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">结果</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#walk-forward-8-窗口68看起来更好" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">Walk-forward 8 窗口：6/8（看起来更好！）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#-但全历史是灾难" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">❌ 但全历史是灾难</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#为什么-walk-forward-好但全历史坏" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">为什么 walk-forward 好但全历史坏？</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#回退决定" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">回退决定</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验cmaessampler技术改进" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：CmaEsSampler（技术改进）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#扩展实验honesttrend1mlive-单独-hyperopt-被拒绝" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">扩展实验：HonestTrend1mLive 单独 hyperopt（❌ 被拒绝）</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#设置" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">设置</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#最优参数epoch-3050" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">最优参数（epoch 30/50）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#训练集2024-单年" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">训练集（2024 单年）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#全历史-33-年对比2023-01--2026-04" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">全历史 3.3 年对比（2023-01 → 2026-04）</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#回退决定-1" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">回退决定</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#为什么没改善" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">为什么没改善？</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#未来优化路线" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">未来优化路线</span> </a> <ul class="astro-cj4rfyob" style="--depth: 1;"> <li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#短期" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">短期</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#不做" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">不做</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 1;"> <a href="#关键教训" class="astro-cj4rfyob" style="--depth: 1;"> <span class="astro-cj4rfyob" style="--depth: 1;">关键教训</span> </a>  </li> </ul> </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#复现" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">复现</span> </a>  </li><li class="astro-cj4rfyob" style="--depth: 0;"> <a href="#参考" class="astro-cj4rfyob" style="--depth: 0;"> <span class="astro-cj4rfyob" style="--depth: 0;">参考</span> </a>  </li> </ul></nav></starlight-toc><script type="module" src="/docs/_astro/TableOfContents.astro_astro_type_script_index_0_lang.FuRcXuRY.js"></script></div></div> </div> </aside> <div class="main-pane astro-xj7zo36l">  <main data-pagefind-body class="astro-4ruuvvwp" lang="zh-CN" dir="ltr">    <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <h1 id="_top" class="astro-nskwttlr">Hyperopt Pyramid 调优</h1> </div> </div> <div class="content-panel astro-4atcjhew"> <div class="sl-container astro-4atcjhew"> <div class="sl-markdown-content"> <div class="sl-heading-wrapper level-h1"><h1 id="hyperopt-实验pyramid-参数优化">Hyperopt 实验：Pyramid 参数优化</h1><a class="sl-anchor-link" href="#hyperopt-实验pyramid-参数优化"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Hyperopt 实验：Pyramid 参数优化”</span></a></div>
+<p><strong>目标</strong>：把我”凭感觉”设的 4 个 pyramid 参数交给 optuna 优化，用自定义 loss 避免过拟合，walk-forward 验证是否真的更好。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="方法论">方法论</h2><a class="sl-anchor-link" href="#方法论"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “方法论”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="1-参数空间">1. 参数空间</h3><a class="sl-anchor-link" href="#1-参数空间"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “1. 参数空间”</span></a></div>
+<div class="expressive-code"><link rel="stylesheet" href="/docs/_astro/ec.v4551.css"><script type="module" src="/docs/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="python"><code><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">pyramid_1_trigger     </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#B2CCD6;--1:#096E72">DecimalParameter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#F78C6C;--1:#AA0982">0.03</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> </span><span style="--0:#F78C6C;--1:#AA0982">0.10</span><span style="--0:#D6DEEB;--1:#403F53">)  </span><span style="--0:#919F9F;--1:#5F636F"># 原默认 0.05</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">pyramid_2_trigger     </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#B2CCD6;--1:#096E72">DecimalParameter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#F78C6C;--1:#AA0982">0.08</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> </span><span style="--0:#F78C6C;--1:#AA0982">0.20</span><span style="--0:#D6DEEB;--1:#403F53">)  </span><span style="--0:#919F9F;--1:#5F636F"># 原默认 0.12</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">pyramid_1_stake_ratio </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#B2CCD6;--1:#096E72">DecimalParameter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#F78C6C;--1:#AA0982">0.30</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> </span><span style="--0:#F78C6C;--1:#AA0982">1.00</span><span style="--0:#D6DEEB;--1:#403F53">)  </span><span style="--0:#919F9F;--1:#5F636F"># 原默认 0.60</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">pyramid_2_stake_ratio </span><span style="--0:#C792EA;--1:#8844AE">=</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#B2CCD6;--1:#096E72">DecimalParameter</span><span style="--0:#D6DEEB;--1:#403F53">(</span><span style="--0:#F78C6C;--1:#AA0982">0.20</span><span style="--0:#D9F5DD;--1:#111111">,</span><span style="--0:#82AAFF;--1:#3B61B0"> </span><span style="--0:#F78C6C;--1:#AA0982">0.80</span><span style="--0:#D6DEEB;--1:#403F53">)  </span><span style="--0:#919F9F;--1:#5F636F"># 原默认 0.40</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pyramid_1_trigger     = DecimalParameter(0.03, 0.10)  # 原默认 0.05pyramid_2_trigger     = DecimalParameter(0.08, 0.20)  # 原默认 0.12pyramid_1_stake_ratio = DecimalParameter(0.30, 1.00)  # 原默认 0.60pyramid_2_stake_ratio = DecimalParameter(0.20, 0.80)  # 原默认 0.40"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="2-自定义-loss--honesthyperoptloss">2. 自定义 Loss — <code dir="auto">HonestHyperOptLoss</code></h3><a class="sl-anchor-link" href="#2-自定义-loss--honesthyperoptloss"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “2. 自定义 Loss — HonestHyperOptLoss”</span></a></div>
+<p>避开内置 loss 的陷阱：</p>
+<ul>
+<li><code dir="auto">ShortTradeDurHyperOptLoss</code> 鼓励短线（违反我们中线哲学）</li>
+<li><code dir="auto">SharpeHyperOptLoss</code> 容易被大赢家骗</li>
+<li>内置 <code dir="auto">CalmarHyperOptLoss</code> 最接近但没有 DD 硬阈值</li>
+</ul>
+<p>我们的版本（<code dir="auto">strategies/HonestHyperOptLoss.py</code>）：</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">IF trade_count &#x3C; 50:       loss = 999  (拒绝低样本)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">IF max_dd > 20%:           loss = 100 + max_dd * 10  (硬拒绝)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">IF max_dd > 15%:           Calmar 除以惩罚系数 (1.0 → 2.0)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">ELSE:                      loss = -Calmar  (Calmar 越大越好)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="IF trade_count < 50:       loss = 999  (拒绝低样本)IF max_dd > 20%:           loss = 100 + max_dd * 10  (硬拒绝)IF max_dd > 15%:           Calmar 除以惩罚系数 (1.0 → 2.0)ELSE:                      loss = -Calmar  (Calmar 越大越好)"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="3-训练--验证切分">3. 训练 / 验证切分</h3><a class="sl-anchor-link" href="#3-训练--验证切分"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “3. 训练 / 验证切分”</span></a></div>
+<ul>
+<li>
+<p><strong>训练</strong>：2022-01 → 2024-12（3 年，3 regime：LUNA 崩盘 / 复苏 / ETF 牛）</p>
+</li>
+<li>
+<p><strong>验证</strong>：</p>
+<ul>
+<li><strong>真 out-of-sample 过去</strong>：2018-2020（W1-W3）</li>
+<li><strong>真 out-of-sample 未来</strong>：2025-至今（W8）</li>
+<li><strong>内含 in-sample</strong>：2022-2024（W5-W7）</li>
+</ul>
+</li>
+<li>
+<p><strong>CPU</strong>：单线程（多线程因 joblib pickle 错误无法启用）</p>
+</li>
+<li>
+<p><strong>Optuna sampler</strong>：NSGAIIISampler（默认，多目标友好）</p>
+</li>
+<li>
+<p><strong>Epochs</strong>：100</p>
+</li>
+<li>
+<p><strong>Runtime</strong>：19 分钟</p>
+</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="结果">结果</h2><a class="sl-anchor-link" href="#结果"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “结果”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="最优参数epoch-42100">最优参数（epoch 42/100）</h3><a class="sl-anchor-link" href="#最优参数epoch-42100"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “最优参数（epoch 42/100）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>参数</th><th align="right">原默认</th><th align="right">Hyperopt 最优</th><th align="right">变化</th></tr></thead><tbody><tr><td><code dir="auto">pyramid_1_trigger</code></td><td align="right">0.05</td><td align="right"><strong>0.08</strong></td><td align="right">+60%</td></tr><tr><td><code dir="auto">pyramid_2_trigger</code></td><td align="right">0.12</td><td align="right"><strong>0.10</strong></td><td align="right">−17%</td></tr><tr><td><code dir="auto">pyramid_1_stake_ratio</code></td><td align="right">0.60</td><td align="right"><strong>0.80</strong></td><td align="right">+33%</td></tr><tr><td><code dir="auto">pyramid_2_stake_ratio</code></td><td align="right">0.40</td><td align="right"><strong>0.80</strong></td><td align="right"><strong>+100%</strong></td></tr></tbody></table>
+<p><strong>解读</strong>：</p>
+<ul>
+<li>第一次加仓门槛提高到 +8%（更谨慎，过滤噪音）</li>
+<li>第二次加仓门槛反而降到 +10%（当第一次已经过关，第二次更快跟进）</li>
+<li>两次加仓金额都放大到 <strong>0.8× 初始</strong>（最大总仓位达 <strong>2.6× 初始</strong> vs 旧的 2.0×）</li>
+<li>本质：<strong>更激进的 pyramid，但更严格的门槛</strong></li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="训练集表现2022-01--2024-12">训练集表现（2022-01 → 2024-12）</h3><a class="sl-anchor-link" href="#训练集表现2022-01--2024-12"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “训练集表现（2022-01 → 2024-12）”</span></a></div>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Trades: 206</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Win Rate: 37.4%</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Total Profit: +48.86%</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Max DD: 10.31%</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Calmar Objective: -4.74</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Trades: 206Win Rate: 37.4%Total Profit: +48.86%Max DD: 10.31%Calmar Objective: -4.74"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="全历史对比2017-08--2026-04">全历史对比（2017-08 → 2026-04）</h3><a class="sl-anchor-link" href="#全历史对比2017-08--2026-04"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “全历史对比（2017-08 → 2026-04）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>指标</th><th align="right">旧默认</th><th align="right"><strong>Hyperopted</strong></th><th align="right">差异</th></tr></thead><tbody><tr><td>Total Profit</td><td align="right">+195%</td><td align="right"><strong>+207%</strong></td><td align="right">+12 ppt</td></tr><tr><td>Trades</td><td align="right">570</td><td align="right">570</td><td align="right">0</td></tr><tr><td>Win Rate</td><td align="right">33.2%</td><td align="right"><strong>35.3%</strong></td><td align="right">+2.1 ppt</td></tr><tr><td>Max DD</td><td align="right">16.93%</td><td align="right"><strong>15.53%</strong></td><td align="right"><strong>−1.4 ppt</strong></td></tr><tr><td>Avg Trade</td><td align="right">0.15%</td><td align="right">−0.08%</td><td align="right">略降（高胜率换高利润模式）</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="8-regime-walk-forward-对比">8-Regime Walk-Forward 对比</h3><a class="sl-anchor-link" href="#8-regime-walk-forward-对比"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “8-Regime Walk-Forward 对比”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Window</th><th align="right">旧默认</th><th align="right">Hyperopted</th><th align="right">差异</th><th>备注</th></tr></thead><tbody><tr><td>W1 2018 crash</td><td align="right">−14.43%</td><td align="right"><strong>−13.27%</strong></td><td align="right"><strong>+1.16</strong></td><td>🎯 OOS 改善</td></tr><tr><td>W2 2019 accum</td><td align="right">+9.57%</td><td align="right">+8.42%</td><td align="right">−1.15</td><td>OOS 略降</td></tr><tr><td>W3 2020 COVID</td><td align="right">+46.88%</td><td align="right">+45.74%</td><td align="right">−1.14</td><td>OOS 略降</td></tr><tr><td>W4 2021 bull</td><td align="right">+34.77%</td><td align="right">+31.54%</td><td align="right">−3.23</td><td>训练前</td></tr><tr><td>W5 2022 LUNA</td><td align="right">−4.83%</td><td align="right"><strong>−4.68%</strong></td><td align="right">+0.15</td><td>训练集</td></tr><tr><td>W6 2023 recovery</td><td align="right">+4.72%</td><td align="right">+5.90%</td><td align="right">+1.18</td><td>训练集</td></tr><tr><td>W7 2024 ETF</td><td align="right">+44.69%</td><td align="right">+47.29%</td><td align="right">+2.60</td><td>训练集</td></tr><tr><td>W8 2025 present</td><td align="right">−4.00%</td><td align="right"><strong>−2.46%</strong></td><td align="right"><strong>+1.54</strong></td><td>🎯 OOS 改善</td></tr><tr><td></td><td align="right"></td><td align="right"></td><td align="right"><strong>+1.11 sum</strong></td><td></td></tr><tr><td>profitable/8</td><td align="right">5/8</td><td align="right">5/8</td><td align="right">0</td><td>稳定</td></tr></tbody></table>
+<p><strong>关键观察</strong>：</p>
+<ol>
+<li><strong>训练集 (W5-W7) 累计 +3.93 ppt 改善</strong> — 符合预期</li>
+<li><strong>OOS 过去 (W1-W3) 累计 −1.13 ppt</strong> — 过去数据有轻微退化，但 W1 (2018 最难) 实际改善 +1.16</li>
+<li><strong>OOS 未来 (W8) +1.54 ppt 改善</strong> — 对当下市场有益</li>
+<li><strong>没有过拟合信号</strong>：OOS 平均 +0.24 ppt 改善，超过 1/8 样本意义</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="结论值得采纳">结论：值得采纳</h2><a class="sl-anchor-link" href="#结论值得采纳"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “结论：值得采纳”</span></a></div>
+<p>✅ <strong>Pros</strong>：</p>
+<ul>
+<li>全历史 +12 ppt 收益 + DD 降 1.4 ppt</li>
+<li>W1 2018 (最难窗口) 和 W8 2025 (当前) 都有改善</li>
+<li>无过拟合证据 (OOS 数据有净正改善)</li>
+</ul>
+<p>⚠️ <strong>Cons</strong>：</p>
+<ul>
+<li>W4 2021 牛市顶部 −3.23 ppt（高估值时代的边际退化）</li>
+<li>W2/W3 OOS 轻微退化（但仍盈利）</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="已应用">已应用</h3><a class="sl-anchor-link" href="#已应用"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “已应用”</span></a></div>
+<ol>
+<li><code dir="auto">strategies/HonestTrendGeneric.py</code> 基类 defaults 更新为 hyperopt 最优值
+<ul>
+<li>所有子类 (<code dir="auto">HonestTrend15mDry</code>, <code dir="auto">1mLive</code>, <code dir="auto">1mMTF</code>) 自动继承</li>
+</ul>
+</li>
+<li><code dir="auto">strategies/HonestTrend15mDry.json</code> auto-saved by freqtrade（takes precedence for that class specifically）</li>
+<li>生产 configs 已 pyramid enabled（见 <code dir="auto">docs/EXPERIMENTS_DCA_AND_PYRAMID.md</code>）</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="扩展实验6-参数-hyperopt-被拒绝">扩展实验：6 参数 hyperopt（❌ 被拒绝）</h2><a class="sl-anchor-link" href="#扩展实验6-参数-hyperopt-被拒绝"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “扩展实验：6 参数 hyperopt（❌ 被拒绝）”</span></a></div>
+<p><strong>2026-04-21 后续测试</strong>：把 <code dir="auto">adx_threshold</code> 和 <code dir="auto">min_hold_minutes</code> 也加入 hyperopt 空间（总计 6 个参数），150 epochs。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="结果-1">结果</h3><a class="sl-anchor-link" href="#结果-1"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “结果”</span></a></div>
+<p>训练集表现炸裂：</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Objective: -10.84  (vs -4.74 in 4-param baseline)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">In-sample (2022-2024): 119 trades, 37.8% WR, +70%, Max DD 6.46%</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Objective: -10.84  (vs -4.74 in 4-param baseline)In-sample (2022-2024): 119 trades, 37.8% WR, +70%, Max DD 6.46%"><div></div></button></div></figure></div>
+<p>最优参数：</p>
+<ul>
+<li><code dir="auto">adx_threshold</code>: 18 → <strong>30</strong>（大幅提高入场门槛）</li>
+<li><code dir="auto">min_hold_minutes</code>: 720 → <strong>1065</strong>（~18h 最短持仓）</li>
+<li><code dir="auto">pyramid_1_stake_ratio</code>: 0.80 → <strong>1.00</strong>（第一次加仓打满）</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="walk-forward-8-窗口68看起来更好">Walk-forward 8 窗口：6/8（看起来更好！）</h3><a class="sl-anchor-link" href="#walk-forward-8-窗口68看起来更好"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “Walk-forward 8 窗口：6/8（看起来更好！）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Window</th><th align="right">4-param</th><th align="right">6-param</th><th align="right">Diff</th></tr></thead><tbody><tr><td>W1 2018</td><td align="right">−13.27%</td><td align="right"><strong>−20.02%</strong></td><td align="right">−6.75 ❌</td></tr><tr><td>W4 2021</td><td align="right">+31.54%</td><td align="right"><strong>+58.59%</strong></td><td align="right">+27.05 ✅</td></tr><tr><td>W5 2022</td><td align="right">−4.83%</td><td align="right"><strong>+4.89%</strong></td><td align="right">+9.57 ✅ <strong>翻正</strong></td></tr><tr><td>W7 2024</td><td align="right">+47.29%</td><td align="right">+55.02%</td><td align="right">+7.73 ✅</td></tr><tr><td>Sum</td><td align="right"></td><td align="right"></td><td align="right"><strong>+19.4 ppt</strong></td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="-但全历史是灾难">❌ 但全历史是灾难</h3><a class="sl-anchor-link" href="#-但全历史是灾难"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “❌ 但全历史是灾难”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>指标</th><th align="right">4-param</th><th align="right">6-param</th><th align="right">差异</th></tr></thead><tbody><tr><td>Total profit</td><td align="right">+207%</td><td align="right"><strong>+160%</strong></td><td align="right">−47 ppt</td></tr><tr><td>Max DD</td><td align="right"><strong>15.53%</strong></td><td align="right"><strong>24.81%</strong></td><td align="right"><strong>+9.3 ppt 🚨</strong></td></tr><tr><td>Trades</td><td align="right">570</td><td align="right">335</td><td align="right">−40%</td></tr></tbody></table>
+<p><strong>24.81% max DD 超过 20% kill-switch 阈值</strong> → 实盘会触发 RETIRE 自动退役。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="为什么-walk-forward-好但全历史坏">为什么 walk-forward 好但全历史坏？</h3><a class="sl-anchor-link" href="#为什么-walk-forward-好但全历史坏"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “为什么 walk-forward 好但全历史坏？”</span></a></div>
+<ul>
+<li>Walk-forward 每个窗口 $10K 独立本金，peak-to-trough 只在年内</li>
+<li>全历史<strong>复合增长</strong>后，mid-2018 的 −6.7 ppt 亏损叠加到已累积的牛市利润上 = 更大百分比回撤</li>
+<li>ADX=30 的严格过滤在牛市涨得更猛，但熊市也因为少开仓而<strong>更晚</strong>回到新高</li>
+<li>简单的”每窗口能赚吗”忽略了<strong>下跌时的相对深度</strong></li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="回退决定">回退决定</h3><a class="sl-anchor-link" href="#回退决定"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “回退决定”</span></a></div>
+<ul>
+<li><code dir="auto">adx_threshold</code> 和 <code dir="auto">min_hold_minutes</code> 恢复为 <code dir="auto">optimize=False</code></li>
+<li><code dir="auto">strategies/HonestTrend15mDry.json</code> 恢复为 4-param hyperopt 的旧最优值</li>
+<li>教训：<strong>walk-forward profitable rate 不等于全历史 max DD 控制</strong></li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="扩展实验cmaessampler技术改进">扩展实验：CmaEsSampler（技术改进）</h2><a class="sl-anchor-link" href="#扩展实验cmaessampler技术改进"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “扩展实验：CmaEsSampler（技术改进）”</span></a></div>
+<p>添加了 <code dir="auto">generate_estimator</code> 方法（nested <code dir="auto">HyperOpt</code> class 内）用 <code dir="auto">CmaEsSampler</code> 替代默认 <code dir="auto">NSGAIIISampler</code>。CmaEs 对连续参数收敛更快。</p>
+<p><strong>未来 hyperopt 自动启用</strong>，但 6-param 被拒绝的实验用的是 NSGAIII（改 CmaEs 前），结果不受影响。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="扩展实验honesttrend1mlive-单独-hyperopt-被拒绝">扩展实验：HonestTrend1mLive 单独 hyperopt（❌ 被拒绝）</h2><a class="sl-anchor-link" href="#扩展实验honesttrend1mlive-单独-hyperopt-被拒绝"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “扩展实验：HonestTrend1mLive 单独 hyperopt（❌ 被拒绝）”</span></a></div>
+<p><strong>2026-04-22</strong>：在 1m timeframe 上单独 hyperopt（base class 是用 15m 数据调的，理论上 1m 可能有不同最优）。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="设置">设置</h3><a class="sl-anchor-link" href="#设置"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “设置”</span></a></div>
+<ul>
+<li>训练范围：2024-01 → 2024-12（1 年 1m BTC+ETH）</li>
+<li>Epochs：50，<code dir="auto">min_trades=25</code>（1m 交易少，必须降阈值）</li>
+<li>空间：4 个 pyramid 参数（不动 EMA/ADX/min_hold）</li>
+<li>Sampler：CmaEs</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="最优参数epoch-3050">最优参数（epoch 30/50）</h3><a class="sl-anchor-link" href="#最优参数epoch-3050"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “最优参数（epoch 30/50）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>参数</th><th align="right">base class 默认</th><th align="right">1m hyperopt</th><th align="right">变化</th></tr></thead><tbody><tr><td><code dir="auto">pyramid_1_stake_ratio</code></td><td align="right">0.80</td><td align="right"><strong>0.60</strong></td><td align="right">−25%</td></tr><tr><td><code dir="auto">pyramid_2_stake_ratio</code></td><td align="right">0.80</td><td align="right"><strong>0.70</strong></td><td align="right">−13%</td></tr><tr><td><code dir="auto">pyramid_2_trigger</code></td><td align="right">0.10</td><td align="right"><strong>0.08</strong></td><td align="right">−20%</td></tr><tr><td><code dir="auto">pyramid_1_trigger</code></td><td align="right">0.08</td><td align="right">0.08</td><td align="right">=</td></tr></tbody></table>
+<p>方向：<strong>加仓更保守</strong>（stake 小、第二次加仓门槛更低但金额更小）。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="训练集2024-单年">训练集（2024 单年）</h3><a class="sl-anchor-link" href="#训练集2024-单年"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “训练集（2024 单年）”</span></a></div>
+<ul>
+<li>Default: +25.21%</li>
+<li>1m hyperopt: +24.72%（<strong>−0.49 ppt</strong>）</li>
+</ul>
+<p>训练集上已经没有明显改善 —— 说明 CmaEs 在 50 epochs 内找不到比默认更好的组合。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="全历史-33-年对比2023-01--2026-04">全历史 3.3 年对比（2023-01 → 2026-04）</h3><a class="sl-anchor-link" href="#全历史-33-年对比2023-01--2026-04"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “全历史 3.3 年对比（2023-01 → 2026-04）”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>指标</th><th align="right">Base class 默认</th><th align="right">1m hyperopt</th><th align="right">差异</th></tr></thead><tbody><tr><td>Total Profit</td><td align="right"><strong>+37.99%</strong></td><td align="right">+36.13%</td><td align="right"><strong>−1.86 ppt</strong></td></tr><tr><td>Max DD</td><td align="right">10.55%</td><td align="right">10.33%</td><td align="right">−0.22 ppt</td></tr><tr><td>Calmar (wallet)</td><td align="right">4.15</td><td align="right">4.04</td><td align="right">−0.11</td></tr><tr><td>Trades</td><td align="right">135</td><td align="right">135</td><td align="right">0</td></tr><tr><td>Win Rate</td><td align="right">35.6%</td><td align="right">35.6%</td><td align="right">0</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="回退决定-1">回退决定</h3><a class="sl-anchor-link" href="#回退决定-1"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “回退决定”</span></a></div>
+<ul>
+<li>删除 <code dir="auto">strategies/HonestTrend1mLive.json</code></li>
+<li><code dir="auto">HonestTrend1mLive</code> 继续继承 base class 的 pyramid 默认值</li>
+<li>教训：<strong>同一套 4 个 pyramid 参数在 15m 和 1m 上都够用</strong>，再单独 hyperopt 1m 是 noise-chasing</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="为什么没改善">为什么没改善？</h3><a class="sl-anchor-link" href="#为什么没改善"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “为什么没改善？”</span></a></div>
+<ol>
+<li><strong>Pyramid 触发器是”利润百分比”</strong>，不依赖 timeframe —— +8% 在 15m 和 1m 都是 +8%</li>
+<li><strong>真正会随 timeframe 变的是 EMA/ADX</strong>，但这些我们明确不做 hyperopt</li>
+<li><strong>50 epochs + 1 年数据</strong>不够 CmaEs 收敛到有意义的改善</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="未来优化路线">未来优化路线</h2><a class="sl-anchor-link" href="#未来优化路线"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “未来优化路线”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="短期">短期</h3><a class="sl-anchor-link" href="#短期"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “短期”</span></a></div>
+<ul>
+<li>观察 W8 (2025-至今) 实盘 1-2 月，确认 4-param 新参数确实好</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="不做">不做</h3><a class="sl-anchor-link" href="#不做"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “不做”</span></a></div>
+<ul>
+<li><strong>不要再往 hyperopt 空间加 adx/min_hold</strong>（上面已验证是陷阱）</li>
+<li><strong>不要一次调 >5 个参数</strong>（过拟合概率随维度指数增加）</li>
+<li><strong>不要把 EMA 周期加进 hyperopt</strong>（这些是”结构性”选择，不该由优化器随意改）</li>
+<li><strong>不要再单独 hyperopt 1m vs 15m 的 pyramid 参数</strong>（2026-04-22 已验证 noise-chasing）</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="关键教训">关键教训</h3><a class="sl-anchor-link" href="#关键教训"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “关键教训”</span></a></div>
+<ol>
+<li><strong>训练 loss 降低 ≠ 生产更好</strong>：objective 从 -4.74 → -10.84 在训练集看来是 2× 改善，但全历史 DD 翻了 1.6 倍</li>
+<li><strong>Walk-forward 独立窗口 ≠ 全历史回测</strong>：前者看不见”连续劣势”的复合伤害</li>
+<li><strong>相信 kill-switch 阈值</strong>：20% DD 不是随便定的，是实盘能扛住的心理上限。让 hyperopt 把 DD 推到那个阈值就是在玩火</li>
+<li><strong>少即是多</strong>：4 个 pyramid 参数 + 严格 loss 已足够。再加 2 个变量把噪音引进来</li>
+<li><strong>跨 timeframe 的 pyramid 参数是 timeframe-agnostic</strong>：同一套 4 个 pyramid 在 15m 和 1m 上都最优 —— 因为触发器看百分比利润而非 K 线数</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="复现">复现</h2><a class="sl-anchor-link" href="#复现"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “复现”</span></a></div>
+<div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># Hyperopt</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">freqtrade</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">hyperopt</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--strategy</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">HonestTrend15mDry</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--config</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">configs/backtest/config_backtest_15m_btceth.json</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--datadir</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">user_data/data/binance</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--user-data-dir</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">user_data</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--strategy-path</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">strategies</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--hyperopt-loss</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">HonestHyperOptLoss</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--hyperopt-path</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">strategies</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--spaces</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">buy</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--epochs</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">100</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--timerange</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">20220101-20241231</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">-j</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">1</span><span style="--0:#D6DEEB;--1:#403F53">  </span><span style="--0:#919F9F;--1:#5F636F"># single-threaded due to joblib pickle issue with our strategy</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># 查看最佳 epoch</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">freqtrade</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">hyperopt-show</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#82AAFF;--1:#3B61B0">--best</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--user-data-dir</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">user_data</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--hyperopt-filename</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">strategy_HonestTrend15mDry_2026-04-21_17-08-21.fthypt</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#919F9F;--1:#5F636F"># Walk-forward 验证</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">scripts/walk_forward_full_history.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--strategy</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">HonestTrend15mDry</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--timeframe</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">15m</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#F78C6C;--1:#AA0982">\</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#82AAFF;--1:#3B61B0">--config</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">configs/backtest/config_backtest_15m_btceth.json</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="freqtrade hyperopt \  --strategy HonestTrend15mDry \  --config configs/backtest/config_backtest_15m_btceth.json \  --datadir user_data/data/binance \  --user-data-dir user_data \  --strategy-path strategies \  --hyperopt-loss HonestHyperOptLoss \  --hyperopt-path strategies \  --spaces buy \  --epochs 100 \  --timerange 20220101-20241231 \  -j 1  # single-threaded due to joblib pickle issue with our strategyfreqtrade hyperopt-show --best \  --user-data-dir user_data \  --hyperopt-filename strategy_HonestTrend15mDry_2026-04-21_17-08-21.fthyptpython scripts/walk_forward_full_history.py \  --strategy HonestTrend15mDry \  --timeframe 15m \  --config configs/backtest/config_backtest_15m_btceth.json"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="参考">参考</h2><a class="sl-anchor-link" href="#参考"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentcolor" d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 0 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 1 0-1.42-1.42Zm8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 0 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 1 0 1.42 1.42l3.88-3.89a4.49 4.49 0 0 0 0-6.33ZM8.83 15.17a1 1 0 0 0 1.1.22 1 1 0 0 0 .32-.22l4.92-4.92a1 1 0 0 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42Z"></path></svg></span><span class="sr-only" data-pagefind-ignore="">Section titled “参考”</span></a></div>
+<ul>
+<li><a href="https://www.freqtrade.io/en/develop/advanced-hyperopt/">Freqtrade Advanced Hyperopt</a></li>
+<li><a href="WALK_FORWARD_FULL_HISTORY.md"><code dir="auto">WALK_FORWARD_FULL_HISTORY.md</code></a> — 8-regime 方法论</li>
+<li><a href="../TUTORIAL_FOR_BEGINNERS.md"><code dir="auto">TUTORIAL_FOR_BEGINNERS.md</code></a> §1.8 — Hyperopt 陷阱</li>
+</ul> </div> <footer class="sl-flex astro-ospshcon"> <div class="meta sl-flex astro-ospshcon">   </div> <div class="pagination-links print:hidden astro-bvyhghzn" dir="ltr"> <a href="/docs/research/experiments-dca-and-pyramid/" rel="prev" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg> <span class="astro-bvyhghzn"> 上一页 <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">DCA + Pyramid 激进实验</span> </span> </a> <a href="/docs/research/optimization-plan/" rel="next" class="astro-bvyhghzn"> <svg aria-hidden="true" class="astro-bvyhghzn astro-i3dzsa2d" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg> <span class="astro-bvyhghzn"> 下一页 <br class="astro-bvyhghzn"> <span class="link-title astro-bvyhghzn">Phase 3 优化（归档）</span> </span> </a> </div>  </footer> </div> </div>  </main> </div> </div> </div> </div> </body></html>
