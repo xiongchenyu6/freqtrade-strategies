@@ -1871,7 +1871,7 @@
 
 <svelte:head><title>{t(lang, 'strategies.title')}</title></svelte:head>
 
-<main class="mx-auto max-w-7xl px-5 py-8">
+<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
 	<header class="mb-8">
 		<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'strategies.title')}</h1>
 		<p class="mt-2 max-w-3xl text-sm text-muted-foreground">{t(lang, 'strategies.subtitle')}</p>

@@ -2264,7 +2264,7 @@
 	<title>Factor Attribution · Crypto Quant</title>
 </svelte:head>
 
-<main class="mx-auto max-w-7xl px-3 sm:px-5 py-8">
+<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
 	<h1 class="text-2xl font-semibold tracking-tight">Factor Attribution</h1>
 	<p class="mt-1 max-w-3xl text-sm text-muted-foreground">
 		Which indicator/regime tags correlate with better backtest results?

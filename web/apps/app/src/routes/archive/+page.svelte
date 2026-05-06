@@ -2663,7 +2663,7 @@
 
 <svelte:head><title>{t(lang, 'archive.title')} · Crypto Quant</title></svelte:head>
 
-<main class="mx-auto max-w-7xl px-5 py-8">
+<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
 	<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'archive.title')}</h1>
 	<p class="mt-1 text-sm text-muted-foreground">{t(lang, 'archive.subtitle')}</p>
 

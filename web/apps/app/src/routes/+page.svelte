@@ -2119,7 +2119,7 @@
 	<title>{t(lang, 'home.title')}</title>
 </svelte:head>
 
-<main class="mx-auto max-w-7xl px-3 sm:px-5 py-10">
+<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-10">
 	<GreetingBanner ohlcByCoin={data.ohlcByCoin} events={data.triggers} />
 
 	<div class="mb-10">

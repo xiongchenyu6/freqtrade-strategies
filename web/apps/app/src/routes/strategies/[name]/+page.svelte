@@ -2857,7 +2857,7 @@
 
 <svelte:head><title>{strategyName} · Crypto Quant</title></svelte:head>
 
-<main class="mx-auto max-w-7xl px-5 py-8">
+<main class="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
 	<nav class="mb-4 text-xs text-muted-foreground">
 		<a href="/strategies" class="hover:text-foreground">{t(lang, 'detail.breadcrumb')}</a>
 		<span class="mx-2">/</span>
