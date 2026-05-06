@@ -1,0 +1,90 @@
+{
+  "folders": [
+    {
+      "folder": "dca_backtest",
+      "pages": [
+        "dca_comparison.html",
+        "index.html",
+        "multiplier_distribution.html"
+      ],
+      "updated": "2026-05-04T21:54:59.561Z"
+    },
+    {
+      "folder": "event_dca",
+      "pages": [
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:54:59.561Z"
+    },
+    {
+      "folder": "full_history_btceth",
+      "pages": [
+        "01_equity_curve.html",
+        "02_drawdown.html",
+        "03_per_pair.html",
+        "04_trade_distribution.html",
+        "05_monthly_heatmap.html",
+        "06_exit_reasons.html",
+        "07_rolling_winrate.html",
+        "09_btc_candles_with_trades.html",
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:54:59.675Z"
+    },
+    {
+      "folder": "full_history_btceth_pyramid",
+      "pages": [
+        "01_equity_curve.html",
+        "02_drawdown.html",
+        "03_per_pair.html",
+        "04_trade_distribution.html",
+        "05_monthly_heatmap.html",
+        "06_exit_reasons.html",
+        "07_rolling_winrate.html",
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:54:59.825Z"
+    },
+    {
+      "folder": "hyperopted_full_history",
+      "pages": [
+        "01_equity_curve.html",
+        "02_drawdown.html",
+        "03_per_pair.html",
+        "04_trade_distribution.html",
+        "05_monthly_heatmap.html",
+        "06_exit_reasons.html",
+        "07_rolling_winrate.html",
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:54:59.982Z"
+    },
+    {
+      "folder": "pyramid",
+      "pages": [
+        "01_equity_curve.html",
+        "02_drawdown.html",
+        "03_per_pair.html",
+        "04_trade_distribution.html",
+        "05_monthly_heatmap.html",
+        "06_exit_reasons.html",
+        "07_rolling_winrate.html",
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:55:00.083Z"
+    },
+    {
+      "folder": "walk_forward",
+      "pages": [
+        "index.html"
+      ],
+      "updated": "2026-05-04T21:55:00.084Z"
+    }
+  ],
+  "skipped": [
+    {
+      "path": "full_history_btceth/08_freqtrade_profit_plot.html",
+      "mb": "59.9"
+    }
+  ]
+}
