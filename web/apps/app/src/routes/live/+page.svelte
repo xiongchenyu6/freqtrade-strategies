@@ -6,6 +6,7 @@
 	import { fmtPct, fmtTime, fmtUSD } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
 	import StatusPill from '$lib/components/status-pill.svelte';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -3010,7 +3011,7 @@
 
 	<!-- Position size calculator -->
 	<section class="mt-6 rounded-lg border bg-card p-5">
-		<h2 class="mb-4 text-sm font-semibold">Position Size Calculator</h2>
+		<h2 class="mb-4 text-sm font-semibold">Position Size Calculator <ChartInfo metric="positionSize" {lang} /></h2>
 		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 			<label class="flex flex-col gap-1">
 				<span class="text-[11px] text-muted-foreground">Account Size (USDT)</span>
@@ -3101,7 +3102,7 @@
 	{#if botBreakdown && botBreakdown.length > 0}
 		<section class="mt-4 rounded-lg border bg-card">
 			<div class="border-b border-border px-4 py-3">
-				<h2 class="text-sm font-semibold">Bot Performance <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.close_date).length} closed trades)</span></h2>
+				<h2 class="text-sm font-semibold">Bot Performance <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.close_date).length} closed trades)</span> <ChartInfo metric="botPnl" {lang} /></h2>
 			</div>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
@@ -3133,7 +3134,7 @@
 	{#if dailyPnl}
 		<section class="mt-4 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Daily Closed P&L <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.close_date).length} trades · last {dailyPnl.bars.length} days)</span></h2>
+				<h2 class="text-sm font-semibold">Daily Closed P&L <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.close_date).length} trades · last {dailyPnl.bars.length} days)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 				<span class="font-mono text-xs" class:text-green-400={dailyPnl.total >= 0} class:text-red-400={dailyPnl.total < 0}>
 					{dailyPnl.total >= 0 ? '+' : ''}{dailyPnl.total.toFixed(0)} USDT total
 				</span>
@@ -3172,7 +3173,7 @@
 	{#if pairPnl && pairPnl.rows.length > 1}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Pair P&L Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({pairPnl.rows.length} pairs · closed trades)</span></h2>
+				<h2 class="text-sm font-semibold">Pair P&L Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({pairPnl.rows.length} pairs · closed trades)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<span class="text-[11px] text-muted-foreground">profit USDT · bar width ∝ |profit|</span>
 			</div>
 			<div class="space-y-1.5 font-mono text-xs">
@@ -3198,7 +3199,7 @@
 	{#if weeklyPnl}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-				<h2 class="text-sm font-semibold">Weekly P&L <span class="ml-1 font-normal text-muted-foreground text-xs">(last {weeklyPnl.weeks} weeks)</span></h2>
+				<h2 class="text-sm font-semibold">Weekly P&L <span class="ml-1 font-normal text-muted-foreground text-xs">(last {weeklyPnl.weeks} weeks)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 				<div class="flex items-center gap-4 text-[11px]">
 					<span class="text-muted-foreground">Total <span class="font-mono font-semibold" class:text-green-400={weeklyPnl.total >= 0} class:text-red-400={weeklyPnl.total < 0}>{weeklyPnl.total >= 0 ? '+' : ''}{weeklyPnl.total.toFixed(0)} USDT</span></span>
 					<span class="text-muted-foreground">Win weeks <span class="font-mono text-foreground">{weeklyPnl.wins}/{weeklyPnl.weeks}</span></span>
@@ -3233,7 +3234,7 @@
 		{@const ec = closedEquityCurve}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Closed Trade Equity Curve <span class="ml-1 font-normal text-muted-foreground text-xs">({ec.n} trades · cumulative P&amp;L)</span></h2>
+				<h2 class="text-sm font-semibold">Closed Trade Equity Curve <span class="ml-1 font-normal text-muted-foreground text-xs">({ec.n} trades · cumulative P&amp;L)</span> <ChartInfo metric="equityCurve" {lang} /></h2>
 				<span class="font-mono text-xs {ec.final >= 0 ? 'text-green-400' : 'text-red-400'}">{ec.final >= 0 ? '+' : ''}{ec.final.toFixed(0)} USDT</span>
 			</div>
 			<svg viewBox="0 0 {ec.W} {ec.H}" class="w-full" style="height:{ec.H}px;min-width:240px">
@@ -3261,7 +3262,7 @@
 		{@const lm = liveMonthlyPnl}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Monthly P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">({lm.winMonths}/{lm.total_months} green months)</span></h2>
+				<h2 class="text-sm font-semibold">Monthly P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">({lm.winMonths}/{lm.total_months} green months)</span> <ChartInfo metric="calendar" {lang} /></h2>
 				<span class="font-mono text-xs {lm.total >= 0 ? 'text-green-400' : 'text-red-400'}">{lm.total >= 0 ? '+' : ''}{lm.total.toFixed(0)} USDT total</span>
 			</div>
 			<div class="overflow-x-auto">
@@ -3304,7 +3305,7 @@
 
 	{#if openAging && openAging.length > 0}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Open Position Aging <span class="ml-1 font-normal text-muted-foreground text-xs">({openAging.length} positions · oldest first)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Open Position Aging <span class="ml-1 font-normal text-muted-foreground text-xs">({openAging.length} positions · oldest first)</span> <ChartInfo metric="livePosition" {lang} /></h2>
 			<div class="space-y-2">
 				{#each openAging as row}
 					<div class="flex items-center gap-2 text-xs">
@@ -3333,7 +3334,7 @@
 
 	{#if openExposureMap}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Open Exposure Map <span class="ml-1 font-normal text-muted-foreground text-xs">({openExposureMap.length} positions · proportional stake)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Open Exposure Map <span class="ml-1 font-normal text-muted-foreground text-xs">({openExposureMap.length} positions · proportional stake)</span> <ChartInfo metric="livePosition" {lang} /></h2>
 			<!-- Stacked bar showing each position's % of total open capital -->
 			<div class="flex h-7 w-full overflow-hidden rounded-sm gap-px">
 				{#each openExposureMap as row}
@@ -3366,7 +3367,7 @@
 
 	{#if liveDowPnl}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Day-of-Week P&amp;L <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit by weekday · {data.closedTrades.length} closed trades)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Day-of-Week P&amp;L <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit by weekday · {data.closedTrades.length} closed trades)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="flex gap-2">
 				{#each liveDowPnl as d}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -3393,7 +3394,7 @@
 
 	{#if closeHourChart}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Trade Close Hour (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when trades close · {data.closedTrades.length} trades)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Trade Close Hour (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when trades close · {data.closedTrades.length} trades)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="flex items-end gap-px">
 				{#each closeHourChart as h}
 					<div class="flex flex-1 flex-col items-center gap-0.5" title="Hour {h.h}:00 UTC: {h.count} trades · WR {(h.wr*100).toFixed(0)}%">
@@ -3416,7 +3417,7 @@
 
 	{#if durationHist}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Trade Duration Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(how long trades were held · {data.closedTrades.length} closed)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Trade Duration Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(how long trades were held · {data.closedTrades.length} closed)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="flex items-end gap-2">
 				{#each durationHist as b}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -3439,7 +3440,7 @@
 
 	{#if liveExitReasons}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Exit Reason Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.length} closed trades)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Exit Reason Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.length} closed trades)</span> <ChartInfo metric="exitReason" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each liveExitReasons as r}
 					<div class="flex items-center gap-2 text-xs">
@@ -3464,7 +3465,7 @@
 
 	{#if stakeEfficiency}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Pair Stake Efficiency <span class="ml-1 font-normal text-muted-foreground text-xs">(profit / USDT deployed · ranked)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Pair Stake Efficiency <span class="ml-1 font-normal text-muted-foreground text-xs">(profit / USDT deployed · ranked)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each stakeEfficiency as r}
 					<div class="flex items-center gap-2 text-xs">
@@ -3490,7 +3491,7 @@
 	{#if tradeProfitDist}
 		{@const tpd = tradeProfitDist}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Trade Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({tpd.total} trades · avg {tpd.avg >= 0 ? '+' : ''}{tpd.avg.toFixed(2)}%)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Trade Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({tpd.total} trades · avg {tpd.avg >= 0 ? '+' : ''}{tpd.avg.toFixed(2)}%)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="flex items-end gap-3 h-20">
 				{#each tpd.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -3511,8 +3512,7 @@
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					(last {rtl.total} trades · {rtl.wins}W / {rtl.total - rtl.wins}L
 					· streak {rtl.streak > 0 ? '+' + rtl.streak + 'W' : rtl.streak + 'L'})
-				</span>
-			</h2>
+				</span> <ChartInfo metric="streak" {lang} /></h2>
 			<div class="flex flex-wrap gap-1">
 				{#each rtl.trades as t}
 					<div class="relative group h-7 w-7 rounded-sm flex items-center justify-center text-[9px] font-mono shrink-0 cursor-default"
@@ -3532,8 +3532,7 @@
 	{#if openTradeHoldingMap}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Open Trade Holding Duration
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({openTradeHoldingMap.length} open · ranked oldest first)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({openTradeHoldingMap.length} open · ranked oldest first)</span> <ChartInfo metric="livePosition" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each openTradeHoldingMap as r}
 					<div class="flex items-center gap-2">
@@ -3562,8 +3561,7 @@
 			<h2 class="mb-3 text-sm font-semibold">Win/Loss Streak Distribution
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					(avg win streak {sd.avgWin.toFixed(1)} · avg loss streak {sd.avgLoss.toFixed(1)})
-				</span>
-			</h2>
+				</span> <ChartInfo metric="streak" {lang} /></h2>
 			<div class="flex items-end gap-2">
 				{#each sd.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -3587,8 +3585,7 @@
 		{@const mwr = monthlyWinRateTrend}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Monthly Win Rate Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 12 months · avg {(mwr.avgWr * 100).toFixed(1)}%)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 12 months · avg {(mwr.avgWr * 100).toFixed(1)}%)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<svg viewBox="0 0 {mwr.W} {mwr.H}" class="w-full" style="height:{mwr.H}px">
 				<!-- 50% reference line -->
 				<line x1={mwr.PAD} y1={mwr.zeroY.toFixed(1)} x2={mwr.W - mwr.PAD} y2={mwr.zeroY.toFixed(1)}
@@ -3612,8 +3609,7 @@
 	{#if botProfitRanking}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Profit by Bot
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({botProfitRanking.reduce((s,r)=>s+r.count,0)} closed trades across {botProfitRanking.length} bots)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({botProfitRanking.reduce((s,r)=>s+r.count,0)} closed trades across {botProfitRanking.length} bots)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="space-y-2">
 				{#each botProfitRanking as r}
 					<div class="flex items-center gap-2">
@@ -3638,8 +3634,7 @@
 	{#if pairProfitMatrix}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Pair Profit Matrix
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(top {pairProfitMatrix.length} pairs by total P&L · {data.closedTrades.length} closed trades)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(top {pairProfitMatrix.length} pairs by total P&L · {data.closedTrades.length} closed trades)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each pairProfitMatrix as r}
 					<div class="flex items-center gap-2">
@@ -3670,8 +3665,7 @@
 			<h2 class="mb-2 text-sm font-semibold">Rolling 20-Trade Win Rate
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					(current {(rwr.lastWr * 100).toFixed(0)}% · avg {(rwr.avgWr * 100).toFixed(0)}%)
-				</span>
-			</h2>
+				</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<svg viewBox="0 0 {rwr.W} {rwr.H}" class="w-full" style="height:{rwr.H}px">
 				<line x1={rwr.PAD} y1={rwr.fiftyY.toFixed(1)} x2={rwr.W - rwr.PAD} y2={rwr.fiftyY.toFixed(1)}
 					stroke="var(--ch-rule-strong)" stroke-width="1" stroke-dasharray="4 3"/>
@@ -3689,8 +3683,7 @@
 	{#if profitPercentiles}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Trade Profit Percentiles
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.profit_pct != null).length} closed trades)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({data.closedTrades.filter(t => t.profit_pct != null).length} closed trades)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each profitPercentiles as p}
 					<div class="flex items-center gap-3">
@@ -3713,8 +3706,7 @@
 	{#if weeklyWinRateTrend}
 		<section class="mt-4 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Weekly Win Rate (last 12 weeks)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades closing in-profit per calendar week)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades closing in-profit per calendar week)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:72px">
 				{#each weeklyWinRateTrend as w}
 					{@const wr = w.wr ?? 0}
@@ -3744,8 +3736,7 @@
 	{#if profitFactorByBot}
 		<section class="mt-4 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Profit Factor by Bot
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(gross wins ÷ gross losses · PF &gt;1 = profitable · PF &gt;2 = strong)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(gross wins ÷ gross losses · PF &gt;1 = profitable · PF &gt;2 = strong)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each profitFactorByBot as r}
 					<div class="flex items-center gap-2">
@@ -3766,8 +3757,7 @@
 	{#if openTradeAgeDistribution}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Open Trade Age Distribution
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how long current positions have been open)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how long current positions have been open)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each openTradeAgeDistribution as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5">
@@ -3788,8 +3778,7 @@
 	{#if openPairUnrealizedPnl}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Open Positions — Unrealized P&amp;L by Pair
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg current profit% per open pair)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg current profit% per open pair)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each openPairUnrealizedPnl as r}
 					<div class="flex items-center gap-2">
@@ -3811,8 +3800,7 @@
 		{@const hm = tradeDoWHourHeatmap}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Profit Heatmap: Day × Hour
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg closed trade profit% by UTC day-of-week and hour)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg closed trade profit% by UTC day-of-week and hour)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="mt-3 overflow-x-auto">
 				<div class="grid gap-px" style="grid-template-columns: 2rem repeat(24, minmax(0, 1fr))">
 					{#each hm.DAYS as day, di}
@@ -3837,8 +3825,7 @@
 	{#if botWinRateComparison}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Win Rate by Bot
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(% profitable closed trades per bot · ranked highest to lowest)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(% profitable closed trades per bot · ranked highest to lowest)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="mt-3 space-y-2">
 				{#each botWinRateComparison as r}
 					<div class="flex items-center gap-2">
@@ -3858,8 +3845,7 @@
 	{#if strategyTradeVolume}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Trade Volume by Strategy
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(closed trade count per strategy across all bots · ranked by activity)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(closed trade count per strategy across all bots · ranked by activity)</span> <ChartInfo metric="tradeCount" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyTradeVolume as r}
 					<div class="flex items-center gap-2">
@@ -3878,7 +3864,7 @@
 
 	{#if pairProfitLeaderboard}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Pair Profit Leaderboard</h2>
+			<h2 class="text-base font-semibold">Pair Profit Leaderboard <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 pairs by cumulative closed profit (USDT) across all bots</p>
 			<div class="mt-3 space-y-1.5">
 				{#each pairProfitLeaderboard as r}
@@ -3899,7 +3885,7 @@
 	{#if botCumulativePnlTimeline}
 		{@const bcpt = botCumulativePnlTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Bot Cumulative PnL</h2>
+			<h2 class="text-base font-semibold">Bot Cumulative PnL <ChartInfo metric="botPnl" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Cumulative closed profit (USDT) over time per bot</p>
 			<svg viewBox="0 0 {bcpt.W} {bcpt.H}" class="mt-2 w-full" style="height:60px">
 				{#each bcpt.polylines as l}
@@ -3920,7 +3906,7 @@
 
 	{#if openTradeUnrealizedByBot}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Open Trade Unrealized PnL by Bot</h2>
+			<h2 class="text-base font-semibold">Open Trade Unrealized PnL by Bot <ChartInfo metric="livePosition" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Sum of unrealized profit% across all currently open trades per bot</p>
 			<div class="mt-3 space-y-1.5">
 				{#each openTradeUnrealizedByBot as r}
@@ -3940,7 +3926,7 @@
 
 	{#if closedTradeExitReasonBreakdown}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Exit Reason Breakdown</h2>
+			<h2 class="text-base font-semibold">Exit Reason Breakdown <ChartInfo metric="exitReason" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Count and avg profit% per exit reason across all closed trades</p>
 			<div class="mt-3 space-y-1.5">
 				{#each closedTradeExitReasonBreakdown as r}
@@ -3962,7 +3948,7 @@
 	{#if tradeDurationVsProfit}
 		{@const tdvp = tradeDurationVsProfit}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Trade Duration vs Profit Scatter</h2>
+			<h2 class="text-base font-semibold">Trade Duration vs Profit Scatter <ChartInfo metric="scatter" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one closed trade · X = holding time (min) · Y = profit% · reveals if longer holds outperform</p>
 			<svg viewBox="0 0 {tdvp.W} {tdvp.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={tdvp.PAD} y1={tdvp.H - tdvp.PAD - ((0 - tdvp.minP) / (tdvp.maxP - tdvp.minP || 1)) * (tdvp.H - tdvp.PAD * 2)} x2={tdvp.W - tdvp.PAD} y2={tdvp.H - tdvp.PAD - ((0 - tdvp.minP) / (tdvp.maxP - tdvp.minP || 1)) * (tdvp.H - tdvp.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -3979,7 +3965,7 @@
 
 	{#if strategyProfitLeaderboard}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Live Profit Leaderboard</h2>
+			<h2 class="text-base font-semibold">Strategy Live Profit Leaderboard <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies by avg profit% per closed trade (min 3 trades) — live performance ranking</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyProfitLeaderboard as r, i}
@@ -4000,7 +3986,7 @@
 
 	{#if closedTradeProfitByMonth}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Monthly Avg Trade Profit</h2>
+			<h2 class="text-base font-semibold">Monthly Avg Trade Profit <ChartInfo metric="avgProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average profit% per closed trade grouped by calendar month — reveals seasonal or regime-driven performance patterns</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each closedTradeProfitByMonth as r}
@@ -4021,7 +4007,7 @@
 
 	{#if closedTradePairFrequency}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Closed Trade Pair Frequency</h2>
+			<h2 class="text-sm font-semibold">Closed Trade Pair Frequency <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Top pairs by number of closed trades, with avg profit and win rate</p>
 			<div class="space-y-1">
 				{#each closedTradePairFrequency as r}
@@ -4043,7 +4029,7 @@
 	{#if closedTradeDurationDistribution}
 		{@const ctdd = closedTradeDurationDistribution}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Trade Duration Distribution</h2>
+			<h2 class="text-sm font-semibold">Trade Duration Distribution <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Histogram of closed trade durations · median {(ctdd.median / 60).toFixed(1)}h · n={ctdd.total}</p>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each ctdd.buckets as b}
@@ -4062,7 +4048,7 @@
 
 	{#if closedTradeStrategyWinRate}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy Win Rate (Live Trades)</h2>
+			<h2 class="text-sm font-semibold">Strategy Win Rate (Live Trades) <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Win rate per strategy across closed live trades (≥3 trades) sorted by win rate</p>
 			<div class="space-y-1">
 				{#each closedTradeStrategyWinRate as r}
@@ -4084,7 +4070,7 @@
 	{#if closedTradeBotProfitByMonth}
 		{@const cbm = closedTradeBotProfitByMonth}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Per-Bot Monthly PnL Comparison</h2>
+			<h2 class="text-sm font-semibold">Per-Bot Monthly PnL Comparison <ChartInfo metric="botPnl" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Sum of profit% per bot per month (last 12 months) · green = profitable · red = losing</p>
 			<svg viewBox="0 0 {cbm.W} {cbm.H}" class="w-full" style="height:80px">
 				<line x1="0" y1={cbm.midY} x2={cbm.W} y2={cbm.midY} stroke="var(--ch-axis-muted)" stroke-width="0.5"/>
@@ -4112,7 +4098,7 @@
 	{#if closedTradePairDowHeatmap}
 		{@const cpdh = closedTradePairDowHeatmap}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Pair Win Rate by Day of Week</h2>
+			<h2 class="text-sm font-semibold">Pair Win Rate by Day of Week <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Win rate per pair × weekday across closed live trades (≥2 trades per cell)</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[9px]">
@@ -4149,7 +4135,7 @@
 	{#if closedTradeMonthlyWinRate}
 		{@const cmwr = closedTradeMonthlyWinRate}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Monthly Win Rate Trend</h2>
+			<h2 class="text-sm font-semibold">Monthly Win Rate Trend <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Win rate per calendar month across all closed live trades · avg {(cmwr.avgWr * 100).toFixed(1)}% · {cmwr.rows.length} months</p>
 			<svg viewBox="0 0 {cmwr.W} {cmwr.H}" class="w-full" style="height:62px">
 				<line x1={cmwr.PAD} y1={cmwr.y50} x2={cmwr.W - cmwr.PAD} y2={cmwr.y50} stroke="var(--ch-axis-faint)" stroke-width="0.6" stroke-dasharray="3,2"/>
@@ -4168,7 +4154,7 @@
 	{#if closedTradeProfitDistribution}
 		{@const cpd = closedTradeProfitDistribution}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Closed Trade Profit % Distribution</h2>
+			<h2 class="mb-1 text-sm font-semibold">Closed Trade Profit % Distribution <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">{cpd.total} trades · {(cpd.wr * 100).toFixed(1)}% win rate · profit bucket histogram</p>
 			<div class="flex h-24 items-end gap-1">
 				{#each cpd.buckets as b}
@@ -4191,7 +4177,7 @@
 
 	{#if closedTradeProfitByExitReason}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Exit Reason</h2>
+			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Exit Reason <ChartInfo metric="exitReason" {lang} /></h2>
 			<div class="space-y-1">
 				{#each closedTradeProfitByExitReason as r}
 					{@const color = r.avg > 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss)'}
@@ -4212,7 +4198,7 @@
 
 	{#if liveEntryTagPerformance}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Entry Tag</h2>
+			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Entry Tag <ChartInfo metric="enterTag" {lang} /></h2>
 			<div class="space-y-1">
 				{#each liveEntryTagPerformance as r}
 					{@const color = r.avg > 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss)'}
@@ -4233,7 +4219,7 @@
 
 	{#if liveRecentTradeProfitMovingAvg}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">10-Trade Rolling Avg Profit %</h2>
+			<h2 class="mb-1 text-sm font-semibold">10-Trade Rolling Avg Profit % <ChartInfo metric="avgProfit" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed 10-trade moving average of profit % over time · latest: <span class="font-mono" style="color:{liveRecentTradeProfitMovingAvg.latest >= 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss-strong)'};">{liveRecentTradeProfitMovingAvg.latest >= 0 ? '+' : ''}{liveRecentTradeProfitMovingAvg.latest.toFixed(2)}%</span> · overall avg: {liveRecentTradeProfitMovingAvg.overall.toFixed(2)}%</p>
 			<svg viewBox="0 0 {liveRecentTradeProfitMovingAvg.W} {liveRecentTradeProfitMovingAvg.H}" class="w-full">
 				<line x1="0" y1={liveRecentTradeProfitMovingAvg.zeroY} x2={liveRecentTradeProfitMovingAvg.W} y2={liveRecentTradeProfitMovingAvg.zeroY} stroke="var(--ch-axis-muted)" stroke-width="1" stroke-dasharray="4,3"/>
@@ -4245,7 +4231,7 @@
 
 	{#if liveMonthlyTradeCount}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Monthly Trade Count</h2>
+			<h2 class="mb-3 text-sm font-semibold">Monthly Trade Count <ChartInfo metric="tradeCount" {lang} /></h2>
 			<svg viewBox="0 0 {liveMonthlyTradeCount.W} {liveMonthlyTradeCount.H}" class="w-full">
 				{#each liveMonthlyTradeCount.bars as b}
 					<rect x={b.x} y={liveMonthlyTradeCount.H - liveMonthlyTradeCount.PAD - b.h} width={b.w} height={b.h}

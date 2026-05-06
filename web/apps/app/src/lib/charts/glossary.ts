@@ -373,6 +373,130 @@ export const METRICS: Record<string, MetricEntry> = {
 			plain: 'Strategies grouped by status (live/dryrun/research) or trading mode (spot/futures).',
 			why: 'Reveals capital allocation: too few "live" means too much research and too little execution; too many "dryrun" means you are deferring deployment decisions.'
 		}
+	},
+	factor: {
+		zh: {
+			name: '因子 (Factor)',
+			plain: '策略里使用的某个具体逻辑组件 — 如 EMA-cross, ADX, RSI, DD-Kill, Pyramid, Trailing 等。',
+			why: '把"策略"这个黑盒拆成可以对比的乐高积木。"哪些因子赚钱、哪些拖累" 比"哪个策略好"更接近真相。'
+		},
+		en: {
+			name: 'Factor',
+			plain: 'A specific logic component inside a strategy — EMA-cross, ADX, RSI, DD-Kill, Pyramid, Trailing, etc.',
+			why: 'Decomposes the "strategy" black box into comparable lego bricks. "Which factors print money, which drag" is closer to truth than "which strategy is best".'
+		}
+	},
+	factorCooccurrence: {
+		zh: {
+			name: '因子共现',
+			plain: '统计哪些因子常一起出现在最优策略里。',
+			why: '不是每个因子单独有用，而是某几个因子组合才能赚钱。共现分析揭示这些"必须搭档"的组合。'
+		},
+		en: {
+			name: 'Factor Co-occurrence',
+			plain: 'How often factors appear together in winning strategies.',
+			why: 'Sometimes a single factor is mediocre, but a specific *combination* prints money. Co-occurrence reveals these "must-pair" tandems.'
+		}
+	},
+	factorAttribution: {
+		zh: {
+			name: '因子归因',
+			plain: '把策略表现拆成各因子的贡献。',
+			why: '让你回答"如果去掉 ADX 会损失多少"这种问题。简化策略 = 减少过拟合风险。'
+		},
+		en: {
+			name: 'Factor Attribution',
+			plain: 'Decompose total performance into the contribution of each factor.',
+			why: 'Lets you answer "what would I lose by dropping ADX?" Simplifying a strategy = reducing over-fit risk.'
+		}
+	},
+	wfConsistency: {
+		zh: {
+			name: 'Walk-Forward 一致性',
+			plain: '策略在多个时间窗口里都赚钱的比例。',
+			why: '只在一个窗口暴富的策略多半是过拟合。一致性高 = 在不同市场环境都能存活，是"真边际"的关键证据。',
+			rules: ['> 70% 真鲁棒', '50–70% 还可以', '< 50% 大概率运气']
+		},
+		en: {
+			name: 'Walk-Forward Consistency',
+			plain: '% of windows where the strategy was profitable.',
+			why: 'A strategy that prints in only one window is usually over-fit. High consistency = survives across regimes, the key evidence for a real edge.',
+			rules: ['> 70% truly robust', '50–70% acceptable', '< 50% mostly luck']
+		}
+	},
+	hyperoptParam: {
+		zh: {
+			name: 'Hyperopt 参数空间',
+			plain: '优化器搜索的每个参数的取值范围 + 最优组合。',
+			why: '看参数搜索的"地形"。范围太宽 = 浪费算力；最优值贴边 = 范围设错；最优值在中间 = 健康搜索。'
+		},
+		en: {
+			name: 'Hyperopt Parameter Space',
+			plain: 'The search range and best-found value for each tuneable parameter.',
+			why: 'Reveals the search landscape. Range too wide = wasted compute; best at edge = range set wrong; best in middle = healthy search.'
+		}
+	},
+	livePosition: {
+		zh: {
+			name: '持仓 (Live Position)',
+			plain: '策略当前持有的开仓 — 每笔有未实现盈亏、入场价、持仓时长。',
+			why: '比"已平仓"更关键的状态：决定即时风险敞口。开仓过多 = 杠杆失控；持仓时长异常 = 策略卡在亏损中不肯止损。'
+		},
+		en: {
+			name: 'Live Position',
+			plain: 'Strategy’s currently open trades — each with unrealized PnL, entry price, age.',
+			why: 'More important than closed trades: defines current risk. Too many open = over-levered; abnormally old positions = strategy stuck in unrealized losses.'
+		}
+	},
+	positionSize: {
+		zh: {
+			name: '仓位大小 (Position Size)',
+			plain: '单笔交易的下单金额 (USDT) 或仓位占总资金的比例。',
+			why: '风险管理的核心杠杆。"对的策略 + 错的仓位" 也会爆。Smart DCA 在恐惧时加大、贪婪时减小。'
+		},
+		en: {
+			name: 'Position Size',
+			plain: 'USDT amount per trade, or trade size as a fraction of total capital.',
+			why: 'The single most important risk lever. "Right strategy + wrong size" still blows up. Smart DCA scales it up under fear, down under greed.'
+		}
+	},
+	botPnl: {
+		zh: {
+			name: '机器人 PnL',
+			plain: '某个具体 bot (live / dryrun 实例) 的累计盈亏。',
+			why: '区分多个 bot 的真实贡献。某个 bot 长期亏 = 应该停掉；几个 bot 都赚但某个崩 = 那个策略已死。'
+		},
+		en: {
+			name: 'Bot PnL',
+			plain: 'Cumulative profit/loss for a specific bot instance (live or dryrun).',
+			why: 'Separates contribution across multiple bots. A bot that bleeds = stop it; if peers print but one tanks = that strategy is dead.'
+		}
+	},
+	dcaTrigger: {
+		zh: {
+			name: 'DCA 触发 (Trigger)',
+			plain: 'Smart DCA 系统在某个事件（闪崩 / 恐慌指数极低 / 宏观信号）触发的加仓动作。',
+			why: '反向投机的执行单元。事件分布告诉你这套规则是否在"该买的时候买" — 大多数触发应该集中在熊市/恐慌期。',
+			rules: ['闪崩触发：单日跌幅 > 阈值', 'F&G 触发：恐惧指数 < 25', '事件叠加：多个条件同时成立']
+		},
+		en: {
+			name: 'DCA Trigger',
+			plain: 'A scale-in action fired by Smart DCA when a market event (flash crash / extreme fear / macro signal) hits.',
+			why: 'The execution unit of contrarian buying. Trigger distribution tells you whether the rules buy "when they should" — most triggers should cluster in bear / fear regimes.',
+			rules: ['Flash crash: single-day drop > threshold', 'F&G: fear index < 25', 'Stacked: multiple conditions hit at once']
+		}
+	},
+	signalKind: {
+		zh: {
+			name: '信号类型 (Signal Kind)',
+			plain: '把每个 DCA 触发标上类型 — flash_crash / fng_extreme / weekly_dca / 等。',
+			why: '不同信号类型背后是不同的逻辑。混合占比能看出资金主要由哪种逻辑驱动 — 应该和你心里期望的分布一致。'
+		},
+		en: {
+			name: 'Signal Kind',
+			plain: 'A label on each DCA trigger — flash_crash / fng_extreme / weekly_dca / etc.',
+			why: 'Different kinds carry different logic. The mix shows which logic actually drives capital deployment — it should match what you intended.'
+		}
 	}
 };
 

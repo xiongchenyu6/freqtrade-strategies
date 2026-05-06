@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const runs = $derived(data.runs);
@@ -2298,7 +2299,7 @@
 	<!-- Factor × metric heatmap -->
 	{#if heatmapRows.length > 0}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Factor × Metric Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(top {heatmapRows.length} by run count · column-normalized)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Factor × Metric Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(top {heatmapRows.length} by run count · column-normalized)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead>
@@ -2485,7 +2486,7 @@
 	<!-- Factor co-occurrence combos -->
 	{#if topCombos.length > 0}
 		<section class="mt-10">
-			<h2 class="text-base font-semibold tracking-tight">Top Factor Co-occurrences</h2>
+			<h2 class="text-base font-semibold tracking-tight">Top Factor Co-occurrences <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-1 text-sm text-muted-foreground">
 				Factor pairs that appear together most often and their combined median profit.
 			</p>
@@ -2527,7 +2528,7 @@
 	{#if factorTrend && factorTrend.length > 0}
 		<section class="mt-10 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Factor Win-Rate Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(top factors · 4 time periods)</span></h2>
+				<h2 class="text-sm font-semibold">Factor Win-Rate Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(top factors · 4 time periods)</span> <ChartInfo metric="factor" {lang} /></h2>
 				<span class="text-[11px] text-muted-foreground">↑ improving · ↓ degrading</span>
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -2578,7 +2579,7 @@
 		{@const wrTop = [...factorStats].filter(f => f.win_rate > 0 && f.count >= 2).sort((a, b) => b.win_rate - a.win_rate).slice(0, 12)}
 		{@const wrMax = wrTop.length ? wrTop[0].win_rate : 100}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Win-Rate Leaderboard</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Win-Rate Leaderboard <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-2">
 					{#each wrTop as f, i}
@@ -2602,7 +2603,7 @@
 
 	{#if ddLeaderboard}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Lowest Avg Drawdown Factors</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Lowest Avg Drawdown Factors <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-2">
 					{#each ddLeaderboard as row, i}
@@ -2625,7 +2626,7 @@
 
 	{#if calmarLeaderboard}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Calmar Leaderboard</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Calmar Leaderboard <ChartInfo metric="factor" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-1.5">
 					{#each calmarLeaderboard as row, i}
@@ -2650,7 +2651,7 @@
 	{#if wrProfitScatter}
 		{@const wps = wrProfitScatter}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Win Rate vs Avg Profit</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Win Rate vs Avg Profit <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<svg viewBox="0 0 {wps.W} {wps.H}" class="w-full" style="height:{wps.H}px;min-width:200px">
 					<!-- quadrant lines -->
@@ -2682,7 +2683,7 @@
 
 	{#if strategyBreadth}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Strategy Breadth</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Strategy Breadth <ChartInfo metric="factor" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-1.5">
 					{#each strategyBreadth as row, i}
@@ -2707,7 +2708,7 @@
 
 	{#if factorWinRateLeaderboard}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Win Rate Leaderboard</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Win Rate Leaderboard <ChartInfo metric="factor" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-1.5">
 					{#each factorWinRateLeaderboard as row}
@@ -2733,7 +2734,7 @@
 	{#if factorCoOccurrence && factorCoOccurrence.pairs.length >= 3}
 		{@const fco = factorCoOccurrence}
 		<section class="mb-6">
-			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Co-occurrence</h2>
+			<h2 class="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">Factor Co-occurrence <ChartInfo metric="factorCooccurrence" {lang} /></h2>
 			<div class="rounded-lg border bg-card p-4">
 				<div class="space-y-1.5">
 					{#each fco.pairs as p}
@@ -2759,8 +2760,7 @@
 	{#if avgProfitByFactorCount}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Factor Count
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(does combining more factors improve returns?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(does combining more factors improve returns?)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="flex items-end gap-4 h-24">
 				{#each avgProfitByFactorCount as r}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -2780,8 +2780,7 @@
 		{@const fmt2 = factorMonthlyTrend}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Top Factor Monthly Profit Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per month for top 5 factors)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per month for top 5 factors)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<svg viewBox="0 0 {fmt2.W} {fmt2.H}" class="w-full" style="height:{fmt2.H}px">
 				<line x1={fmt2.PAD} y1={fmt2.zeroY.toFixed(1)} x2={fmt2.W - fmt2.PAD} y2={fmt2.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -2810,8 +2809,7 @@
 	{#if factorProfitFactorLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Profit-Factor per Factor
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_factor = gross wins / gross losses · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_factor = gross wins / gross losses · min 5 runs)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorProfitFactorLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2835,8 +2833,7 @@
 	{#if lowDrawdownLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Lowest Drawdown Factors
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(safest factors by avg max drawdown · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(safest factors by avg max drawdown · min 5 runs)</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each lowDrawdownLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2862,8 +2859,7 @@
 	{#if factorSharpeLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Sharpe Factors
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Sharpe per factor · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Sharpe per factor · min 5 runs)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorSharpeLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2889,8 +2885,7 @@
 	{#if factorProfitVolatility}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Most Consistent Factors
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(lowest profit% std dev · shorter bar = more consistent · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(lowest profit% std dev · shorter bar = more consistent · min 5 runs)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorProfitVolatility as r, i}
 					<div class="flex items-center gap-2">
@@ -2916,8 +2911,7 @@
 	{#if factorCalmarLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Calmar Factors
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Calmar ratio · annual return ÷ max drawdown · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Calmar ratio · annual return ÷ max drawdown · min 5 runs)</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorCalmarLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2943,8 +2937,7 @@
 	{#if factorSortinoLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Sortino Factors
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Sortino ratio · return ÷ downside deviation · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(median Sortino ratio · return ÷ downside deviation · min 5 runs)</span> <ChartInfo metric="sortino" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorSortinoLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2968,8 +2961,7 @@
 	{#if factorWinCount}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Factor Win Rate (run-level)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of runs with this factor that had positive total profit · min 5 runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of runs with this factor that had positive total profit · min 5 runs)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorWinCount as r, i}
 					{@const color = r.wr >= 0.6 ? 'var(--ch-profit)' : r.wr >= 0.5 ? 'var(--ch-warn-light)' : 'var(--ch-loss-light)'}
@@ -2990,8 +2982,7 @@
 	{#if factorAvgHoldingTime}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Avg Holding Time per Factor
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(factors sorted by shortest avg hold · shorter = quicker in-and-out style)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(factors sorted by shortest avg hold · shorter = quicker in-and-out style)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorAvgHoldingTime as r, i}
 					<div class="flex items-center gap-2">
@@ -3011,8 +3002,7 @@
 	{#if factorDrawdownSpread}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Drawdown Consistency by Factor
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of max drawdown — shorter bar = more predictable risk)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of max drawdown — shorter bar = more predictable risk)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each factorDrawdownSpread as r, i}
 					<div class="flex items-center gap-2">
@@ -3032,8 +3022,7 @@
 	{#if factorTopTimeframes}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Factor Timeframe Affinity
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(which timeframes each factor most commonly runs on)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(which timeframes each factor most commonly runs on)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="mt-3 space-y-2">
 				{#each factorTopTimeframes as r}
 					<div class="flex items-center gap-2">
@@ -3056,8 +3045,7 @@
 	{#if factorPairCoverage}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Pair Coverage by Factor
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many distinct trading pairs appear in runs using each factor)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many distinct trading pairs appear in runs using each factor)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each factorPairCoverage as r}
 					<div class="flex items-center gap-2">
@@ -3076,8 +3064,7 @@
 		{@const svc = factorSortinoVsCalmar}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Factor Risk Map: Sortino vs Calmar
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg per-factor · ideal = top-right · dot size = run count)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg per-factor · ideal = top-right · dot size = run count)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<svg viewBox="0 0 {svc.W} {svc.H}" class="w-full" style="height:110px">
 				{#each svc.dots as d}
 					<circle cx={d.cx} cy={d.cy} r={d.r} fill={d.color} opacity="0.85"><title>{d.title}</title></circle>
@@ -3092,8 +3079,7 @@
 	{#if factorBestRunLeaderboard}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Factor Best-Case Run Leaderboard
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(highest single run profit% ever achieved using each factor)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(highest single run profit% ever achieved using each factor)</span> <ChartInfo metric="factor" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each factorBestRunLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -3113,7 +3099,7 @@
 
 	{#if factorAvgWinRateRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Avg Win Rate</h2>
+			<h2 class="text-base font-semibold">Factor Avg Win Rate <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average win rate % across all runs that include each factor (min 3 runs)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each factorAvgWinRateRanking as r}
@@ -3133,7 +3119,7 @@
 
 	{#if factorCalmarRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Avg Calmar Ratio</h2>
+			<h2 class="text-base font-semibold">Factor Avg Calmar Ratio <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average Calmar ratio across all runs containing each factor (min 3 runs)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each factorCalmarRanking as r}
@@ -3154,7 +3140,7 @@
 	{#if factorRunCountTimeline}
 		{@const frct = factorRunCountTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Research Activity Timeline</h2>
+			<h2 class="text-base font-semibold">Factor Research Activity Timeline <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Monthly run count for top 5 factors by total usage — shows research focus shifts over time</p>
 			<svg viewBox="0 0 {frct.W} {frct.H}" class="mt-2 w-full" style="height:60px">
 				{#each frct.lines as l}
@@ -3178,7 +3164,7 @@
 
 	{#if factorProfitEfficiency}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Profit Efficiency (Profit / Drawdown)</h2>
+			<h2 class="text-base font-semibold">Factor Profit Efficiency (Profit / Drawdown) <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Median profit% ÷ avg drawdown% — factors with highest return per unit of risk (min 3 runs)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each factorProfitEfficiency as r, i}
@@ -3200,7 +3186,7 @@
 	{#if factorWinRateVsProfit}
 		{@const fwrvp = factorWinRateVsProfit}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Win Rate vs Median Profit Scatter</h2>
+			<h2 class="text-base font-semibold">Factor Win Rate vs Median Profit Scatter <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one factor · X = avg win rate · Y = median profit% · top-right = ideal high-win-rate high-profit factors</p>
 			<svg viewBox="0 0 {fwrvp.W} {fwrvp.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={fwrvp.PAD} y1={fwrvp.H - fwrvp.PAD - ((0 - fwrvp.yMin) / (fwrvp.yMax - fwrvp.yMin)) * (fwrvp.H - fwrvp.PAD * 2)} x2={fwrvp.W - fwrvp.PAD} y2={fwrvp.H - fwrvp.PAD - ((0 - fwrvp.yMin) / (fwrvp.yMax - fwrvp.yMin)) * (fwrvp.H - fwrvp.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -3217,7 +3203,7 @@
 
 	{#if factorStrategyCount}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Factor Strategy Coverage</h2>
+			<h2 class="text-base font-semibold">Factor Strategy Coverage <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Number of distinct strategies that have used each factor — wider adoption = more battle-tested factor</p>
 			<div class="mt-3 space-y-1.5">
 				{#each factorStrategyCount as r, i}
@@ -3238,7 +3224,7 @@
 
 	{#if factorProfitPerTrade}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Profit-per-Trade</h2>
+			<h2 class="text-sm font-semibold">Factor Profit-per-Trade <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Average profit% per individual trade for runs tagged with each factor (≥4 runs)</p>
 			<div class="space-y-1">
 				{#each factorProfitPerTrade as r}
@@ -3259,7 +3245,7 @@
 	{#if factorDrawdownVsProfit}
 		{@const fdp = factorDrawdownVsProfit}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Drawdown vs Profit Scatter</h2>
+			<h2 class="text-sm font-semibold">Factor Drawdown vs Profit Scatter <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Each dot = one factor · x-axis: avg drawdown% · y-axis: median profit% · upper-left = ideal (low DD, high profit)</p>
 			<svg viewBox="0 0 {fdp.W} {fdp.H}" class="w-full" style="height:90px">
 				<line x1="8" y1={fdp.zeroY} x2={fdp.W - 8} y2={fdp.zeroY} stroke="var(--ch-rule)" stroke-width="0.8"/>
@@ -3276,7 +3262,7 @@
 
 	{#if factorTimeframeDiversity}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Timeframe Diversity</h2>
+			<h2 class="text-sm font-semibold">Factor Timeframe Diversity <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Number of distinct timeframes each factor tag appears across · high diversity = robust across trading horizons</p>
 			<div class="space-y-1">
 				{#each factorTimeframeDiversity as r}
@@ -3295,7 +3281,7 @@
 
 	{#if factorProfitFactorRanking}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Profit Factor Ranking</h2>
+			<h2 class="text-sm font-semibold">Factor Profit Factor Ranking <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Median profit factor per factor tag across associated runs (≥4 runs) · PF &gt; 1.2 = acceptable edge</p>
 			<div class="space-y-1">
 				{#each factorProfitFactorRanking as r}
@@ -3315,7 +3301,7 @@
 
 	{#if factorMaxDrawdownRanking}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Max Drawdown Ranking</h2>
+			<h2 class="text-sm font-semibold">Factor Max Drawdown Ranking <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Median max drawdown% across runs using each factor (≥4 runs) · sorted lowest first</p>
 			<div class="space-y-1">
 				{#each factorMaxDrawdownRanking as r}
@@ -3335,7 +3321,7 @@
 
 	{#if factorTradeCountProfile}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Trade Count Profile</h2>
+			<h2 class="text-sm font-semibold">Factor Trade Count Profile <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Median total trades per run using each factor (≥4 runs) · high count = high-frequency signal component</p>
 			<div class="space-y-1">
 				{#each factorTradeCountProfile as r}
@@ -3354,7 +3340,7 @@
 	{/if}
 	{#if factorWinLossRatio}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor Win/Loss Ratio Leaderboard</h2>
+			<h2 class="text-sm font-semibold">Factor Win/Loss Ratio Leaderboard <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Cumulative wins ÷ losses across runs using each factor (≥3 runs) · distinct from win rate — measures magnitude of edge</p>
 			<div class="space-y-1">
 				{#each factorWinLossRatio as r}
@@ -3374,7 +3360,7 @@
 	{/if}
 	{#if factorHighProfitHitRate}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Factor High-Profit Hit Rate (&gt;5%)</h2>
+			<h2 class="text-sm font-semibold">Factor High-Profit Hit Rate (&gt;5%) <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">% of backtest runs achieving &gt;5% total profit — quality threshold rate, distinct from basic win rate (&gt;0%)</p>
 			<div class="space-y-1">
 				{#each factorHighProfitHitRate as r}
@@ -3394,7 +3380,7 @@
 	{/if}
 	{#if factorImprovement}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Factor Improvement (Recent vs Older Runs)</h2>
+			<h2 class="mb-1 text-sm font-semibold">Factor Improvement (Recent vs Older Runs) <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Compares avg profit % of each factor in recent half of runs vs older half — positive delta = improving, negative = declining</p>
 			<div class="space-y-2">
 				{#each factorImprovement as r}
@@ -3415,7 +3401,7 @@
 	{/if}
 	{#if factorProfitRangeSpread}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Profit Range Spread by Factor</h2>
+			<h2 class="mb-1 text-sm font-semibold">Profit Range Spread by Factor <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Range between best and worst run profit % for each factor — narrow spread = consistent outcomes, wide = high variance</p>
 			<div class="space-y-1">
 				{#each factorProfitRangeSpread as r}
@@ -3435,7 +3421,7 @@
 	{/if}
 	{#if factorProfitQuantile90}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">90th Percentile Profit by Factor</h2>
+			<h2 class="mb-1 text-sm font-semibold">90th Percentile Profit by Factor <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">90th-percentile total profit % per factor — shows ceiling performance, not just the single best outlier run</p>
 			<div class="space-y-1">
 				{#each factorProfitQuantile90 as r}

@@ -3,6 +3,7 @@
 	import type { EventDcaTrigger, BacktestRun } from '$lib/types';
 	import { fmtTime, fmtUSD, fmtPct } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2407,7 +2408,7 @@
 	{#if stratFreshness.length > 0}
 		<section class="mt-8 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Strategy Freshness</h2>
+				<h2 class="text-sm font-semibold">Strategy Freshness <ChartInfo metric="leaderboard" {lang} /></h2>
 				<span class="text-[11px] text-muted-foreground">Days since last backtest import</span>
 			</div>
 			<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -2430,7 +2431,7 @@
 
 	{#if modeBreakdown}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Event Mode Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({data.events.length} events · count + avg severity per mode)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Event Mode Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({data.events.length} events · count + avg severity per mode)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each modeBreakdown as row}
 					<div class="flex items-center gap-2 text-xs">
@@ -2457,7 +2458,7 @@
 		{@const st = severityTrend}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<div class="mb-2 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Market Stress Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(7-event rolling avg severity)</span></h2>
+				<h2 class="text-sm font-semibold">Market Stress Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(7-event rolling avg severity)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 				<span class="font-mono text-xs {st.rising ? 'text-red-400' : st.falling ? 'text-green-400' : 'text-muted-foreground'}">
 					{st.latest.toFixed(3)} {st.rising ? '↑ rising' : st.falling ? '↓ easing' : '→ stable'}
 				</span>
@@ -2476,7 +2477,7 @@
 	{#if signalKindTimeline}
 		{@const skt = signalKindTimeline}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Weekly Signal Mix <span class="ml-1 font-normal text-muted-foreground text-xs">(last 8 weeks · stacked by kind)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Weekly Signal Mix <span class="ml-1 font-normal text-muted-foreground text-xs">(last 8 weeks · stacked by kind)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="flex items-end gap-1">
 				{#each skt.weeks as [week, kinds]}
 					{@const total = skt.KINDS.reduce((s, k) => s + (kinds[k] ?? 0), 0)}
@@ -2509,7 +2510,7 @@
 		{@const fh = fngHistogram}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Fear &amp; Greed at Trigger Time <span class="ml-1 font-normal text-muted-foreground text-xs">({fh.total} events with FNG data)</span></h2>
+				<h2 class="text-sm font-semibold">Fear &amp; Greed at Trigger Time <span class="ml-1 font-normal text-muted-foreground text-xs">({fh.total} events with FNG data)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 				<span class="font-mono text-xs text-muted-foreground">avg {fh.avg.toFixed(0)}</span>
 			</div>
 			<div class="flex items-end gap-1">
@@ -2526,7 +2527,7 @@
 
 	{#if severityByKind}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Severity Range by Trigger Kind <span class="ml-1 font-normal text-muted-foreground text-xs">(min · median · max)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Severity Range by Trigger Kind <span class="ml-1 font-normal text-muted-foreground text-xs">(min · median · max)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="space-y-2">
 				{#each severityByKind as row}
 					<div class="flex items-center gap-3 text-xs">
@@ -2551,7 +2552,7 @@
 	{#if dcaCumulativeSpend}
 		{@const dcs = dcaCumulativeSpend}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Cumulative DCA Spend <span class="ml-1 font-normal text-muted-foreground text-xs">({dcs.n} events · {dcs.firstDate} → {dcs.lastDate})</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Cumulative DCA Spend <span class="ml-1 font-normal text-muted-foreground text-xs">({dcs.n} events · {dcs.firstDate} → {dcs.lastDate})</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<svg viewBox="0 0 {dcs.W} {dcs.H}" class="w-full" style="height:{dcs.H}px">
 				<polyline points={dcs.polyline} fill="none" stroke="var(--ch-violet-strong)" stroke-width="1.5" stroke-linejoin="round"/>
 				<text x={dcs.PAD} y={dcs.H - 2} font-size="7" fill="var(--ch-rule)">{dcs.firstDate}</text>
@@ -2564,7 +2565,7 @@
 
 	{#if eventCalendar}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">30-Day Event Activity <span class="ml-1 font-normal text-muted-foreground text-xs">(DCA triggers · last 30 days)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">30-Day Event Activity <span class="ml-1 font-normal text-muted-foreground text-xs">(DCA triggers · last 30 days)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each eventCalendar.rows as row}
 					<div class="grid grid-cols-6 gap-1.5">
@@ -2594,8 +2595,7 @@
 		{@const fva = fngVsAmount}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Fear &amp; Greed vs Amount Deployed
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({fva.dots.length} events · r = {fva.corr >= 0 ? '+' : ''}{fva.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({fva.dots.length} events · r = {fva.corr >= 0 ? '+' : ''}{fva.corr.toFixed(2)})</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<svg viewBox="0 0 {fva.W} {fva.H}" class="w-full" style="height:{fva.H}px">
 				<!-- zone lines: fear=25, greed=75 -->
 				<line x1={fva.PAD + 25/100*(fva.W-fva.PAD*2)} y1={fva.PAD} x2={fva.PAD + 25/100*(fva.W-fva.PAD*2)} y2={fva.H-fva.PAD} stroke="var(--ch-profit-light)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -2621,8 +2621,7 @@
 	{#if eventAmountRanking}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Top Events by USDT Deployed
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(largest single-event deployments)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(largest single-event deployments)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each eventAmountRanking as r}
 					<div class="flex items-center gap-2">
@@ -2649,8 +2648,7 @@
 		{@const hed = hourlyEventDist}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Trigger Hour Distribution (UTC)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(peak at {hed.peakH.toString().padStart(2,'0')}:00 UTC · {data.events.length} events)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(peak at {hed.peakH.toString().padStart(2,'0')}:00 UTC · {data.events.length} events)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="flex items-end gap-px" style="height:72px">
 				{#each hed.bars as b}
 					<div class="flex-1 flex flex-col justify-end" title="Hour {b.h.toString().padStart(2,'0')}:00 UTC · {b.count} events · avg sev {(b.avgSev*100).toFixed(0)}% · ${b.avgAmount.toFixed(0)}">
@@ -2669,8 +2667,7 @@
 		{@const kp = kindProportions}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Signal Kind Proportions
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({kp.total} total triggers)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({kp.total} total triggers)</span> <ChartInfo metric="signalKind" {lang} /></h2>
 			<div class="space-y-2">
 				{#each kp.rows as r}
 					<div class="flex items-center gap-2">
@@ -2696,8 +2693,7 @@
 		{@const kmt = kindMonthlyTrend}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Signal Kind Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 6 months · events per kind)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 6 months · events per kind)</span> <ChartInfo metric="signalKind" {lang} /></h2>
 			<div class="flex items-end gap-2" style="height:80px">
 				{#each kmt.months as m}
 					<div class="flex flex-1 flex-col gap-px items-stretch justify-end" title="{m.label}: {m.total} events">
@@ -2727,8 +2723,7 @@
 	{#if fngZoneEventCount}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Events by Fear & Greed Zone
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(count + avg USDT deployed per sentiment zone)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(count + avg USDT deployed per sentiment zone)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="space-y-2">
 				{#each fngZoneEventCount as z}
 					<div class="flex items-center gap-3">
@@ -2752,8 +2747,7 @@
 	{#if severityTimeOfDay}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Signal Severity by Hour (UTC)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg severity score · which hours produce most intense signals?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg severity score · which hours produce most intense signals?)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="flex items-end gap-px" style="height:56px">
 				{#each severityTimeOfDay as h}
 					<div class="flex flex-1 flex-col items-center justify-end"
@@ -2777,8 +2771,7 @@
 	{#if kindAvgInterval}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Interval Between Events by Kind
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(mean hours between consecutive same-kind events · shorter bar = more frequent)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(mean hours between consecutive same-kind events · shorter bar = more frequent)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<div class="space-y-2">
 				{#each kindAvgInterval as row}
 					<div class="flex items-center gap-2">
@@ -2798,8 +2791,7 @@
 		{@const rpt = runProfitTimeline}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Backtest Run Profit Trend
-				<span class="ml-2 text-xs font-normal text-muted-foreground">(last {rpt.count} runs by import date · {rpt.improving ? '📈 improving' : '→ stable'})</span>
-			</h2>
+				<span class="ml-2 text-xs font-normal text-muted-foreground">(last {rpt.count} runs by import date · {rpt.improving ? '📈 improving' : '→ stable'})</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<svg viewBox="0 0 {rpt.W} {rpt.H}" class="w-full" style="height:72px">
 				<line x1={rpt.PAD} x2={rpt.W - rpt.PAD} y1={rpt.zeroY} y2={rpt.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
 				<polyline points={rpt.polyline} fill="none" stroke="var(--ch-violet)" stroke-width="1.5"/>
@@ -2814,8 +2806,7 @@
 	{#if fngSeverityMatrix}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">F&amp;G Zone by Severity
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(at which market sentiment does each severity fire?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(at which market sentiment does each severity fire?)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="mt-3 space-y-2">
 				{#each fngSeverityMatrix.matrix as row}
 					<div class="flex items-center gap-2">
@@ -2848,8 +2839,7 @@
 		{@const rst = runSortinoTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Backtest Run Sortino Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rst.count} runs · {rst.improving ? '↑ improving' : '→ stable'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rst.count} runs · {rst.improving ? '↑ improving' : '→ stable'})</span> <ChartInfo metric="sortino" {lang} /></h2>
 			<svg viewBox="0 0 {rst.W} {rst.H}" class="w-full" style="height:72px">
 				<line x1={rst.PAD} x2={rst.W - rst.PAD} y1={rst.zeroY} y2={rst.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
 				<polyline points={rst.polyline} fill="none" stroke="var(--ch-violet)" stroke-width="1.5"/>
@@ -2865,8 +2855,7 @@
 		{@const rwrt = runWinRateTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Backtest Run Win-Rate Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rwrt.count} runs by import date · latest {rwrt.latest.toFixed(1)}% · {rwrt.trend >= 0 ? '↑' : '↓'} {Math.abs(rwrt.trend).toFixed(1)}pp)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rwrt.count} runs by import date · latest {rwrt.latest.toFixed(1)}% · {rwrt.trend >= 0 ? '↑' : '↓'} {Math.abs(rwrt.trend).toFixed(1)}pp)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<svg viewBox="0 0 {rwrt.W} {rwrt.H}" class="mt-3 w-full" style="height:64px">
 				{#if rwrt.fiftyY != null}
 					<line x1={rwrt.PAD} x2={rwrt.W - rwrt.PAD} y1={rwrt.fiftyY} y2={rwrt.fiftyY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
@@ -2886,8 +2875,7 @@
 		{@const rct = runCalmarTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Backtest Run Calmar Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rct.count} runs · {rct.improving ? '↑ improving' : '→ stable'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rct.count} runs · {rct.improving ? '↑ improving' : '→ stable'})</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<svg viewBox="0 0 {rct.W} {rct.H}" class="w-full" style="height:72px">
 				<line x1={rct.PAD} x2={rct.W - rct.PAD} y1={rct.zeroY} y2={rct.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
 				<polyline points={rct.polyline} fill="none" stroke={rct.improving ? 'var(--ch-profit)' : 'var(--ch-violet)'} stroke-width="1.5"/>
@@ -2903,8 +2891,7 @@
 		{@const rpft = runProfitFactorTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Backtest Run Profit Factor Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rpft.count} runs · latest {rpft.latest.toFixed(2)} · avg {rpft.avg.toFixed(2)} · {rpft.trend >= 0 ? '↑' : '↓'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last {rpft.count} runs · latest {rpft.latest.toFixed(2)} · avg {rpft.avg.toFixed(2)} · {rpft.trend >= 0 ? '↑' : '↓'})</span> <ChartInfo metric="factor" {lang} /></h2>
 			<svg viewBox="0 0 {rpft.W} {rpft.H}" class="mt-3 w-full" style="height:64px">
 				{#if rpft.oneY != null}
 					<line x1={rpft.PAD} x2={rpft.W - rpft.PAD} y1={rpft.oneY} y2={rpft.oneY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
@@ -2921,7 +2908,7 @@
 	{#if runCalmarSignalTimeline}
 		{@const rct = runCalmarSignalTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Calmar Ratio Timeline</h2>
+			<h2 class="text-base font-semibold">Calmar Ratio Timeline <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Calmar ratio (return / max drawdown) across runs sorted by import date · {rct.trend >= 0 ? 'improving' : 'declining'}</p>
 			<svg viewBox="0 0 {rct.W} {rct.H}" class="mt-2 w-full" style="height:60px">
 				<polyline points={rct.poly} fill="none" stroke={rct.trend >= 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss)'} stroke-width="1.5"/>
@@ -2936,7 +2923,7 @@
 	{#if runSortinoDistribution}
 		{@const rsd = runSortinoDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Sortino Distribution</h2>
+			<h2 class="text-base font-semibold">Sortino Distribution <ChartInfo metric="sortino" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of Sortino ratios across {rsd.total} runs · median {rsd.median.toFixed(2)}</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each rsd.buckets as b}
@@ -2960,7 +2947,7 @@
 	{#if runMaxDrawdownTimeline}
 		{@const rmdt = runMaxDrawdownTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Max Drawdown Timeline</h2>
+			<h2 class="text-base font-semibold">Max Drawdown Timeline <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Max drawdown% across runs sorted by import date · {rmdt.trend <= 0 ? 'improving (falling)' : 'worsening (rising)'}</p>
 			<svg viewBox="0 0 {rmdt.W} {rmdt.H}" class="mt-2 w-full" style="height:60px">
 				<polyline points={rmdt.poly} fill="none" stroke={rmdt.trend <= 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss)'} stroke-width="1.5"/>
@@ -2975,7 +2962,7 @@
 	{#if runProfitFactorDistribution}
 		{@const rpfd = runProfitFactorDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Run Profit Factor Distribution</h2>
+			<h2 class="text-base font-semibold">Run Profit Factor Distribution <ChartInfo metric="factor" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of profit factor across {rpfd.total} runs · median {rpfd.median.toFixed(2)} · PF&gt;1 = gross wins exceed gross losses</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each rpfd.buckets as b}
@@ -2995,7 +2982,7 @@
 	{#if runCalmarVsSortino}
 		{@const rcvs = runCalmarVsSortino}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Calmar vs Sortino Scatter</h2>
+			<h2 class="text-base font-semibold">Calmar vs Sortino Scatter <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one backtest run · X = Calmar ratio · Y = Sortino ratio · top-right = strong risk-adjusted returns on both measures</p>
 			<svg viewBox="0 0 {rcvs.W} {rcvs.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={rcvs.PAD} y1={rcvs.H - rcvs.PAD - ((0 - rcvs.yMin) / (rcvs.yMax - rcvs.yMin)) * (rcvs.H - rcvs.PAD * 2)} x2={rcvs.W - rcvs.PAD} y2={rcvs.H - rcvs.PAD - ((0 - rcvs.yMin) / (rcvs.yMax - rcvs.yMin)) * (rcvs.H - rcvs.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -3014,7 +3001,7 @@
 	{#if runWinRateDistribution}
 		{@const rwrd = runWinRateDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Run Win Rate Distribution</h2>
+			<h2 class="text-base font-semibold">Run Win Rate Distribution <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of win rate% across {rwrd.total} runs · median {rwrd.median.toFixed(1)}% · how often do backtested strategies hit their targets?</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each rwrd.buckets as b}
@@ -3034,7 +3021,7 @@
 	{#if runTradeCountDistribution}
 		{@const rtcd = runTradeCountDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Run Trade Count Distribution</h2>
+			<h2 class="text-base font-semibold">Run Trade Count Distribution <ChartInfo metric="tradeCount" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of total trades per backtest run across {rtcd.total} runs · median {rtcd.median}</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each rtcd.buckets as b}
@@ -3054,7 +3041,7 @@
 	{#if runProfitVsDrawdownScatter}
 		{@const sc = runProfitVsDrawdownScatter}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Run Profit vs Drawdown Scatter</h2>
+			<h2 class="text-sm font-semibold">Run Profit vs Drawdown Scatter <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Each dot = one backtest run · x-axis: max drawdown % · y-axis: total profit % · upper-left = ideal</p>
 			<svg viewBox="0 0 {sc.W} {sc.H}" class="w-full" style="height:100px">
 				<line x1="10" y1={sc.zeroY} x2={sc.W - 10} y2={sc.zeroY} stroke="var(--ch-rule)" stroke-width="0.8" />
@@ -3072,7 +3059,7 @@
 	{#if runSharpeVsCalmar}
 		{@const rsc = runSharpeVsCalmar}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Sharpe vs Calmar Scatter</h2>
+			<h2 class="text-sm font-semibold">Sharpe vs Calmar Scatter <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Each dot = one backtest run · x = Sharpe · y = Calmar · upper-right = excellent on both metrics · n={rsc.dots.length}</p>
 			<svg viewBox="0 0 {rsc.W} {rsc.H}" class="w-full" style="height:100px">
 				<line x1={rsc.zeroX} y1="10" x2={rsc.zeroX} y2={rsc.H - 10} stroke="var(--ch-rule)" stroke-width="0.8"/>
@@ -3090,7 +3077,7 @@
 
 	{#if runStrategyBestProfitRanking}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy Best Run Profit Ranking</h2>
+			<h2 class="text-sm font-semibold">Strategy Best Run Profit Ranking <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Best total profit% achieved across all runs per strategy (≥2 runs)</p>
 			<div class="space-y-1">
 				{#each runStrategyBestProfitRanking as r}
@@ -3111,7 +3098,7 @@
 	{#if runTimeframeWinRateMatrix}
 		{@const rwm = runTimeframeWinRateMatrix}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy × Timeframe Win-Rate Matrix</h2>
+			<h2 class="text-sm font-semibold">Strategy × Timeframe Win-Rate Matrix <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Win rate (% runs with positive profit) per strategy and timeframe · grey = insufficient data</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[9px]">
@@ -3147,7 +3134,7 @@
 
 	{#if runSortinoByStrategy}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Median Sortino by Strategy</h2>
+			<h2 class="text-sm font-semibold">Median Sortino by Strategy <ChartInfo metric="sortino" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Median Sortino ratio across all runs per strategy (≥3 runs) · Sortino penalises only downside volatility</p>
 			<div class="space-y-1">
 				{#each runSortinoByStrategy as r}
@@ -3167,7 +3154,7 @@
 
 	{#if runMaxDrawdownByStrategy}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Median Max Drawdown by Strategy</h2>
+			<h2 class="text-sm font-semibold">Median Max Drawdown by Strategy <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Median max drawdown% per strategy across all runs (≥3 runs) · sorted lowest first — lower is safer</p>
 			<div class="space-y-1">
 				{#each runMaxDrawdownByStrategy as r}
@@ -3186,7 +3173,7 @@
 	{/if}
 	{#if runWinLossRatioByStrategy}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Strategy Win/Loss Ratio Ranking</h2>
+			<h2 class="mb-3 text-sm font-semibold">Strategy Win/Loss Ratio Ranking <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="space-y-1">
 				{#each runWinLossRatioByStrategy as r}
 					{@const color = r.ratio >= 2 ? 'var(--ch-profit-strong)' : r.ratio >= 1 ? 'var(--ch-violet)' : 'var(--ch-loss)'}
@@ -3205,7 +3192,7 @@
 	{/if}
 	{#if runProfitFactorByTimeframe}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Median Profit Factor by Timeframe</h2>
+			<h2 class="mb-3 text-sm font-semibold">Median Profit Factor by Timeframe <ChartInfo metric="factor" {lang} /></h2>
 			<div class="space-y-1">
 				{#each runProfitFactorByTimeframe as r}
 					{@const color = r.good ? 'var(--ch-profit-strong)' : r.pf >= 1 ? 'var(--ch-violet)' : 'var(--ch-loss)'}
@@ -3224,7 +3211,7 @@
 	{/if}
 	{#if runProfitByTimeframe}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Avg Total Profit % by Timeframe</h2>
+			<h2 class="mb-1 text-sm font-semibold">Avg Total Profit % by Timeframe <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Average total_profit_pct across all backtest runs for each timeframe — shows which candle granularity produces highest mean return</p>
 			<div class="space-y-2">
 				{#each runProfitByTimeframe as r}
@@ -3244,7 +3231,7 @@
 	{/if}
 	{#if runSharpeDistribution}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Sharpe Ratio Distribution</h2>
+			<h2 class="mb-1 text-sm font-semibold">Sharpe Ratio Distribution <ChartInfo metric="sharpe" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Histogram of Sharpe ratios across all backtest runs · median {runSharpeDistribution.median.toFixed(2)} · {runSharpeDistribution.positive}/{runSharpeDistribution.total} positive</p>
 			<div class="flex h-20 items-end gap-0.5">
 				{#each runSharpeDistribution.buckets as b}
@@ -3261,7 +3248,7 @@
 	{/if}
 	{#if eventFngMovingAvg}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">7-Event Rolling Avg F&amp;G Index</h2>
+			<h2 class="mb-1 text-sm font-semibold">7-Event Rolling Avg F&amp;G Index <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed Fear &amp; Greed index at trigger times (7-event window) · latest {eventFngMovingAvg.latest.toFixed(1)} · trend {eventFngMovingAvg.trend > 2 ? '↑ rising greed' : eventFngMovingAvg.trend < -2 ? '↓ rising fear' : '→ stable'}</p>
 			<svg viewBox="0 0 {eventFngMovingAvg.W} {eventFngMovingAvg.H}" class="w-full">
 				{#if eventFngMovingAvg.y50 !== null}

@@ -9,6 +9,7 @@
 	import { t, type Lang } from '$lib/i18n';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const s = data.summary;
@@ -2310,7 +2311,7 @@
 		{@const lb = stratLeaderboard}
 		<section class="mt-10">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-lg font-semibold">Strategy Leaderboard <span class="ml-1 text-sm font-normal text-muted-foreground">(most recent run · {lb.total} strategies)</span></h2>
+				<h2 class="text-lg font-semibold">Strategy Leaderboard <span class="ml-1 text-sm font-normal text-muted-foreground">(most recent run · {lb.total} strategies)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<a href="/strategies" class="text-xs text-primary hover:underline">All strategies</a>
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2">

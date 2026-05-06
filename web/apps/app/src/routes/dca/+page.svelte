@@ -6,6 +6,7 @@
 	import { fmtTime, fmtUSD } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
 	import { onMount } from 'svelte';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2347,7 +2348,7 @@
 		{@const wt = weeklyTriggers}
 		<section class="mb-8 rounded-lg border bg-card p-5">
 			<div class="mb-2 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Weekly Trigger Activity <span class="ml-1 font-normal text-muted-foreground text-xs">(last {wt.weeks} weeks)</span></h2>
+				<h2 class="text-sm font-semibold">Weekly Trigger Activity <span class="ml-1 font-normal text-muted-foreground text-xs">(last {wt.weeks} weeks)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 				<span class="font-mono text-xs text-muted-foreground">Σ {fmtUSD(wt.totalUsdt)}</span>
 			</div>
 			<svg viewBox="0 0 {wt.W} {wt.H}" class="w-full" style="height:60px;min-width:280px">
@@ -2414,7 +2415,7 @@
 	{#if severityHistogram}
 		{@const sh = severityHistogram}
 		<section class="mb-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Signal Severity Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({sh.total} triggers · severity 0 = mild → 1 = extreme)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Signal Severity Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({sh.total} triggers · severity 0 = mild → 1 = extreme)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="flex items-end gap-1">
 				{#each sh.buckets as b, i}
 					{@const barH = Math.round((b.total / sh.maxTotal) * 80)}
@@ -2435,7 +2436,7 @@
 
 	{#if kindAmountChart}
 		<section class="mb-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Capital Deployed by Signal Kind <span class="ml-1 font-normal text-muted-foreground text-xs">({data.triggers.length} total triggers)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Capital Deployed by Signal Kind <span class="ml-1 font-normal text-muted-foreground text-xs">({data.triggers.length} total triggers)</span> <ChartInfo metric="signalKind" {lang} /></h2>
 			<div class="space-y-2">
 				{#each kindAmountChart as row}
 					<div class="flex items-center gap-2 text-xs">
@@ -2456,7 +2457,7 @@
 
 	{#if triggerHourChart}
 		<section class="mt-6 mb-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Trigger Hour of Day (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when DCA events fire · {data.triggers.length} total)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Trigger Hour of Day (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when DCA events fire · {data.triggers.length} total)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="flex items-end gap-px">
 				{#each triggerHourChart as h}
 					<div class="flex flex-1 flex-col items-center gap-0.5" title="Hour {h.h}:00 UTC: {h.count} events · {h.amount.toFixed(0)} USDT">
@@ -2478,7 +2479,7 @@
 	{#if sevAmountScatter}
 		{@const sa = sevAmountScatter}
 		<section class="mt-6 mb-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Severity vs Capital Deployed <span class="ml-1 font-normal text-muted-foreground text-xs">({sa.dots.length} events with both fields)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Severity vs Capital Deployed <span class="ml-1 font-normal text-muted-foreground text-xs">({sa.dots.length} events with both fields)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<svg viewBox="0 0 {sa.W} {sa.H}" class="w-full" style="height:{sa.H}px;min-width:200px">
 				<line x1={sa.PAD} y1={sa.PAD} x2={sa.PAD} y2={sa.H - sa.PAD} stroke="var(--ch-rule-faint)" stroke-width="1"/>
 				<line x1={sa.PAD} y1={sa.H - sa.PAD} x2={sa.W - sa.PAD} y2={sa.H - sa.PAD} stroke="var(--ch-rule-faint)" stroke-width="1"/>
@@ -2517,7 +2518,7 @@
 	{#if dcaAmountTrend}
 		{@const dat = dcaAmountTrend}
 		<section class="mt-6 mb-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">DCA Sizing Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(5-event rolling avg · {dat.first} → {dat.last})</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">DCA Sizing Trend <span class="ml-1 font-normal text-muted-foreground text-xs">(5-event rolling avg · {dat.first} → {dat.last})</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<svg viewBox="0 0 {dat.W} {dat.H}" class="w-full" style="height:{dat.H}px">
 				<polyline points={dat.polyline} fill="none"
 					stroke={dat.trend >= 0 ? 'var(--ch-profit-strong)' : 'var(--ch-loss)'}
@@ -2538,8 +2539,7 @@
 		{@const kdh = kindDowHeatmap}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Trigger Kind × Day-of-Week
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(frequency heatmap — darker = more triggers)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(frequency heatmap — darker = more triggers)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[11px]">
 					<thead>
@@ -2581,8 +2581,7 @@
 			<h2 class="mb-2 text-sm font-semibold">Market Stress Timeline
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					(5-event rolling avg severity · latest {(st.latest * 100).toFixed(0)}% · peak {(st.peak * 100).toFixed(0)}%)
-				</span>
-			</h2>
+				</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<svg viewBox="0 0 {st.W} {st.H}" class="w-full" style="height:{st.H}px">
 				<line x1={st.PAD} y1={(st.H - st.PAD - (0.5) * (st.H - st.PAD * 2)).toFixed(1)}
 					x2={st.W - st.PAD} y2={(st.H - st.PAD - (0.5) * (st.H - st.PAD * 2)).toFixed(1)}
@@ -2611,8 +2610,7 @@
 		{@const kcs = kindCumulativeShare}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Capital Deployed by Kind
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(total ${kcs.grandTotal.toFixed(0)} USDT across all triggers)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(total ${kcs.grandTotal.toFixed(0)} USDT across all triggers)</span> <ChartInfo metric="signalKind" {lang} /></h2>
 			<div class="space-y-2">
 				{#each kcs.rows as r}
 					<div class="flex items-center gap-2">
@@ -2637,8 +2635,7 @@
 	{#if amountByDayOfWeek}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Capital Deployed by Weekday
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(total USDT · Mon – Sun)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(total USDT · Mon – Sun)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="flex items-end gap-2" style="height:72px">
 				{#each amountByDayOfWeek as d}
 					<div class="flex flex-1 flex-col items-center gap-1 justify-end"
@@ -2657,8 +2654,7 @@
 		{@const tgd = triggerGapDistribution}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Trigger Gap Distribution
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(time between consecutive triggers · avg {tgd.avgGapH.toFixed(1)}h)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(time between consecutive triggers · avg {tgd.avgGapH.toFixed(1)}h)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="flex items-end gap-3" style="height:72px">
 				{#each tgd.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-1 justify-end">
@@ -2676,8 +2672,7 @@
 	{#if monthlyTriggerSummary}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Monthly Trigger Summary
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({monthlyTriggerSummary.reduce((s,m)=>s+m.count,0)} total triggers · last 12 months)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({monthlyTriggerSummary.reduce((s,m)=>s+m.count,0)} total triggers · last 12 months)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each monthlyTriggerSummary as m}
 					<div class="flex items-center gap-2">
@@ -2702,8 +2697,7 @@
 	{#if avgAmountBySeverity}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Deploy by Severity
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(mean USDT deployed per severity range)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(mean USDT deployed per severity range)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="space-y-2">
 				{#each avgAmountBySeverity as b}
 					<div class="flex items-center gap-3">
@@ -2728,8 +2722,7 @@
 	{#if triggerFngDistribution}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Fear &amp; Greed at Trigger Time
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(distribution of F&amp;G index when DCA signals fired)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(distribution of F&amp;G index when DCA signals fired)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each triggerFngDistribution as b}
 					<div class="flex flex-1 flex-col items-center justify-end"
@@ -2750,8 +2743,7 @@
 	{#if monthlyTriggerVolume}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Monthly DCA Activity (last 12 months)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(trigger count + USDT deployed per calendar month)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(trigger count + USDT deployed per calendar month)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:80px">
 				{#each monthlyTriggerVolume as m}
 					<div class="flex flex-1 flex-col items-center justify-end gap-px"
@@ -2794,8 +2786,7 @@
 			<h2 class="mb-2 text-sm font-semibold">F&amp;G Sentiment at Trigger Time (8-event rolling avg)
 				<span class="ml-2 text-xs font-normal text-muted-foreground">
 					{ftl.drift > 5 ? '↑ trending greedier' : ftl.drift < -5 ? '↓ trending more fearful' : '→ stable'} · latest {ftl.latest.toFixed(0)}
-				</span>
-			</h2>
+				</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<svg viewBox="0 0 {ftl.W} {ftl.H}" class="w-full" style="height:64px">
 				<line x1={ftl.PAD} x2={ftl.W - ftl.PAD} y1={ftl.fearY} y2={ftl.fearY} stroke="var(--ch-profit-light)" stroke-width="1" stroke-dasharray="3 3"/>
 				<line x1={ftl.PAD} x2={ftl.W - ftl.PAD} y1={ftl.greedY} y2={ftl.greedY} stroke="var(--ch-loss-light)" stroke-width="1" stroke-dasharray="3 3"/>
@@ -2813,8 +2804,7 @@
 	{#if severityAmountCumulative}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Total USDT Deployed by Severity
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative capital committed per severity level)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative capital committed per severity level)</span> <ChartInfo metric="fearGreed" {lang} /></h2>
 			<div class="mt-3 flex gap-2" style="height:32px">
 				{#each severityAmountCumulative.totals as r, i}
 					{#if r.total > 0}
@@ -2843,8 +2833,7 @@
 	{#if triggerDayOfMonth}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Triggers by Day of Month
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(does DCA fire more at month start, mid, or end?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(does DCA fire more at month start, mid, or end?)</span> <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-px" style="height:64px">
 				{#each triggerDayOfMonth as d}
 					<div class="flex flex-1 flex-col items-center">
@@ -2861,8 +2850,7 @@
 	{#if fngKindAvg}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Avg F&amp;G When Each Kind Fires
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(which event types trigger in fearful vs greedy markets?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(which event types trigger in fearful vs greedy markets?)</span> <ChartInfo metric="scatter" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each fngKindAvg as r}
 					<div class="flex items-center gap-2">
@@ -2883,8 +2871,7 @@
 		{@const kcl = kindCumulativeLines}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Cumulative USDT Deployed by Kind
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(running total per event type over all triggers chronologically)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(running total per event type over all triggers chronologically)</span> <ChartInfo metric="signalKind" {lang} /></h2>
 			<svg viewBox="0 0 {kcl.W} {kcl.H}" class="mt-3 w-full" style="height:80px">
 				{#each kcl.lines as ln}
 					<polyline points={ln.poly} fill="none" stroke={ln.color} stroke-width="1.5"/>
@@ -2905,8 +2892,7 @@
 		{@const tad = triggerAmountDistribution}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">DCA Amount Distribution
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(histogram of individual trigger sizes · avg ${tad.avg.toFixed(0)} · median ${tad.median.toFixed(0)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(histogram of individual trigger sizes · avg ${tad.avg.toFixed(0)} · median ${tad.median.toFixed(0)})</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each tad.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5">
@@ -2925,7 +2911,7 @@
 	{#if fngAmountScatter}
 		{@const fas = fngAmountScatter}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Fear &amp; Greed vs Deploy Size</h2>
+			<h2 class="text-base font-semibold">Fear &amp; Greed vs Deploy Size <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one DCA trigger · X = FNG index · Y = USDT deployed</p>
 			<svg viewBox="0 0 {fas.W} {fas.H}" class="mt-2 w-full" style="height:80px">
 				{#each fas.mapped as p}
@@ -2942,7 +2928,7 @@
 	{#if triggerIntervalDistribution}
 		{@const tid = triggerIntervalDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Trigger Interval Distribution</h2>
+			<h2 class="text-base font-semibold">Trigger Interval Distribution <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Hours between consecutive DCA triggers across {tid.total} gaps · median {tid.median}h</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each tid.buckets as b}
@@ -2962,7 +2948,7 @@
 	{#if triggerHourDistribution}
 		{@const thd = triggerHourDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Trigger Hour of Day (UTC)</h2>
+			<h2 class="text-base font-semibold">Trigger Hour of Day (UTC) <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">DCA triggers by UTC hour across {thd.total} events — reveals market-session clustering</p>
 			<div class="mt-3 flex items-end gap-px" style="height:60px">
 				{#each thd.counts as h}
@@ -2980,7 +2966,7 @@
 
 	{#if triggerMonthlyCount}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">DCA Triggers per Month</h2>
+			<h2 class="text-base font-semibold">DCA Triggers per Month <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Monthly DCA event count — shows when markets were most fearful and DCA activity peaked</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each triggerMonthlyCount as r}
@@ -2999,7 +2985,7 @@
 
 	{#if triggerAmountByMonth}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">DCA Capital Deployed per Month (USDT)</h2>
+			<h2 class="text-base font-semibold">DCA Capital Deployed per Month (USDT) <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Total USDT deployed via DCA triggers per calendar month — shows capital commitment over time</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each triggerAmountByMonth as r}
@@ -3020,7 +3006,7 @@
 
 	{#if kindFngProfile}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Average Fear & Greed by Trigger Kind</h2>
+			<h2 class="text-base font-semibold">Average Fear & Greed by Trigger Kind <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Mean FNG index value at time of trigger for each DCA kind — lower = more fearful conditions</p>
 			<div class="mt-3 space-y-2">
 				{#each kindFngProfile as r}
@@ -3040,7 +3026,7 @@
 
 	{#if triggerSeverityBreakdown}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Trigger Severity Breakdown</h2>
+			<h2 class="text-sm font-semibold">Trigger Severity Breakdown <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Count, average DCA amount, and average Fear &amp; Greed index by severity level</p>
 			<div class="space-y-2">
 				{#each triggerSeverityBreakdown as r}
@@ -3062,7 +3048,7 @@
 	{#if triggerCumulativeAmount}
 		{@const tca = triggerCumulativeAmount}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Cumulative DCA Deployed</h2>
+			<h2 class="text-sm font-semibold">Cumulative DCA Deployed <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Running total of USDT deployed across all {tca.count} triggers · total ${tca.total.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
 			<svg viewBox="0 0 {tca.W} {tca.H}" class="w-full" style="height:64px">
 				<polyline points={tca.poly} fill="none" stroke="var(--ch-violet-strong)" stroke-width="1.5"/>
@@ -3077,7 +3063,7 @@
 	{#if triggerFngTimeline}
 		{@const tft = triggerFngTimeline}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Fear &amp; Greed at Each Trigger</h2>
+			<h2 class="text-sm font-semibold">Fear &amp; Greed at Each Trigger <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">FNG value recorded at each DCA trigger · avg {tft.avgFng.toFixed(1)} · {tft.count} triggers · dashed lines at 25 (fear) and 75 (greed)</p>
 			<svg viewBox="0 0 {tft.W} {tft.H}" class="w-full" style="height:64px">
 				<line x1={tft.PAD} y1={tft.fearY} x2={tft.W - tft.PAD} y2={tft.fearY} stroke="var(--ch-profit-light)" stroke-width="0.8" stroke-dasharray="3,2"/>
@@ -3094,7 +3080,7 @@
 	{#if triggerKindTimeline}
 		{@const tkt = triggerKindTimeline}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Trigger Kind Mix by Month</h2>
+			<h2 class="text-sm font-semibold">Trigger Kind Mix by Month <ChartInfo metric="signalKind" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Monthly count of each DCA trigger kind · {tkt.rows.length} months · {tkt.kinds.join(', ')}</p>
 			<div class="flex flex-col gap-1">
 				{#each tkt.rows as row}
@@ -3129,7 +3115,7 @@
 
 	{#if triggerDowDistribution}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Triggers by Day of Week</h2>
+			<h2 class="text-sm font-semibold">Triggers by Day of Week <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">How many DCA triggers fired on each day of week · reveals weekly seasonality in market stress events</p>
 			<div class="flex items-end gap-2" style="height:64px">
 				{#each triggerDowDistribution as d}
@@ -3151,7 +3137,7 @@
 	{#if triggerAmountVsSeverity}
 		{@const tas = triggerAmountVsSeverity}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">DCA Amount vs Event Severity</h2>
+			<h2 class="text-sm font-semibold">DCA Amount vs Event Severity <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Scatter of amount deployed (USDT) vs event severity score · coloured by trigger kind · higher severity → more deployed?</p>
 			<svg viewBox="0 0 {tas.W} {tas.H}" class="w-full" style="height:90px">
 				{#each tas.dots as d}
@@ -3166,7 +3152,7 @@
 	{/if}
 	{#if dcaKindSequence}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Signal Kind Transition Matrix</h2>
+			<h2 class="mb-3 text-sm font-semibold">Signal Kind Transition Matrix <ChartInfo metric="signalKind" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">How often each signal type is followed by another · row = current · column = next event</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
@@ -3203,7 +3189,7 @@
 	{/if}
 	{#if dcaTriggerStreaks}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Same-Kind Trigger Streak Length</h2>
+			<h2 class="mb-3 text-sm font-semibold">Same-Kind Trigger Streak Length <ChartInfo metric="streak" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each dcaTriggerStreaks as r}
 					{@const KIND_COLORS: Record<string, string> = { FLASH: 'var(--ch-loss)', FAST: 'var(--ch-warn)', SUSTAIN: 'var(--ch-violet)', CAPITUL: 'var(--ch-violet-strong)' }}
@@ -3222,7 +3208,7 @@
 	{/if}
 	{#if dcaAmountByFngBucket}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Avg USDT Deployed by Fear &amp; Greed Level</h2>
+			<h2 class="mb-1 text-sm font-semibold">Avg USDT Deployed by Fear &amp; Greed Level <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Average DCA amount per trigger event, grouped by F&amp;G index range — shows which sentiment levels trigger larger deployments</p>
 			<div class="space-y-2">
 				{#each dcaAmountByFngBucket as b}
@@ -3243,7 +3229,7 @@
 	{/if}
 	{#if dcaTriggerByKindHour}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Trigger Hour Distribution by Kind</h2>
+			<h2 class="mb-1 text-sm font-semibold">Trigger Hour Distribution by Kind <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">UTC hour-of-day frequency for each trigger kind — reveals if different signal types cluster at specific market sessions</p>
 			<div class="space-y-4">
 				{#each dcaTriggerByKindHour.kinds as k}
@@ -3268,7 +3254,7 @@
 	{/if}
 	{#if dcaWeeklyAmountMovingAvg}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">4-Week Rolling Avg USDT Deployed</h2>
+			<h2 class="mb-1 text-sm font-semibold">4-Week Rolling Avg USDT Deployed <ChartInfo metric="dcaTrigger" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed weekly DCA spend using 4-week moving average · latest ${dcaWeeklyAmountMovingAvg.latest.toFixed(0)} · overall avg ${dcaWeeklyAmountMovingAvg.overall.toFixed(0)} · {dcaWeeklyAmountMovingAvg.count} data points</p>
 			<svg viewBox="0 0 {dcaWeeklyAmountMovingAvg.W} {dcaWeeklyAmountMovingAvg.H}" class="w-full">
 				<polyline points={dcaWeeklyAmountMovingAvg.polyline} fill="none" stroke="var(--ch-violet-strong)" stroke-width="2"/>
@@ -3279,7 +3265,7 @@
 
 	{#if dcaCumulativeByKind}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Cumulative USDT Deployed by Trigger Kind</h2>
+			<h2 class="mb-1 text-sm font-semibold">Cumulative USDT Deployed by Trigger Kind <ChartInfo metric="signalKind" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Each line = running cumulative sum of USDT deployed for that trigger kind over time · steeper slope = more aggressive deployment of that type</p>
 			<svg viewBox="0 0 {dcaCumulativeByKind.W} {dcaCumulativeByKind.H}" class="w-full">
 				{#each dcaCumulativeByKind.lines as line}
@@ -3297,7 +3283,7 @@
 
 	{#if dcaFngBucketTriggerCount}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Trigger Count by Fear &amp; Greed Bucket</h2>
+			<h2 class="mb-1 text-sm font-semibold">Trigger Count by Fear &amp; Greed Bucket <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">How many DCA triggers fired in each market sentiment zone · reveals whether the system skews toward fear-driven or balanced deployment</p>
 			<div class="space-y-2">
 				{#each dcaFngBucketTriggerCount.buckets as b}
@@ -3317,7 +3303,7 @@
 
 	{#if dcaSeverityTrendTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Trigger Severity Trend (5-Trigger Rolling Avg)</h2>
+			<h2 class="mb-1 text-sm font-semibold">Trigger Severity Trend (5-Trigger Rolling Avg) <ChartInfo metric="fearGreed" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed severity score over time (mild=1, moderate=2, severe=3, extreme=4) · rising = conditions worsening · falling = recovery · latest {dcaSeverityTrendTimeline.latest.toFixed(2)}</p>
 			<svg viewBox="0 0 {dcaSeverityTrendTimeline.W} {dcaSeverityTrendTimeline.H}" class="w-full">
 				<line x1="0" y1={dcaSeverityTrendTimeline.avgY} x2={dcaSeverityTrendTimeline.W} y2={dcaSeverityTrendTimeline.avgY} stroke="var(--ch-warn-light)" stroke-width="1" stroke-dasharray="4,3"/>

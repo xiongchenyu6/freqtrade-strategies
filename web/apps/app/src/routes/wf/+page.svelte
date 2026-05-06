@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { WfResult } from '$lib/types';
 	import { t, type Lang } from '$lib/i18n';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2228,7 +2229,7 @@
 		{#if windowWaterfall}
 			{@const ww = windowWaterfall}
 			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Window Waterfall — {ww.strategy} <span class="ml-1 font-normal text-muted-foreground text-xs">(top stability strategy · sequential out-of-sample windows)</span></h2>
+				<h2 class="mb-4 text-sm font-semibold">Window Waterfall — {ww.strategy} <span class="ml-1 font-normal text-muted-foreground text-xs">(top stability strategy · sequential out-of-sample windows)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<div class="flex items-end gap-1">
 					{#each ww.bars as bar, i}
 						{@const h = bar.profit != null ? Math.round((Math.abs(bar.profit) / ww.maxAbs) * 72) : 0}
@@ -2252,7 +2253,7 @@
 
 		{#if stabilityLeaderboard}
 			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Strategy Stability Leaderboard <span class="ml-1 font-normal text-muted-foreground text-xs">(% of positive out-of-sample windows)</span></h2>
+				<h2 class="mb-4 text-sm font-semibold">Strategy Stability Leaderboard <span class="ml-1 font-normal text-muted-foreground text-xs">(% of positive out-of-sample windows)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<div class="space-y-2">
 					{#each stabilityLeaderboard as row, i}
 						<div class="flex items-center gap-2 text-xs">
@@ -2279,7 +2280,7 @@
 
 		{#if allWindows.length >= 2 && byStrategy.length >= 2}
 			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Window Profitability Rate <span class="ml-1 font-normal text-muted-foreground text-xs">(% of strategies profitable per window · {byStrategy.length} strategies)</span></h2>
+				<h2 class="mb-4 text-sm font-semibold">Window Profitability Rate <span class="ml-1 font-normal text-muted-foreground text-xs">(% of strategies profitable per window · {byStrategy.length} strategies)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 				<div class="flex items-end gap-1">
 					{#each allWindows as w}
 						{@const agg = windowAgg[w]}
@@ -2305,7 +2306,7 @@
 		{#if allWindows.length >= 2 && byStrategy.length >= 2}
 			{@const maxN = Math.max(1, ...allWindows.map(w => windowAgg[w]?.n ?? 0))}
 			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Strategy Coverage per Window <span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies tested each window)</span></h2>
+				<h2 class="mb-4 text-sm font-semibold">Strategy Coverage per Window <span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies tested each window)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 				<div class="flex items-end gap-1">
 					{#each allWindows as w}
 						{@const n = windowAgg[w]?.n ?? 0}
@@ -2324,7 +2325,7 @@
 
 		{#if stratProfitSumRanking}
 			<section class="mt-6 rounded-lg border bg-card p-4">
-				<h2 class="mb-3 text-sm font-semibold">Strategy Profit Sum Ranking <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% across all walk-forward windows)</span></h2>
+				<h2 class="mb-3 text-sm font-semibold">Strategy Profit Sum Ranking <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% across all walk-forward windows)</span> <ChartInfo metric="walkForward" {lang} /></h2>
 				<div class="space-y-1.5">
 					{#each stratProfitSumRanking as r, i}
 						<div class="flex items-center gap-2 text-xs">
@@ -2347,7 +2348,7 @@
 		{#if windowAvgTrend}
 			{@const wat = windowAvgTrend}
 			<section class="mt-6 rounded-lg border bg-card p-4">
-				<h2 class="mb-3 text-sm font-semibold">Avg Profit Per Window <span class="ml-1 font-normal text-muted-foreground text-xs">(cross-strategy average · market regime signal)</span></h2>
+				<h2 class="mb-3 text-sm font-semibold">Avg Profit Per Window <span class="ml-1 font-normal text-muted-foreground text-xs">(cross-strategy average · market regime signal)</span> <ChartInfo metric="walkForward" {lang} /></h2>
 				<svg viewBox="0 0 {wat.W} {wat.H}" class="w-full" style="height:{wat.H}px">
 					{#if wat.zeroY > wat.PAD && wat.zeroY < wat.H - wat.PAD}
 						<line x1={wat.PAD} y1={wat.zeroY} x2={wat.W - wat.PAD} y2={wat.zeroY}
@@ -2372,7 +2373,7 @@
 
 		{#if stratWinFrequency && stratWinFrequency.length >= 2}
 			<section class="mt-6 rounded-lg border bg-card p-4">
-				<h2 class="mb-3 text-sm font-semibold">Window Win Frequency <span class="ml-1 font-normal text-muted-foreground text-xs">(positive windows / total windows per strategy)</span></h2>
+				<h2 class="mb-3 text-sm font-semibold">Window Win Frequency <span class="ml-1 font-normal text-muted-foreground text-xs">(positive windows / total windows per strategy)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 				<div class="space-y-1.5">
 					{#each stratWinFrequency as r, i}
 						<div class="flex items-center gap-2 text-xs">
@@ -2417,8 +2418,7 @@
 	{#if windowBestWorstContrast}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Window Strategy Spread
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(best minus worst strategy profit per window · high spread = high dispersion)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(best minus worst strategy profit per window · high spread = high dispersion)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="space-y-2">
 				{#each windowBestWorstContrast as r}
 					<div class="flex items-center gap-2">
@@ -2442,8 +2442,7 @@
 	{#if windowParticipationRate}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Window Participation Rate
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies have results per window)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies have results per window)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each windowParticipationRate as r}
 					<div class="flex items-center gap-2">
@@ -2471,8 +2470,7 @@
 	{#if avgTradesPerWindow}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Trades per Window
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(across all strategies with ok results)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(across all strategies with ok results)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:72px">
 				{#each avgTradesPerWindow as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5 justify-end"
@@ -2495,8 +2493,7 @@
 	{#if strategyWinStreak}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Longest Profitable Window Streak
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(consecutive profitable windows · top 10 strategies)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(consecutive profitable windows · top 10 strategies)</span> <ChartInfo metric="streak" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each strategyWinStreak as r, i}
 					<div class="flex items-center gap-2">
@@ -2523,8 +2520,7 @@
 		{@const swh = strategyWindowHeatmap}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Strategy × Window Heatmap
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(profit% per cell · green = profit · red = loss)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(profit% per cell · green = profit · red = loss)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[10px]">
 					<thead>
@@ -2563,8 +2559,7 @@
 	{#if stratAvgProfitPerWindow}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Profit per Window by Strategy
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg tot_profit% per participated window · min 2 windows)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg tot_profit% per participated window · min 2 windows)</span> <ChartInfo metric="avgProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each stratAvgProfitPerWindow as r, i}
 					<div class="flex items-center gap-2">
@@ -2591,8 +2586,7 @@
 		{@const slwp = stratLastWindowPerf}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Last Window Performance
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(window: {slwp.window} · current form snapshot)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(window: {slwp.window} · current form snapshot)</span> <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each slwp.rows as r, i}
 					<div class="flex items-center gap-2">
@@ -2616,8 +2610,7 @@
 	{#if wfTimeframeBreakdown}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Timeframe (WF)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({data.results.filter(r=>r.status==='ok').length} ok results across all windows)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({data.results.filter(r=>r.status==='ok').length} ok results across all windows)</span> <ChartInfo metric="avgProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each wfTimeframeBreakdown as r}
 					<div class="flex items-center gap-2">
@@ -2642,8 +2635,7 @@
 	{#if windowVolatility}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Strategy Profit Spread per Window
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of strategy profits — taller = more divergence between strategies that window)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of strategy profits — taller = more divergence between strategies that window)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="flex items-end gap-0.5" style="height:64px">
 				{#each windowVolatility as w}
 					<div class="flex flex-1 flex-col items-center justify-end"
@@ -2666,8 +2658,7 @@
 	{#if strategyMomentum}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Strategy Momentum
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last-3-window avg vs all-window avg profit — improving or declining?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last-3-window avg vs all-window avg profit — improving or declining?)</span> <ChartInfo metric="avgProfit" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyMomentum as r}
 					<div class="flex items-center gap-2">
@@ -2688,8 +2679,7 @@
 		{@const wpt = windowParticipationTrend}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Strategy Participation Over Time
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies ran each walk-forward window · {wpt.growing ? 'growing ↑' : 'stable →'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies ran each walk-forward window · {wpt.growing ? 'growing ↑' : 'stable →'})</span> <ChartInfo metric="walkForward" {lang} /></h2>
 			<svg viewBox="0 0 {wpt.W} {wpt.H}" class="w-full" style="height:64px">
 				<polyline points={wpt.polyline} fill="none" stroke="var(--ch-violet)" stroke-width="1.5"/>
 				{#each wpt.pts as p, i}
@@ -2705,8 +2695,7 @@
 	{#if windowProfitRange}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Window Profit Spread
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(min/avg/max profit% per window — how wide is the strategy spread?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(min/avg/max profit% per window — how wide is the strategy spread?)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<svg viewBox="0 0 {windowProfitRange.length * 18} 80" class="w-full" style="height:80px">
 				<line x1="0" x2={windowProfitRange.length * 18} y1="40" y2="40" stroke="var(--ch-rule)" stroke-width="1"/>
 				{#each windowProfitRange as r, i}
@@ -2724,8 +2713,7 @@
 	{#if windowChampionFrequency}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Window Champion Leaderboard
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many walk-forward windows each strategy won)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many walk-forward windows each strategy won)</span> <ChartInfo metric="walkForward" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each windowChampionFrequency as r, i}
 					<div class="flex items-center gap-2">
@@ -2745,8 +2733,7 @@
 	{#if strategyProfitStdDev}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Strategy Profit Consistency
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of profit% across windows · lower = more consistent)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(std dev of profit% across windows · lower = more consistent)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyProfitStdDev as r}
 					<div class="flex items-center gap-2">
@@ -2765,7 +2752,7 @@
 
 	{#if windowTopStrategyProfit}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Window Peak Profit</h2>
+			<h2 class="text-base font-semibold">Window Peak Profit <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Best single-strategy profit% achieved per walk-forward window</p>
 			<div class="mt-3 space-y-1">
 				{#each windowTopStrategyProfit as r}
@@ -2785,7 +2772,7 @@
 
 	{#if strategyConsistencyScore}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Consistency Score</h2>
+			<h2 class="text-base font-semibold">Strategy Consistency Score <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Fraction of walk-forward windows where each strategy was profitable (min 3 windows)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyConsistencyScore as r}
@@ -2805,7 +2792,7 @@
 
 	{#if strategyAvgTradesRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Avg Trades per Window by Strategy</h2>
+			<h2 class="text-base font-semibold">Avg Trades per Window by Strategy <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average number of trades per walk-forward window per strategy (min 2 windows)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyAvgTradesRanking as r}
@@ -2825,7 +2812,7 @@
 
 	{#if strategyWinWindowRatio}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Window Win Rate</h2>
+			<h2 class="text-base font-semibold">Strategy Window Win Rate <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">% of walk-forward windows each strategy finished profitable (min 3 windows) — robustness across regimes</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyWinWindowRatio as r, i}
@@ -2846,7 +2833,7 @@
 
 	{#if windowAvgProfitTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Window Average Profit Timeline</h2>
+			<h2 class="text-base font-semibold">Window Average Profit Timeline <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average profit% per walk-forward window across all strategies — identifies which periods were collectively profitable</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each windowAvgProfitTimeline as r}
@@ -2867,7 +2854,7 @@
 
 	{#if strategyBestSingleWindow}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Best Single Window Profit</h2>
+			<h2 class="text-base font-semibold">Strategy Best Single Window Profit <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies by their single highest profit% in any walk-forward window — peak performance potential</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyBestSingleWindow as r, i}
@@ -2888,7 +2875,7 @@
 
 	{#if windowLoserCount}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Window Loser Count</h2>
+			<h2 class="text-base font-semibold">Window Loser Count <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Strategies that lost money per walk-forward window — high count = harsh market regime</p>
 			<div class="mt-3 space-y-1">
 				{#each windowLoserCount as r}
@@ -2908,7 +2895,7 @@
 
 	{#if strategyAvgProfitPerTrade}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy Avg Profit per Trade (WF)</h2>
+			<h2 class="text-sm font-semibold">Strategy Avg Profit per Trade (WF) <ChartInfo metric="avgProfit" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Average profit% per individual trade across all walk-forward windows (≥5 trades, ≥2 windows)</p>
 			<div class="space-y-1">
 				{#each strategyAvgProfitPerTrade as r}
@@ -2929,7 +2916,7 @@
 	{#if windowTotalProfitDistribution}
 		{@const wtpd = windowTotalProfitDistribution}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Window Profit Distribution</h2>
+			<h2 class="text-sm font-semibold">Window Profit Distribution <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Histogram of total profit% across all WF windows · median {wtpd.median.toFixed(1)}% · {wtpd.positive}/{wtpd.total} profitable</p>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each wtpd.buckets as b}
@@ -2948,7 +2935,7 @@
 
 	{#if windowStrategyCount}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategies per WF Window</h2>
+			<h2 class="text-sm font-semibold">Strategies per WF Window <ChartInfo metric="walkForward" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Number of distinct strategies participating in each walk-forward window · declining = strategies being retired</p>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each windowStrategyCount as r}
@@ -2968,7 +2955,7 @@
 	{#if strategyTimeframeWinWindowPct}
 		{@const stww = strategyTimeframeWinWindowPct}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy × Timeframe Win Window %</h2>
+			<h2 class="text-sm font-semibold">Strategy × Timeframe Win Window % <ChartInfo metric="timeframe" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">% of walk-forward windows with positive profit per strategy × timeframe (≥3 windows) · green ≥60% · yellow 40–60% · red &lt;40%</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[9px]">
@@ -3004,7 +2991,7 @@
 
 	{#if windowProfitByTimeframe}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Avg Window Profit by Timeframe</h2>
+			<h2 class="text-sm font-semibold">Avg Window Profit by Timeframe <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Average tot_profit% per walk-forward window, grouped by timeframe (≥5 windows) · reveals which TFs produce more profitable windows</p>
 			<div class="space-y-1">
 				{#each windowProfitByTimeframe as r}
@@ -3025,7 +3012,7 @@
 
 	{#if windowStrategyProfitRanking}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Total WF Profit by Strategy</h2>
+			<h2 class="text-sm font-semibold">Total WF Profit by Strategy <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Sum of tot_profit% across all walk-forward windows per strategy (≥3 windows) · shows cumulative WF performance</p>
 			<div class="space-y-1">
 				{#each windowStrategyProfitRanking as r}
@@ -3046,7 +3033,7 @@
 	{#if windowLabelProfitTimeline}
 		{@const wlpt = windowLabelProfitTimeline}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Walk-Forward Window Profit Timeline</h2>
+			<h2 class="mb-1 text-sm font-semibold">Walk-Forward Window Profit Timeline <ChartInfo metric="walkForward" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Avg profit across all strategies per WF window · shows market regime difficulty over time</p>
 			<svg viewBox="0 0 {wlpt.W} {wlpt.H}" class="w-full" style="height:82px">
 				<line x1={wlpt.PAD} y1={wlpt.zeroY} x2={wlpt.W - wlpt.PAD} y2={wlpt.zeroY} stroke="var(--ch-axis-muted)" stroke-width="1" stroke-dasharray="3,3"/>
@@ -3065,7 +3052,7 @@
 	{/if}
 	{#if strategyWorstWindowLoss}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Strategy Worst Single Window Loss</h2>
+			<h2 class="mb-3 text-sm font-semibold">Strategy Worst Single Window Loss <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="space-y-1">
 				{#each strategyWorstWindowLoss as r}
 					<div class="flex items-center gap-2">
@@ -3083,7 +3070,7 @@
 	{/if}
 	{#if strategyConsecutiveLossWindows}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Max Consecutive Losing Windows</h2>
+			<h2 class="mb-1 text-sm font-semibold">Max Consecutive Losing Windows <ChartInfo metric="wfConsistency" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Longest unbroken streak of walk-forward windows with negative profit per strategy — measures drawdown duration risk</p>
 			<div class="space-y-2">
 				{#each strategyConsecutiveLossWindows as r}
@@ -3104,7 +3091,7 @@
 	{/if}
 	{#if windowCumulativeProfitByStrategy}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Cumulative WF Profit by Strategy</h2>
+			<h2 class="mb-1 text-sm font-semibold">Cumulative WF Profit by Strategy <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">Running cumulative total profit % across walk-forward windows (chronological) — top 5 strategies by final cumulative score</p>
 			<svg viewBox="0 0 {windowCumulativeProfitByStrategy.W} {windowCumulativeProfitByStrategy.H}" class="w-full">
 				<line x1="0" y1={windowCumulativeProfitByStrategy.zeroY} x2={windowCumulativeProfitByStrategy.W} y2={windowCumulativeProfitByStrategy.zeroY} stroke="var(--ch-axis-faint)" stroke-width="1" stroke-dasharray="3,2"/>
@@ -3125,7 +3112,7 @@
 	{/if}
 	{#if windowProfitConcentration}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Top-Strategy Profit Share per Window</h2>
+			<h2 class="mb-1 text-sm font-semibold">Top-Strategy Profit Share per Window <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mb-3 text-[10px] text-muted-foreground">% of each window's total positive profit captured by the single best strategy — high = one strategy dominates, low = profits spread across strategies</p>
 			<div class="space-y-1">
 				{#each windowProfitConcentration as r}

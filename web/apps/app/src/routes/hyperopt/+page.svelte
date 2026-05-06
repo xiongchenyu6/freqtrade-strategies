@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { HyperoptEpoch } from '$lib/types';
 	import { t, type Lang } from '$lib/i18n';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2526,7 +2527,7 @@
 			<!-- Parameter importance -->
 			{#if paramImportance.length > 0}
 				<section class="mt-8 rounded-xl border bg-card p-5">
-					<h2 class="mb-4 text-sm font-semibold">Parameter Importance <span class="ml-1 font-normal text-muted-foreground text-xs">(|Pearson corr| with loss · higher = more impact)</span></h2>
+					<h2 class="mb-4 text-sm font-semibold">Parameter Importance <span class="ml-1 font-normal text-muted-foreground text-xs">(|Pearson corr| with loss · higher = more impact)</span> <ChartInfo metric="hyperoptParam" {lang} /></h2>
 					<div class="space-y-2">
 						{#each paramImportance as p}
 							{@const absCorr = Math.abs(p.corr)}
@@ -2611,7 +2612,7 @@
 	{#if bestProfitCurve}
 		{@const bpc = bestProfitCurve}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Best Profit Discovery Curve <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {bpc.total} epochs · running-best profit)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Best Profit Discovery Curve <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {bpc.total} epochs · running-best profit)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<svg viewBox="0 0 {bpc.W} {bpc.H}" class="w-full" style="height:{bpc.H}px;min-width:240px">
 				<!-- zero line -->
 				{#if bpc.zeroY >= bpc.PAD && bpc.zeroY <= bpc.H - bpc.PAD}
@@ -2647,7 +2648,7 @@
 		{@const ebp = epochBatchProfitability}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Epoch Batch Profitability <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {ebp.batches.length} batches of 20)</span></h2>
+				<h2 class="text-sm font-semibold">Epoch Batch Profitability <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {ebp.batches.length} batches of 20)</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 				<span class="font-mono text-xs {ebp.avg >= 0.5 ? 'text-green-400' : 'text-amber-400'}">avg {(ebp.avg * 100).toFixed(0)}% profitable</span>
 			</div>
 			<svg viewBox="0 0 {ebp.W} {ebp.H}" class="w-full" style="height:{ebp.H}px;min-width:240px">
@@ -2678,7 +2679,7 @@
 
 	{#if crossStrategyBest && crossStrategyBest.length >= 2}
 		<section class="mt-10 rounded-xl border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Cross-Strategy Best Epoch <span class="ml-1 font-normal text-muted-foreground text-xs">({crossStrategyBest.length} strategies · best loss epoch each)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Cross-Strategy Best Epoch <span class="ml-1 font-normal text-muted-foreground text-xs">({crossStrategyBest.length} strategies · best loss epoch each)</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs font-mono">
 					<thead class="bg-secondary text-[10px] uppercase text-muted-foreground">
@@ -2721,7 +2722,7 @@
 	{#if epochProfitHist}
 		{@const eph = epochProfitHist}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Epoch Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {eph.total} epochs)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Epoch Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {eph.total} epochs)</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {eph.W} {eph.H}" class="w-full" style="height:{eph.H}px;min-width:240px">
 				{#if eph.zeroX > 0 && eph.zeroX < eph.W}
 					<line x1={eph.zeroX} y1="0" x2={eph.zeroX} y2={eph.H - 12} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -2751,7 +2752,7 @@
 	{#if lossVsProfitScatter}
 		{@const lvp = lossVsProfitScatter}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Loss vs Profit Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {lvp.dots.length} epochs)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Loss vs Profit Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {lvp.dots.length} epochs)</span> <ChartInfo metric="scatter" {lang} /></h2>
 			<svg viewBox="0 0 {lvp.W} {lvp.H}" class="w-full" style="height:{lvp.H}px;min-width:280px">
 				<!-- zero profit line -->
 				{#if lvp.zeroY >= lvp.PAD && lvp.zeroY <= lvp.H - lvp.PAD}
@@ -2778,7 +2779,7 @@
 
 	{#if paramRangeStats && paramRangeStats.length > 0}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Parameter Search Range <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {epochs.length} epochs)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Parameter Search Range <span class="ml-1 font-normal text-muted-foreground text-xs">({currentStrategy} · {epochs.length} epochs)</span> <ChartInfo metric="hyperoptParam" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead>
@@ -2819,7 +2820,7 @@
 	{#if drawdownDistribution}
 		{@const ddd = drawdownDistribution}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Drawdown Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({ddd.total} epochs · avg {ddd.avg.toFixed(1)}%)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Drawdown Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">({ddd.total} epochs · avg {ddd.avg.toFixed(1)}%)</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="flex items-end gap-2 h-20">
 				{#each ddd.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -2836,7 +2837,7 @@
 	{#if winrateTradeScatter}
 		{@const wts = winrateTradeScatter}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Win Rate vs Trade Count <span class="ml-1 font-normal text-muted-foreground text-xs">({wts.dots.length} epochs)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Win Rate vs Trade Count <span class="ml-1 font-normal text-muted-foreground text-xs">({wts.dots.length} epochs)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<svg viewBox="0 0 {wts.W} {wts.H}" class="w-full" style="height:{wts.H}px">
 				{#if wts.fiftyY > wts.PAD && wts.fiftyY < wts.H - wts.PAD}
 					<line x1={wts.PAD} y1={wts.fiftyY} x2={wts.W - wts.PAD} y2={wts.fiftyY}
@@ -2863,8 +2864,7 @@
 			<h2 class="mb-3 text-sm font-semibold">Trade Count vs Profit Scatter
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					({tcp.dots.length} epochs · r = {tcp.corr >= 0 ? '+' : ''}{tcp.corr.toFixed(2)})
-				</span>
-			</h2>
+				</span> <ChartInfo metric="tradeCount" {lang} /></h2>
 			<svg viewBox="0 0 {tcp.W} {tcp.H}" class="w-full" style="height:{tcp.H}px">
 				<line x1={tcp.PAD} y1={tcp.zeroY.toFixed(1)} x2={tcp.W - tcp.PAD} y2={tcp.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -2890,8 +2890,7 @@
 			<h2 class="mb-2 text-sm font-semibold">Loss Convergence Curve
 				<span class="ml-1 font-normal text-muted-foreground text-xs">
 					({elc.total} epochs · best at epoch {elc.bestEpoch} · loss {elc.vMin.toFixed(3)})
-				</span>
-			</h2>
+				</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {elc.W} {elc.H}" class="w-full" style="height:{elc.H}px">
 				<polyline points={elc.polyline} fill="none" stroke="var(--ch-violet-strong)" stroke-width="1.5"/>
 				<text x={elc.PAD} y={elc.PAD + 8} font-size="7" fill="var(--ch-rule-strong)">{elc.vMax.toFixed(2)}</text>
@@ -2904,8 +2903,7 @@
 	{#if bestEpochParamComparison}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best-Epoch Param Fingerprint
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(median param value: all epochs vs best epochs · dot = median)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(median param value: all epochs vs best epochs · dot = median)</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<div class="space-y-2">
 				{#each bestEpochParamComparison as r}
 					<div class="flex items-center gap-2">
@@ -2937,8 +2935,7 @@
 	{#if winrateBucketProfit}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Win Rate vs Profit by Bucket
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_total per WR tier · {epochs.length} epochs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_total per WR tier · {epochs.length} epochs)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="flex items-end gap-3" style="height:80px">
 				{#each winrateBucketProfit as b}
 					<div class="flex flex-1 flex-col items-center gap-1 justify-end">
@@ -2963,8 +2960,7 @@
 		{@const hvp = holdingVsProfit}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Avg Hold Duration vs Profit
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({hvp.dots.length} epochs · r = {hvp.corr >= 0 ? '+' : ''}{hvp.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({hvp.dots.length} epochs · r = {hvp.corr >= 0 ? '+' : ''}{hvp.corr.toFixed(2)})</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			<svg viewBox="0 0 {hvp.W} {hvp.H}" class="w-full" style="height:{hvp.H}px">
 				<line x1={hvp.PAD} y1={hvp.zeroY.toFixed(1)} x2={hvp.W - hvp.PAD} y2={hvp.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -2985,8 +2981,7 @@
 	{#if epochSortinoBuckets}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Sortino Bucket
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(does higher Sortino predict higher profit?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(does higher Sortino predict higher profit?)</span> <ChartInfo metric="sortino" {lang} /></h2>
 			<div class="flex items-end gap-3" style="height:72px">
 				{#each epochSortinoBuckets as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5 justify-end" title="{b.label}: {b.count} epochs · avg {b.avg != null ? (b.avg >= 0 ? '+' : '') + (b.avg * 100).toFixed(1) + '%' : '—'}">
@@ -3018,8 +3013,7 @@
 		{@const edp = epochDrawdownProfile}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Drawdown vs Profit Risk Map
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({edp.dots.length} epochs · r = {edp.corr >= 0 ? '+' : ''}{edp.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({edp.dots.length} epochs · r = {edp.corr >= 0 ? '+' : ''}{edp.corr.toFixed(2)})</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<svg viewBox="0 0 {edp.W} {edp.H}" class="w-full" style="height:{edp.H}px">
 				<line x1={edp.PAD} y1={edp.zeroY.toFixed(1)} x2={edp.W - edp.PAD} y2={edp.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -3041,8 +3035,7 @@
 		{@const svp = sqnVsProfit}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">SQN vs Profit
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({svp.dots.length} epochs · r = {svp.corr >= 0 ? '+' : ''}{svp.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({svp.dots.length} epochs · r = {svp.corr >= 0 ? '+' : ''}{svp.corr.toFixed(2)})</span> <ChartInfo metric="scatter" {lang} /></h2>
 			<svg viewBox="0 0 {svp.W} {svp.H}" class="w-full" style="height:{svp.H}px">
 				<line x1={svp.PAD} y1={svp.zeroY.toFixed(1)} x2={svp.W - svp.PAD} y2={svp.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -3063,8 +3056,7 @@
 	{#if calmarBuckets}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Calmar Ratio vs Avg Profit
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_total per Calmar bucket · do higher-Calmar epochs earn more?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit_total per Calmar bucket · do higher-Calmar epochs earn more?)</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<div class="flex items-end gap-2" style="height:72px">
 				{#each calmarBuckets as b}
 					<div class="flex flex-1 flex-col items-center justify-end gap-1"
@@ -3089,8 +3081,7 @@
 	{#if holdingTimeHistogram}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Epoch Holding Time Distribution
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how epochs spread across avg holding duration)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how epochs spread across avg holding duration)</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each holdingTimeHistogram as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5">
@@ -3113,8 +3104,7 @@
 		{@const est = epochSqnTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Rolling SQN Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg System Quality Number · {est.trend >= 0 ? '↑ improving' : '↓ declining'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg System Quality Number · {est.trend >= 0 ? '↑ improving' : '↓ declining'})</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {est.W} {est.H}" class="w-full" style="height:64px">
 				<line x1={est.PAD} x2={est.W - est.PAD} y1={est.zeroY} y2={est.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 3"/>
 				<polyline points={est.polyline} fill="none" stroke={est.trend >= 0 ? 'var(--ch-profit)' : 'var(--ch-loss)'} stroke-width="1.5"/>
@@ -3129,8 +3119,7 @@
 		{@const edt = epochDrawdownTrend}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Rolling Drawdown Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg max drawdown% · {edt.trend <= 0 ? '↓ improving' : '↑ worsening'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg max drawdown% · {edt.trend <= 0 ? '↓ improving' : '↑ worsening'})</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {edt.W} {edt.H}" class="w-full" style="height:64px">
 				<polyline points={edt.polyline} fill="none" stroke={edt.trend <= 0 ? 'var(--ch-profit)' : 'var(--ch-loss)'} stroke-width="1.5"/>
 			</svg>
@@ -3144,8 +3133,7 @@
 		{@const scs = epochSortinoCalmarScatter}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Sortino vs Calmar Scatter
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(each dot = one epoch · color = profit · Pearson r {scs.corr >= 0 ? '+' : ''}{scs.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(each dot = one epoch · color = profit · Pearson r {scs.corr >= 0 ? '+' : ''}{scs.corr.toFixed(2)})</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {scs.W} {scs.H}" class="mt-3 w-full" style="height:120px">
 				{#if scs.zeroX != null}
 					<line x1={scs.zeroX} x2={scs.zeroX} y1={scs.PAD} y2={scs.H - scs.PAD} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 3"/>
@@ -3178,8 +3166,7 @@
 		{@const ewt = epochWinrateTrend}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Rolling Win Rate Trend
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg win rate · latest {(ewt.latest * 100).toFixed(1)}% · {ewt.trend >= 0 ? '↑ improving' : '↓ declining'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(10-epoch rolling avg win rate · latest {(ewt.latest * 100).toFixed(1)}% · {ewt.trend >= 0 ? '↑ improving' : '↓ declining'})</span> <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<svg viewBox="0 0 {ewt.W} {ewt.H}" class="mt-3 w-full" style="height:64px">
 				{#if ewt.fiftyY != null}
 					<line x1={ewt.PAD} x2={ewt.W - ewt.PAD} y1={ewt.fiftyY} y2={ewt.fiftyY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
@@ -3195,7 +3182,7 @@
 
 	{#if epochExplorationDensity}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Optimizer Exploration Density</h2>
+			<h2 class="text-base font-semibold">Optimizer Exploration Density <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Unique param combos per 20-epoch window — higher = broader search, lower = converging</p>
 			<div class="mt-3 flex items-end gap-1.5" style="height:72px">
 				{#each epochExplorationDensity as w}
@@ -3217,7 +3204,7 @@
 	{#if epochBestEverTimeline}
 		{@const ebet = epochBestEverTimeline}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Best-Ever Profit Convergence</h2>
+			<h2 class="text-base font-semibold">Best-Ever Profit Convergence <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Running maximum profit found across all epochs · late gain {ebet.lateGain >= 0 ? '+' : ''}{(ebet.lateGain * 100).toFixed(1)}% in second half</p>
 			<svg viewBox="0 0 {ebet.W} {ebet.H}" class="mt-2 w-full" style="height:60px">
 				<polyline points={ebet.poly} fill="none" stroke="var(--ch-violet-strong)" stroke-width="1.5"/>
@@ -3232,7 +3219,7 @@
 	{#if epochCalmarDistribution}
 		{@const ecd = epochCalmarDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Epoch Calmar Distribution</h2>
+			<h2 class="text-base font-semibold">Epoch Calmar Distribution <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of Calmar ratios across {ecd.total} epochs · median {ecd.median.toFixed(2)}</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each ecd.buckets as b}
@@ -3252,7 +3239,7 @@
 	{#if epochHoldingTimeProfile}
 		{@const ehp = epochHoldingTimeProfile}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Epoch Avg Holding Time Distribution</h2>
+			<h2 class="text-base font-semibold">Epoch Avg Holding Time Distribution <ChartInfo metric="holdingTime" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of average holding hours per epoch across {ehp.total} epochs · median {ehp.median.toFixed(1)}h</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each ehp.buckets as b}
@@ -3272,7 +3259,7 @@
 	{#if epochProfitVsDrawdown}
 		{@const epvd = epochProfitVsDrawdown}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Epoch Profit vs Max Drawdown</h2>
+			<h2 class="text-base font-semibold">Epoch Profit vs Max Drawdown <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one epoch · X = max drawdown · Y = total profit · top-left = ideal (low DD, high profit)</p>
 			<svg viewBox="0 0 {epvd.W} {epvd.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={epvd.PAD} y1={epvd.H - epvd.PAD - ((0 - epvd.yMin) / (epvd.yMax - epvd.yMin)) * (epvd.H - epvd.PAD * 2)} x2={epvd.W - epvd.PAD} y2={epvd.H - epvd.PAD - ((0 - epvd.yMin) / (epvd.yMax - epvd.yMin)) * (epvd.H - epvd.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -3290,7 +3277,7 @@
 	{#if epochWinrateSqnScatter}
 		{@const ewss = epochWinrateSqnScatter}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Epoch Winrate vs SQN Scatter</h2>
+			<h2 class="text-base font-semibold">Epoch Winrate vs SQN Scatter <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one epoch · X = win rate · Y = SQN · top-right = high win rate + high system quality</p>
 			<svg viewBox="0 0 {ewss.W} {ewss.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={ewss.PAD} y1={ewss.H - ewss.PAD - ((0 - ewss.yMin) / (ewss.yMax - ewss.yMin)) * (ewss.H - ewss.PAD * 2)} x2={ewss.W - ewss.PAD} y2={ewss.H - ewss.PAD - ((0 - ewss.yMin) / (ewss.yMax - ewss.yMin)) * (ewss.H - ewss.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -3308,7 +3295,7 @@
 	{#if epochSqnDistribution}
 		{@const esd = epochSqnDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Epoch SQN Distribution</h2>
+			<h2 class="text-base font-semibold">Epoch SQN Distribution <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of System Quality Number across {esd.total} epochs · median {esd.median.toFixed(2)}</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each esd.buckets as b}
@@ -3328,7 +3315,7 @@
 	{#if epochBestCalmarTimeline}
 		{@const ect = epochBestCalmarTimeline}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Best Calmar Timeline</h2>
+			<h2 class="text-sm font-semibold">Best Calmar Timeline <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Best Calmar ratio found so far as optimization progresses · plateau = optimizer converging · final {ect.positive ? '+' : ''}{ect.mx.toFixed(2)}</p>
 			<svg viewBox="0 0 {ect.W} {ect.H}" class="w-full" style="height:64px">
 				<polyline points={ect.poly} fill="none" stroke={ect.positive ? 'var(--ch-violet-strong)' : 'var(--ch-loss-strong)'} stroke-width="1.5"/>
@@ -3343,7 +3330,7 @@
 	{#if epochProfitDistribution}
 		{@const epd = epochProfitDistribution}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Epoch Profit Distribution</h2>
+			<h2 class="text-sm font-semibold">Epoch Profit Distribution <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Histogram of total profit% across all hyperopt epochs · median {epd.median.toFixed(1)}% · {epd.positive}/{epd.total} profitable</p>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each epd.buckets as b}
@@ -3363,7 +3350,7 @@
 	{#if epochWinrateDistribution}
 		{@const ewd = epochWinrateDistribution}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Epoch Win Rate Distribution</h2>
+			<h2 class="text-sm font-semibold">Epoch Win Rate Distribution <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Histogram of win rate% across all hyperopt epochs · median {ewd.median.toFixed(1)}% · {ewd.above50}/{ewd.total} above 50%</p>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each ewd.buckets as b}
@@ -3383,7 +3370,7 @@
 	{#if epochCalmarVsHolding}
 		{@const ech = epochCalmarVsHolding}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Calmar vs Holding Time Scatter</h2>
+			<h2 class="text-sm font-semibold">Calmar vs Holding Time Scatter <ChartInfo metric="holdingTime" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Log-scaled holding time (x) vs Calmar ratio (y) · gold = best epochs · upper-left = high Calmar with short holding</p>
 			<svg viewBox="0 0 {ech.W} {ech.H}" class="w-full" style="height:100px">
 				{#if ech.zero_y >= ech.PAD && ech.zero_y <= ech.H - ech.PAD}
@@ -3403,7 +3390,7 @@
 	{#if epochLossDistribution}
 		{@const eld = epochLossDistribution}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Loss Distribution: Best vs All Epochs</h2>
+			<h2 class="text-sm font-semibold">Loss Distribution: Best vs All Epochs <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Histogram of hyperopt loss values · gold = best-flagged epochs · grey = all others · lower loss = better optimizer score</p>
 			<div class="flex items-end gap-0.5" style="height:64px">
 				{#each eld.restBuckets as b, i}
@@ -3427,7 +3414,7 @@
 	{/if}
 	{#if epochParamBestRanges}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Best-Epoch Parameter Ranges vs Rest</h2>
+			<h2 class="mb-3 text-sm font-semibold">Best-Epoch Parameter Ranges vs Rest <ChartInfo metric="hyperoptEpoch" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead>
@@ -3462,7 +3449,7 @@
 	{#if epochTradeCountComparison}
 		{@const etc = epochTradeCountComparison}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Trade Count: Best vs Non-Best Epochs</h2>
+			<h2 class="mb-3 text-sm font-semibold">Trade Count: Best vs Non-Best Epochs <ChartInfo metric="tradeCount" {lang} /></h2>
 			<div class="space-y-4">
 				{#each [{ label: 'Best epochs', s: etc.best, color: 'var(--ch-warn)' }, { label: 'Non-best epochs', s: etc.rest, color: 'var(--ch-violet)' }] as row}
 					<div>
@@ -3484,7 +3471,7 @@
 	{#if epochMaxDrawdownComparison}
 		{@const emd = epochMaxDrawdownComparison}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Max Drawdown: Best vs Non-Best Epochs</h2>
+			<h2 class="mb-3 text-sm font-semibold">Max Drawdown: Best vs Non-Best Epochs <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="space-y-4">
 				{#each [{ label: 'Best epochs', s: emd.best, color: 'var(--ch-warn)' }, { label: 'Non-best epochs', s: emd.rest, color: 'var(--ch-loss)' }] as row}
 					<div>
@@ -3505,7 +3492,7 @@
 	{/if}
 	{#if epochBestWinrateTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Running Best Win Rate over Epochs</h2>
+			<h2 class="mb-1 text-sm font-semibold">Running Best Win Rate over Epochs <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Gold line = best win rate discovered so far · grey = all epoch win rates · {epochBestWinrateTimeline.total} epochs · best achieved: {(epochBestWinrateTimeline.finalBest * 100).toFixed(1)}%</p>
 			<svg viewBox="0 0 {epochBestWinrateTimeline.W} {epochBestWinrateTimeline.H}" class="w-full">
 				{#if epochBestWinrateTimeline.fiftyY !== null}
@@ -3519,7 +3506,7 @@
 	{/if}
 	{#if epochBestSortinoTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Running Best Sortino over Epochs</h2>
+			<h2 class="mb-1 text-sm font-semibold">Running Best Sortino over Epochs <ChartInfo metric="sortino" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Teal line = best Sortino discovered so far · grey = all epoch Sortino values · {epochBestSortinoTimeline.total} epochs · best achieved: {epochBestSortinoTimeline.finalBest.toFixed(2)}</p>
 			<svg viewBox="0 0 {epochBestSortinoTimeline.W} {epochBestSortinoTimeline.H}" class="w-full">
 				{#if epochBestSortinoTimeline.zeroY !== null}
