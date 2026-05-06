@@ -247,6 +247,132 @@ export const METRICS: Record<string, MetricEntry> = {
 			plain: 'Bin the values and count samples per bin.',
 			why: 'Reveals shape: unimodal / bimodal / long-tailed. Multiple peaks suggest distinct market regimes mixed together.'
 		}
+	},
+	equityCurve: {
+		zh: {
+			name: '资金曲线 (Equity Curve)',
+			plain: '账户余额随时间变化的曲线，每笔交易后更新。',
+			why: '一图看懂策略表现：稳步上升 = 健康，断崖式下跌 = 风险事件，长期横盘 = 失去边际。理想状态是一条平滑右上方的曲线。'
+		},
+		en: {
+			name: 'Equity Curve',
+			plain: 'Account balance over time, updated after each trade.',
+			why: 'The most honest summary chart: steady rise = healthy, sharp drops = risk events, long flatlines = lost edge. The ideal is a smooth line tilting up-right.'
+		}
+	},
+	monteCarlo: {
+		zh: {
+			name: '蒙特卡洛模拟 (Monte Carlo)',
+			plain: '把历史交易随机重排上千次，看在不同顺序下账户曲线的范围。',
+			why: '回测结果可能是"运气好的顺序"。MC 显示同样的策略在最坏 5% 情况下可能会怎样 — 心理上准备最坏情况。',
+			rules: ['p5 = 最差 5% 情况', 'p50 = 中位数', 'p95 = 最好 5% 情况']
+		},
+		en: {
+			name: 'Monte Carlo Simulation',
+			plain: 'Randomly reshuffle the historical trade sequence thousands of times to see the range of equity curves.',
+			why: 'Your backtest may have benefited from a lucky order. MC shows what the same trades look like in the worst 5% — primes you for the downside.',
+			rules: ['p5 = worst 5% scenario', 'p50 = median', 'p95 = best 5% scenario']
+		}
+	},
+	expectancy: {
+		zh: {
+			name: '期望值 (Expectancy)',
+			plain: '每笔交易的平均盈亏期望 = 胜率 × 平均盈利 − 败率 × 平均亏损。',
+			why: '把胜率和盈亏比合在一起。正值 = 长期赚钱；负值 = 长期亏损 (即使胜率高也无效)。',
+			formula: 'E = WR × 平均盈利 − (1 − WR) × |平均亏损|'
+		},
+		en: {
+			name: 'Expectancy',
+			plain: 'Expected profit per trade = win rate × avg win − loss rate × avg loss.',
+			why: 'Combines win rate and risk/reward into a single number. Positive = profitable long-term; negative = unprofitable even with high win rate.',
+			formula: 'E = WR × avg_win − (1 − WR) × |avg_loss|'
+		}
+	},
+	streak: {
+		zh: {
+			name: '连胜 / 连亏 (Streak)',
+			plain: '连续盈利或连续亏损的最长交易序列。',
+			why: '判断你心理上能不能扛过去。连续 10 笔亏损看似不可能，但在 100 笔交易里出现的概率比你想象的高得多。',
+			rules: ['策略要能承受 2× 历史最长连亏', '心理准备 = 实盘成功的关键']
+		},
+		en: {
+			name: 'Win/Loss Streak',
+			plain: 'Longest consecutive run of winning or losing trades.',
+			why: 'Tells you what your psychology has to survive. A 10-trade losing streak feels impossible but is more likely than you think over 100 trades.',
+			rules: ['Plan capital for 2× the historical worst streak', 'Mental prep = key to live success']
+		}
+	},
+	exitReason: {
+		zh: {
+			name: '出场原因 (Exit Reason)',
+			plain: '每笔交易最终的离场原因 — ROI / stoploss / 信号离场 / custom_exit 等。',
+			why: '分析利润是从哪里来的。如果 90% 利润来自 ROI、止损只触发亏损，说明胜出靠固定目标；如果 custom_exit 占主导，自定义逻辑是核心。'
+		},
+		en: {
+			name: 'Exit Reason',
+			plain: 'Why each trade closed — ROI hit / stoploss / signal exit / custom_exit / etc.',
+			why: 'Tells you where the edge actually comes from. If 90% of profit is from ROI hits and stoploss only fires losses, the winners come from fixed targets, not signals.'
+		}
+	},
+	enterTag: {
+		zh: {
+			name: '入场标签 (Enter Tag)',
+			plain: '策略给每笔开仓打的标签 — 标识"是哪个信号触发了入场"。',
+			why: '区分策略里不同的入场逻辑。某些信号可能赚钱，某些一直亏；按 enter_tag 拆开看就知道哪些子策略可以保留、哪些应该剪掉。'
+		},
+		en: {
+			name: 'Enter Tag',
+			plain: 'A label the strategy attaches to each opened trade — "which signal triggered this entry?"',
+			why: 'Lets you separate different entry logics inside one strategy. Some signals print, others bleed; splitting by enter_tag tells you which to keep and which to cut.'
+		}
+	},
+	holdingTime: {
+		zh: {
+			name: '持仓时间 (Holding Time)',
+			plain: '每笔交易从开仓到平仓的时长。',
+			why: '过短 = 抓不到趋势/被噪音洗出；过长 = 资金占用低效。和周期一致才合理 (15m 策略持仓数小时合理，持仓数天则可疑)。'
+		},
+		en: {
+			name: 'Holding Time',
+			plain: 'How long each trade stays open from entry to exit.',
+			why: 'Too short = noise-shaken / trend missed; too long = capital tied up. Should match your timeframe — 15m strategy holding hours is fine, holding days is suspicious.'
+		}
+	},
+	calendar: {
+		zh: {
+			name: '盈亏日历 (PnL Calendar)',
+			plain: '把每天/每月的盈亏画成绿/红方块的日历视图。',
+			why: '一眼识别"赚钱季节"和"危险窗口"。某些月份持续亏损可能意味着策略对该季节的市场结构不适应。'
+		},
+		en: {
+			name: 'PnL Calendar',
+			plain: 'Daily/monthly profit shown as green/red cells in a calendar layout.',
+			why: 'Spot "good seasons" and "danger windows" instantly. Months that bleed consistently often mean the strategy doesn’t fit that season’s market structure.'
+		}
+	},
+	rollingWinRate: {
+		zh: {
+			name: '滚动胜率 (Rolling Win Rate)',
+			plain: '过去 N 笔交易的胜率，随时间滑动更新。',
+			why: '判断策略是否在退化。如果胜率从 60% 慢慢滑到 45%，说明边际正在消失，应该考虑停掉或重新优化。'
+		},
+		en: {
+			name: 'Rolling Win Rate',
+			plain: 'Win rate over the last N trades, sliding through time.',
+			why: 'Detects edge decay. If win rate drifts from 60% down to 45%, the strategy is losing its edge — time to retire or re-optimize.'
+		}
+	},
+	portfolio: {
+		zh: {
+			name: '策略组合视图 (Portfolio View)',
+			plain: '按状态 (live/dryrun/research) 或交易模式 (spot/futures) 拆分的策略集合。',
+			why: '看清当前资金分配 — live 太少说明研究多但落地少；dryrun 太多说明在拖延上线决策。'
+		},
+		en: {
+			name: 'Portfolio View',
+			plain: 'Strategies grouped by status (live/dryrun/research) or trading mode (spot/futures).',
+			why: 'Reveals capital allocation: too few "live" means too much research and too little execution; too many "dryrun" means you are deferring deployment decisions.'
+		}
 	}
 };
 

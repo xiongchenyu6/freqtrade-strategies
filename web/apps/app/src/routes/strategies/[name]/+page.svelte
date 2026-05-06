@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import type { BacktestTrade } from '$lib/types';
 	import { STRATEGIES } from '$lib/strategies';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	const STRATEGY_FORMULAS: Record<string, { label: string; formula: string; note: string }> = {
 		HonestTrend15mDry: {
@@ -2929,7 +2930,7 @@
 	{#if runsTimeSeries}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Metric History <span class="ml-1 font-normal text-muted-foreground text-xs">({runs.length} runs over time)</span></h2>
+				<h2 class="text-sm font-semibold">Metric History <span class="ml-1 font-normal text-muted-foreground text-xs">({runs.length} runs over time)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<div class="flex gap-4 text-[10px]">
 					<span class="flex items-center gap-1"><span class="inline-block h-0.5 w-4 rounded bg-green-400"></span>Profit%</span>
 					<span class="flex items-center gap-1"><span class="inline-block h-0.5 w-4 rounded bg-indigo-400"></span>Sharpe</span>
@@ -3054,7 +3055,7 @@
 	{#if bestRunId && (calendarLoading || calendarLoaded)}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Daily P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span></h2>
+				<h2 class="text-sm font-semibold">Daily P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span> <ChartInfo metric="calendar" {lang} /></h2>
 				{#if calendarLoading}
 					<span class="text-xs text-muted-foreground">Loading…</span>
 				{:else}
@@ -3097,7 +3098,7 @@
 
 	{#if drawdownEpisodes && drawdownEpisodes.length > 0}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Top Drawdown Episodes <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · worst {drawdownEpisodes.length})</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Top Drawdown Episodes <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · worst {drawdownEpisodes.length})</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="space-y-2">
 				{#each drawdownEpisodes as ep, i}
 					{@const depthPct = ep.peakEq > 0 ? (ep.depth / ep.peakEq * 100) : 0}
@@ -3123,7 +3124,7 @@
 	{#if profitHistogram}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(per-trade profit%)</span></h2>
+				<h2 class="text-sm font-semibold">Profit Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(per-trade profit%)</span> <ChartInfo metric="distribution" {lang} /></h2>
 				<div class="flex gap-4 font-mono text-[10px] text-muted-foreground">
 					<span>mean <span class:text-green-400={profitHistogram.mean > 0} class:text-red-400={profitHistogram.mean < 0}>{profitHistogram.mean >= 0 ? '+' : ''}{profitHistogram.mean.toFixed(2)}%</span></span>
 					<span>median <span class:text-green-400={profitHistogram.median > 0} class:text-red-400={profitHistogram.median < 0}>{profitHistogram.median >= 0 ? '+' : ''}{profitHistogram.median.toFixed(2)}%</span></span>
@@ -3150,7 +3151,7 @@
 
 	{#if tradeStrip}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Trade P&amp;L Strip <span class="ml-1 font-normal text-muted-foreground text-xs">(last {tradeStrip.length} trades · block size ∝ |profit%|)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Trade P&amp;L Strip <span class="ml-1 font-normal text-muted-foreground text-xs">(last {tradeStrip.length} trades · block size ∝ |profit%|)</span> <ChartInfo metric="tradeCount" {lang} /></h2>
 			<div class="flex h-10 w-full items-end gap-px overflow-hidden rounded-sm">
 				{#each tradeStrip as t}
 					<div
@@ -3167,7 +3168,7 @@
 	{#if rollingWR}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Rolling Win-Rate <span class="ml-1 font-normal text-muted-foreground text-xs">(20-trade window · {rollingWR.firstDate} → {rollingWR.lastDate})</span></h2>
+				<h2 class="text-sm font-semibold">Rolling Win-Rate <span class="ml-1 font-normal text-muted-foreground text-xs">(20-trade window · {rollingWR.firstDate} → {rollingWR.lastDate})</span> <ChartInfo metric="rollingWinRate" {lang} /></h2>
 				<div class="flex items-center gap-3 text-[11px]">
 					<span class="text-muted-foreground">latest <span class:text-green-400={rollingWR.latestWr >= 0.5} class:text-red-400={rollingWR.latestWr < 0.5} class="font-mono font-semibold">{(rollingWR.latestWr * 100).toFixed(0)}%</span></span>
 					<span class="text-muted-foreground">avg <span class="font-mono text-foreground">{(rollingWR.avgWr * 100).toFixed(0)}%</span></span>
@@ -3201,7 +3202,7 @@
 	{#if rollingPF}
 		{@const rpf = rollingPF}
 		<section class="mt-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Rolling Profit Factor <span class="ml-1 font-normal text-muted-foreground text-xs">(20-trade window · {rpf.total} points · avg {rpf.avg.toFixed(2)})</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Rolling Profit Factor <span class="ml-1 font-normal text-muted-foreground text-xs">(20-trade window · {rpf.total} points · avg {rpf.avg.toFixed(2)})</span> <ChartInfo metric="profitFactor" {lang} /></h2>
 			<svg viewBox="0 0 {rpf.W} {rpf.H}" class="w-full" style="height:{rpf.H}px;min-width:240px">
 				<!-- break-even line at PF=1 -->
 				{#if rpf.oneY >= rpf.PAD && rpf.oneY <= rpf.H - rpf.PAD}
@@ -3226,7 +3227,7 @@
 	{#if streakStats}
 		{@const ss = streakStats}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Streak Analysis <span class="ml-1 font-normal text-muted-foreground text-xs">({ss.total} trades)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Streak Analysis <span class="ml-1 font-normal text-muted-foreground text-xs">({ss.total} trades)</span> <ChartInfo metric="streak" {lang} /></h2>
 			<div class="grid grid-cols-3 gap-3 text-center text-xs">
 				<div class="rounded-lg border bg-secondary/40 p-3">
 					<div class="text-[10px] uppercase text-muted-foreground">Max Win Streak</div>
@@ -3250,7 +3251,7 @@
 	{#if expectancy}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-4 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Expectancy Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({expectancy.n} trades)</span></h2>
+				<h2 class="text-sm font-semibold">Expectancy Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">({expectancy.n} trades)</span> <ChartInfo metric="expectancy" {lang} /></h2>
 				<span class="font-mono text-sm font-bold {expectancy.expectancyVal > 0 ? 'text-green-400' : 'text-red-400'}">
 					E = {expectancy.expectancyVal >= 0 ? '+' : ''}{expectancy.expectancyVal.toFixed(2)}%
 				</span>
@@ -3286,7 +3287,7 @@
 	{#if monthlyPnl}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Monthly P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">({monthlyPnl.winMonths}/{monthlyPnl.total_months} green months)</span></h2>
+				<h2 class="text-sm font-semibold">Monthly P&L Calendar <span class="ml-1 font-normal text-muted-foreground text-xs">({monthlyPnl.winMonths}/{monthlyPnl.total_months} green months)</span> <ChartInfo metric="calendar" {lang} /></h2>
 				<span class="font-mono text-xs {monthlyPnl.total >= 0 ? 'text-green-400' : 'text-red-400'}">{monthlyPnl.total >= 0 ? '+' : ''}{monthlyPnl.total.toFixed(0)} USDT total</span>
 			</div>
 			<div class="overflow-x-auto">
@@ -3330,7 +3331,7 @@
 	{#if extremeTrades}
 		{@const et = extremeTrades}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Best & Worst Trades <span class="ml-1 font-normal text-muted-foreground text-xs">(by absolute P&L · best run)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Best & Worst Trades <span class="ml-1 font-normal text-muted-foreground text-xs">(by absolute P&L · best run)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="grid gap-4 sm:grid-cols-2">
 				<div>
 					<p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-green-400">Top 3 Wins</p>
@@ -3365,8 +3366,7 @@
 	{#if durationHistogram}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-4 text-sm font-semibold">
-				Hold Duration Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades)</span>
-			</h2>
+				Hold Duration Distribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each durationHistogram as b}
 					{#if b.count > 0}
@@ -3390,7 +3390,7 @@
 
 	{#if entryHourChart}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Trade Entry Hour (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when strategy enters trades · {calendarTrades.length} trades)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Trade Entry Hour (UTC) <span class="ml-1 font-normal text-muted-foreground text-xs">(when strategy enters trades · {calendarTrades.length} trades)</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			<div class="flex items-end gap-px">
 				{#each entryHourChart as h}
 					<div class="flex flex-1 flex-col items-center gap-0.5"
@@ -3415,7 +3415,7 @@
 
 	{#if profitByDuration && profitByDuration.length > 1}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Profit by Hold Duration <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Profit by Hold Duration <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades)</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			<div class="flex gap-3">
 				{#each profitByDuration as tier}
 					<div class="flex flex-1 flex-col items-center gap-1 rounded-lg border bg-secondary/20 p-3">
@@ -3433,7 +3433,7 @@
 
 	{#if dowPnl}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Day-of-Week P&amp;L <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit per weekday · best run)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Day-of-Week P&amp;L <span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit per weekday · best run)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="flex gap-2">
 				{#each dowPnl as d}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -3460,7 +3460,7 @@
 
 	{#if exitReasons}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-4 text-sm font-semibold">Exit Reason Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span></h2>
+			<h2 class="mb-4 text-sm font-semibold">Exit Reason Breakdown <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span> <ChartInfo metric="exitReason" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each exitReasons as r}
 					<div class="flex items-center gap-2 text-xs">
@@ -3488,7 +3488,7 @@
 
 	{#if pairStats && pairStats.length > 1}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Pair Contribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {pairStats.length} pairs)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Pair Contribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {pairStats.length} pairs)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead class="text-[10px] uppercase text-muted-foreground">
@@ -3527,7 +3527,7 @@
 
 	{#if enterTagStats && enterTagStats.length > 1}
 		<section class="mb-6 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Entry Signal Performance <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · by enter_tag)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Entry Signal Performance <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · by enter_tag)</span> <ChartInfo metric="enterTag" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead class="text-[10px] uppercase text-muted-foreground">
@@ -3559,7 +3559,7 @@
 		{@const etps = enterTagProfitShare}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Enter-Tag Profit Contribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span></h2>
+				<h2 class="text-sm font-semibold">Enter-Tag Profit Contribution <span class="ml-1 font-normal text-muted-foreground text-xs">(best run)</span> <ChartInfo metric="enterTag" {lang} /></h2>
 				<span class="font-mono text-xs {etps.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}">{etps.totalProfit >= 0 ? '+' : ''}{etps.totalProfit.toFixed(0)} USDT total</span>
 			</div>
 			<div class="space-y-1.5">
@@ -3585,8 +3585,7 @@
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
 				<h2 class="text-sm font-semibold">
-					Monte Carlo <span class="ml-1 font-normal text-muted-foreground text-xs">({N_SIMS} simulations · p5/p50/p95 bands)</span>
-				</h2>
+					Monte Carlo <span class="ml-1 font-normal text-muted-foreground text-xs">({N_SIMS} simulations · p5/p50/p95 bands)</span> <ChartInfo metric="monteCarlo" {lang} /></h2>
 				<div class="flex items-center gap-3 text-xs font-mono">
 					<span class="text-muted-foreground">p5 <span class:text-green-400={monteCarloData.p5final > 1} class:text-red-400={monteCarloData.p5final <= 1}>{((monteCarloData.p5final - 1) * 100).toFixed(1)}%</span></span>
 					<span class="text-muted-foreground">p50 <span class:text-green-400={monteCarloData.finalP50 > 1} class:text-red-400={monteCarloData.finalP50 <= 1}>{((monteCarloData.finalP50 - 1) * 100).toFixed(1)}%</span></span>
@@ -3623,7 +3622,7 @@
 		{@const rs = runRiskScatter}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-2 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Run Risk-Adjusted Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({runs.length} runs · Sharpe × Calmar)</span></h2>
+				<h2 class="text-sm font-semibold">Run Risk-Adjusted Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({runs.length} runs · Sharpe × Calmar)</span> <ChartInfo metric="scatter" {lang} /></h2>
 				<div class="flex gap-2 text-[10px] text-muted-foreground">
 					<span><span class="inline-block h-2 w-2 rounded-full bg-green-400 mr-1"></span>high profit</span>
 					<span><span class="inline-block h-2 w-2 rounded-full bg-yellow-400 mr-1"></span>mid</span>
@@ -3658,7 +3657,7 @@
 	{#if tradeScatter}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Duration vs Profit Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({calendarTrades.length} trades · log x-axis)</span></h2>
+				<h2 class="text-sm font-semibold">Duration vs Profit Scatter <span class="ml-1 font-normal text-muted-foreground text-xs">({calendarTrades.length} trades · log x-axis)</span> <ChartInfo metric="scatter" {lang} /></h2>
 				<div class="flex gap-3 text-[10px] text-muted-foreground">
 					<span><span class="inline-block h-2 w-2 rounded-full bg-green-500 mr-1"></span>Win</span>
 					<span><span class="inline-block h-2 w-2 rounded-full bg-red-500 mr-1"></span>Loss</span>
@@ -3687,7 +3686,7 @@
 	{#if equityCurve}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Equity Curve <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades · cumulative USDT P&L)</span></h2>
+				<h2 class="text-sm font-semibold">Equity Curve <span class="ml-1 font-normal text-muted-foreground text-xs">(best run · {calendarTrades.length} trades · cumulative USDT P&L)</span> <ChartInfo metric="calendar" {lang} /></h2>
 				<div class="flex items-center gap-3 text-[11px] font-mono">
 					<span class="text-muted-foreground">peak <span class="text-foreground">{equityCurve.peak >= 0 ? '+' : ''}{equityCurve.peak.toFixed(0)}</span></span>
 					<span class="text-muted-foreground">final <span class:text-green-400={equityCurve.final > 0} class:text-red-400={equityCurve.final < 0} class="font-semibold">{equityCurve.final >= 0 ? '+' : ''}{equityCurve.final.toFixed(0)}</span></span>
@@ -3717,7 +3716,7 @@
 		{@const uw = underwaterChart}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-2 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Underwater Drawdown <span class="ml-1 font-normal text-muted-foreground text-xs">(% below equity peak)</span></h2>
+				<h2 class="text-sm font-semibold">Underwater Drawdown <span class="ml-1 font-normal text-muted-foreground text-xs">(% below equity peak)</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 				<div class="flex gap-4 text-xs font-mono">
 					<span class="text-muted-foreground">MaxDD <span class="text-red-400">{uw.maxDD.toFixed(1)}%</span></span>
 					<span class="text-muted-foreground">AvgDD <span class="text-foreground">{uw.avgDD.toFixed(1)}%</span></span>
@@ -3741,7 +3740,7 @@
 	{#if timeHeatmap}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Exit Time Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(UTC hour × weekday · avg profit%)</span></h2>
+				<h2 class="text-sm font-semibold">Exit Time Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(UTC hour × weekday · avg profit%)</span> <ChartInfo metric="exitReason" {lang} /></h2>
 			</div>
 			<div class="overflow-x-auto">
 				<div class="min-w-max">
@@ -3779,7 +3778,7 @@
 	{#if entryHeatmap}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Entry Time Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(UTC hour × weekday · entry count)</span></h2>
+				<h2 class="text-sm font-semibold">Entry Time Heatmap <span class="ml-1 font-normal text-muted-foreground text-xs">(UTC hour × weekday · entry count)</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			</div>
 			<div class="overflow-x-auto">
 				<div class="min-w-max">
@@ -3848,7 +3847,7 @@
 	{#if similarStrategies.length > 0}
 		<section class="mb-6 rounded-lg border bg-card p-5">
 			<div class="mb-3 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Similar Strategies</h2>
+				<h2 class="text-sm font-semibold">Similar Strategies <ChartInfo metric="leaderboard" {lang} /></h2>
 				<span class="text-xs text-muted-foreground">Same assets &amp; mode · Jaccard similarity</span>
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -3891,7 +3890,7 @@
 	{#if weeklyPnlBars}
 		{@const wpb = weeklyPnlBars}
 		<section class="mt-6 rounded-lg border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Weekly P&amp;L Bars <span class="ml-1 font-normal text-muted-foreground text-xs">({wpb.winWeeks}/{wpb.weeks} profitable weeks · best run)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Weekly P&amp;L Bars <span class="ml-1 font-normal text-muted-foreground text-xs">({wpb.winWeeks}/{wpb.weeks} profitable weeks · best run)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<svg viewBox="0 0 {wpb.W} {wpb.H}" class="w-full" style="height:{wpb.H}px">
 				<line x1="0" y1={wpb.H / 2} x2={wpb.W} y2={wpb.H / 2} stroke="var(--ch-rule-faint)" stroke-width="0.5"/>
 				{#each wpb.bars as b}
@@ -3915,8 +3914,7 @@
 	{#if pairProfitRanking}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Pair Profit Ranking
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% per pair from best backtest run)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% per pair from best backtest run)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each pairProfitRanking as r}
 					<div class="flex items-center gap-2">
@@ -3944,8 +3942,7 @@
 		{@const mrh = monthlyReturnHeatmap}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Monthly Return Heatmap
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% per calendar month)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(cumulative profit% per calendar month)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[10px]">
 					<thead>
@@ -3986,8 +3983,7 @@
 		{@const tdvp = tradeDurationVsProfit}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-2 text-sm font-semibold">Hold Duration vs Profit Scatter
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({tdvp.dots.length} trades · r = {tdvp.corr >= 0 ? '+' : ''}{tdvp.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({tdvp.dots.length} trades · r = {tdvp.corr >= 0 ? '+' : ''}{tdvp.corr.toFixed(2)})</span> <ChartInfo metric="scatter" {lang} /></h2>
 			<svg viewBox="0 0 {tdvp.W} {tdvp.H}" class="w-full" style="height:{tdvp.H}px">
 				<line x1={tdvp.PAD} y1={tdvp.zeroY.toFixed(1)} x2={tdvp.W - tdvp.PAD} y2={tdvp.zeroY.toFixed(1)}
 					stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 2"/>
@@ -4007,8 +4003,7 @@
 	{#if exitReasonAvgProfit}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Avg Profit by Exit Reason
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per exit type · sorted best → worst)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per exit type · sorted best → worst)</span> <ChartInfo metric="avgProfit" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each exitReasonAvgProfit as r}
 					<div class="flex items-center gap-2">
@@ -4034,8 +4029,7 @@
 		{@const rit = runImportTimeline}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Research Activity Timeline
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({rit.total} total runs · last 12 weeks)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({rit.total} total runs · last 12 weeks)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:64px">
 				{#each rit.weeks as w, i}
 					<div class="flex flex-1 flex-col items-center gap-0.5 justify-end" title="{w.label}: {w.count} runs">
@@ -4054,8 +4048,7 @@
 	{#if avgProfitByMonth}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Monthly Avg Trade Profit %
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 12 months)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(last 12 months)</span> <ChartInfo metric="avgProfit" {lang} /></h2>
 			<div class="flex items-end gap-1" style="height:72px">
 				{#each avgProfitByMonth as m}
 					<div class="flex flex-1 flex-col items-center gap-0.5 justify-center" title="{m.label}: {m.count} trades · avg {m.avg != null ? (m.avg >= 0 ? '+' : '') + m.avg.toFixed(2) + '%' : 'no data'}">
@@ -4085,8 +4078,7 @@
 	{#if pairWinRate}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Win Rate by Pair
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades profitable · min 3 trades · top 14 pairs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades profitable · min 3 trades · top 14 pairs)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="space-y-1">
 				{#each pairWinRate as r}
 					<div class="flex items-center gap-2">
@@ -4109,8 +4101,7 @@
 	{#if enterTagWinRate}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Entry Tag Win Rate
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades profitable per entry condition · min 3 trades)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(% of trades profitable per entry condition · min 3 trades)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="space-y-1">
 				{#each enterTagWinRate as r}
 					<div class="flex items-center gap-2">
@@ -4133,8 +4124,7 @@
 	{#if exitHourAnalysis}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Exit Hour Analysis (UTC)
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per close hour · which hours produce best exits?)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% per close hour · which hours produce best exits?)</span> <ChartInfo metric="exitReason" {lang} /></h2>
 			<div class="flex items-end gap-px" style="height:60px">
 				{#each exitHourAnalysis as h}
 					<div class="flex flex-1 flex-col items-center justify-end"
@@ -4157,8 +4147,7 @@
 	{#if pairHoldingTimeRanking}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Avg Holding Time by Pair
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(pairs ranked longest to shortest average hold · min–max range shown)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(pairs ranked longest to shortest average hold · min–max range shown)</span> <ChartInfo metric="holdingTime" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each pairHoldingTimeRanking as r}
 					<div class="flex items-center gap-2">
@@ -4178,8 +4167,7 @@
 	{#if exitReasonProfitProfile}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Exit Reason Profit Profile
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% and win rate per exit reason · ranked best to worst)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(avg profit% and win rate per exit reason · ranked best to worst)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each exitReasonProfitProfile as r}
 					<div class="flex items-center gap-2">
@@ -4200,8 +4188,7 @@
 	{#if pairWorstTrade}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Worst Single-Trade Loss by Pair
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(pairs ranked by their worst individual trade outcome)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(pairs ranked by their worst individual trade outcome)</span> <ChartInfo metric="totalProfit" {lang} /></h2>
 			<div class="mt-3 space-y-1.5">
 				{#each pairWorstTrade as r}
 					<div class="flex items-center gap-2">
@@ -4222,8 +4209,7 @@
 		{@const rct = runCalmarTimeline}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Calmar Ratio Over Runs
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(risk-adjusted return trend across {rct.count} runs · {rct.trend >= 0 ? '↑ improving' : '↓ declining'})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(risk-adjusted return trend across {rct.count} runs · {rct.trend >= 0 ? '↑ improving' : '↓ declining'})</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<svg viewBox="0 0 {rct.W} {rct.H}" class="w-full" style="height:72px">
 				<line x1={rct.PAD} x2={rct.W - rct.PAD} y1={rct.zeroY} y2={rct.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="4 3"/>
 				<polyline points={rct.polyline} fill="none" stroke={rct.trend >= 0 ? 'var(--ch-profit)' : 'var(--ch-loss)'} stroke-width="1.5"/>
@@ -4238,8 +4224,7 @@
 	{#if tradeMonthlyVolume}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Trade Volume by Month
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many trades closed each calendar month)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many trades closed each calendar month)</span> <ChartInfo metric="tradeCount" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-0.5" style="height:64px">
 				{#each tradeMonthlyVolume as m}
 					<div class="flex flex-1 flex-col items-center gap-0.5">
@@ -4267,7 +4252,7 @@
 
 	{#if stakeAmountProfile}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Profit by Stake Size</h2>
+			<h2 class="text-base font-semibold">Profit by Stake Size <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average profit% per trade grouped by stake amount bucket</p>
 			<div class="mt-3 space-y-1.5">
 				{#each stakeAmountProfile as b}
@@ -4287,7 +4272,7 @@
 
 	{#if enterTagProfitProfile}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Enter Tag Profit Profile</h2>
+			<h2 class="text-base font-semibold">Enter Tag Profit Profile <ChartInfo metric="enterTag" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average profit% and win rate per entry signal tag (min 3 trades)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each enterTagProfitProfile as r}
@@ -4307,7 +4292,7 @@
 
 	{#if pairProfitTrend}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Pair Profit Trend (Early vs Late)</h2>
+			<h2 class="text-base font-semibold">Pair Profit Trend (Early vs Late) <ChartInfo metric="scatter" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Change in avg profit% from first half to second half of trades per pair (min 6 trades)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each pairProfitTrend as r}
@@ -4328,7 +4313,7 @@
 	{#if pairTradeCountVsProfit}
 		{@const ptcvp = pairTradeCountVsProfit}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Pair Trade Count vs Avg Profit Scatter</h2>
+			<h2 class="text-base font-semibold">Pair Trade Count vs Avg Profit Scatter <ChartInfo metric="tradeCount" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one pair · X = number of trades · Y = avg profit% · reveals if heavily traded pairs outperform</p>
 			<svg viewBox="0 0 {ptcvp.W} {ptcvp.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={ptcvp.PAD} y1={ptcvp.H - ptcvp.PAD - ((0 - ptcvp.yMin) / (ptcvp.yMax - ptcvp.yMin)) * (ptcvp.H - ptcvp.PAD * 2)} x2={ptcvp.W - ptcvp.PAD} y2={ptcvp.H - ptcvp.PAD - ((0 - ptcvp.yMin) / (ptcvp.yMax - ptcvp.yMin)) * (ptcvp.H - ptcvp.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -4345,7 +4330,7 @@
 
 	{#if tradeProfitByHour}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Avg Profit% by Hour of Day (UTC Close)</h2>
+			<h2 class="text-base font-semibold">Avg Profit% by Hour of Day (UTC Close) <ChartInfo metric="avgProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average trade profit% per UTC close hour — highlights which market sessions yield best results</p>
 			<div class="mt-3 flex items-end gap-px" style="height:60px">
 				{#each tradeProfitByHour as d}
@@ -4367,7 +4352,7 @@
 
 	{#if tradeProfitByDayOfWeek}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Avg Profit% by Day of Week (Close Date)</h2>
+			<h2 class="text-base font-semibold">Avg Profit% by Day of Week (Close Date) <ChartInfo metric="avgProfit" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Average trade profit% grouped by the day trades closed — reveals weekday edge patterns</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each tradeProfitByDayOfWeek as d}
@@ -4395,7 +4380,7 @@
 	{#if tradeStreakAnalysis}
 		{@const tsa = tradeStreakAnalysis}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Trade Streak Analysis</h2>
+			<h2 class="text-base font-semibold">Trade Streak Analysis <ChartInfo metric="streak" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Win/loss streak statistics across {tsa.total} chronological trades</p>
 			<div class="mt-3 grid grid-cols-3 gap-3">
 				<div class="rounded-lg border border-border bg-card/60 p-3 text-center">
@@ -4418,7 +4403,7 @@
 	{#if tradeMonthlyWinRate}
 		{@const tmwr = tradeMonthlyWinRate}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Monthly Win Rate</h2>
+			<h2 class="text-sm font-semibold">Monthly Win Rate <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Win rate per calendar month · avg {(tmwr.avgWr * 100).toFixed(1)}% · dashed line = 50%</p>
 			<svg viewBox="0 0 {tmwr.W} {tmwr.H}" class="w-full" style="height:64px">
 				<line x1={tmwr.PAD} y1={tmwr.zeroY} x2={tmwr.W - tmwr.PAD} y2={tmwr.zeroY} stroke="var(--ch-rule-strong)" stroke-width="0.8" stroke-dasharray="3,3"/>
@@ -4436,7 +4421,7 @@
 
 	{#if tradePairWinRate}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Win Rate by Pair</h2>
+			<h2 class="text-sm font-semibold">Win Rate by Pair <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Win rate per trading pair (≥3 trades) sorted by win rate descending</p>
 			<div class="space-y-1">
 				{#each tradePairWinRate as r}
@@ -4457,7 +4442,7 @@
 
 	{#if tradeHoldingBucketWinRate}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Win Rate by Holding Duration</h2>
+			<h2 class="text-sm font-semibold">Win Rate by Holding Duration <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Win rate and avg profit% across holding-time buckets (≥3 trades per bucket)</p>
 			<div class="space-y-1.5">
 				{#each tradeHoldingBucketWinRate as b}
@@ -4479,7 +4464,7 @@
 	{#if tradeProfitCumulativeTimeline}
 		{@const tpct = tradeProfitCumulativeTimeline}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Cumulative Profit Timeline</h2>
+			<h2 class="text-sm font-semibold">Cumulative Profit Timeline <ChartInfo metric="totalProfit" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Running sum of trade profit% across {tpct.total} trades · final: {tpct.positive ? '+' : ''}{tpct.final.toFixed(1)}%</p>
 			<svg viewBox="0 0 {tpct.W} {tpct.H}" class="w-full" style="height:64px">
 				<line x1={tpct.PAD} y1={tpct.zeroY} x2={tpct.W - tpct.PAD} y2={tpct.zeroY} stroke="var(--ch-rule)" stroke-width="0.8" stroke-dasharray="3,2"/>
@@ -4495,7 +4480,7 @@
 	{#if tradeEnterTagHourHeatmap}
 		{@const teh = tradeEnterTagHourHeatmap}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Enter Tag Win Rate by Hour</h2>
+			<h2 class="text-sm font-semibold">Enter Tag Win Rate by Hour <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Win rate per entry signal × hour of day (UTC) · green = high success rate at that hour · grey = insufficient trades</p>
 			<div class="overflow-x-auto">
 				<table class="w-full text-[8px]">
@@ -4530,7 +4515,7 @@
 	{/if}
 	{#if runTimeframeComparisonTable}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Timeframe Performance Comparison</h2>
+			<h2 class="mb-3 text-sm font-semibold">Timeframe Performance Comparison <ChartInfo metric="timeframe" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead>
@@ -4569,7 +4554,7 @@
 	{#if runProfitFactorTimeline}
 		{@const rpft = runProfitFactorTimeline}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Profit Factor Timeline</h2>
+			<h2 class="mb-1 text-sm font-semibold">Profit Factor Timeline <ChartInfo metric="profitFactor" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Profit_factor across backtest runs sorted by import date · avg {rpft.avg.toFixed(2)} · range {rpft.vMin.toFixed(2)}–{rpft.vMax.toFixed(2)}</p>
 			<svg viewBox="0 0 {rpft.W} {rpft.H}" class="w-full" style="height:72px">
 				<line x1={rpft.PAD} y1={rpft.y1} x2={rpft.W - rpft.PAD} y2={rpft.y1} stroke="var(--ch-axis-muted)" stroke-width="1" stroke-dasharray="4,3"/>
@@ -4589,7 +4574,7 @@
 	{#if tradeExitReasonTimeline}
 		{@const ert = tradeExitReasonTimeline}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Exit Reason Timeline (Monthly)</h2>
+			<h2 class="mb-3 text-sm font-semibold">Exit Reason Timeline (Monthly) <ChartInfo metric="exitReason" {lang} /></h2>
 			<div class="flex h-28 items-end gap-0.5">
 				{#each ert.months as m}
 					{@const total = [...ert.grid.get(m)!.values()].reduce((s, x) => s + x, 0)}
@@ -4618,7 +4603,7 @@
 	{/if}
 	{#if runDrawdownTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Max Drawdown Over Time</h2>
+			<h2 class="mb-1 text-sm font-semibold">Max Drawdown Over Time <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Max drawdown % per backtest run ordered by import date · shows whether optimization is reducing or worsening drawdown over time · trend {runDrawdownTimeline.trend > 0.5 ? '↑ worsening' : runDrawdownTimeline.trend < -0.5 ? '↓ improving' : '→ stable'}</p>
 			<svg viewBox="0 0 {runDrawdownTimeline.W} {runDrawdownTimeline.H}" class="w-full">
 				<line x1="0" y1={runDrawdownTimeline.avgY} x2={runDrawdownTimeline.W} y2={runDrawdownTimeline.avgY} stroke="var(--ch-warn-light)" stroke-width="1" stroke-dasharray="4,3"/>
@@ -4632,7 +4617,7 @@
 	{/if}
 	{#if runSharpeTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Sharpe Ratio Over Time</h2>
+			<h2 class="mb-1 text-sm font-semibold">Sharpe Ratio Over Time <ChartInfo metric="sharpe" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Sharpe ratio per backtest run ordered by import date · latest {runSharpeTimeline.latest.toFixed(2)} · avg {runSharpeTimeline.avg.toFixed(2)} · trend {runSharpeTimeline.trend > 0.1 ? '↑ improving' : runSharpeTimeline.trend < -0.1 ? '↓ declining' : '→ stable'}</p>
 			<svg viewBox="0 0 {runSharpeTimeline.W} {runSharpeTimeline.H}" class="w-full">
 				<line x1="0" y1={runSharpeTimeline.zeroY} x2={runSharpeTimeline.W} y2={runSharpeTimeline.zeroY} stroke="var(--ch-axis-faint)" stroke-width="1" stroke-dasharray="4,3"/>

@@ -3,6 +3,7 @@
 	import FactorBadges from '$lib/components/factor-badges.svelte';
 	import { fmtPct } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
+	import ChartInfo from '$lib/components/chart-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -1881,8 +1882,7 @@
 	{#if podium.length > 0}
 		<section class="mb-6">
 			<h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-				Top Performers
-			</h2>
+				Top Performers <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="grid gap-3 sm:grid-cols-3">
 				{#each podium as s, i (s.name)}
 					<a
@@ -1914,7 +1914,7 @@
 		{@const fd = frontierData}
 		<section class="mb-6 rounded-lg border bg-card p-4">
 			<div class="mb-2 flex items-baseline justify-between">
-				<h2 class="text-sm font-semibold">Efficient Frontier <span class="ml-1 font-normal text-muted-foreground text-xs">Sharpe vs MaxDD · lower-left = worse, upper-left = best</span></h2>
+				<h2 class="text-sm font-semibold">Efficient Frontier <span class="ml-1 font-normal text-muted-foreground text-xs">Sharpe vs MaxDD · lower-left = worse, upper-left = best</span> <ChartInfo metric="scatter" {lang} /></h2>
 				<div class="flex gap-3 text-[10px] text-muted-foreground">
 					<span><span class="inline-block h-2 w-2 rounded-full bg-green-500 mr-1"></span>spot</span>
 					<span><span class="inline-block h-2 w-2 rounded-full bg-red-400 mr-1"></span>futures</span>
@@ -2145,7 +2145,7 @@
 	{#if statusModeBreakdown}
 		{@const smb = statusModeBreakdown}
 		<section class="mt-8 rounded-lg border bg-card p-5">
-			<h2 class="mb-3 text-sm font-semibold">Strategy Portfolio Matrix <span class="ml-1 font-normal text-muted-foreground text-xs">(status × trading mode · {smb.total} strategies)</span></h2>
+			<h2 class="mb-3 text-sm font-semibold">Strategy Portfolio Matrix <span class="ml-1 font-normal text-muted-foreground text-xs">(status × trading mode · {smb.total} strategies)</span> <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="overflow-x-auto">
 				<table class="w-full text-xs">
 					<thead>
@@ -2185,8 +2185,7 @@
 	{#if profitByStatus}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Profit by Status
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(best &amp; avg across strategies per lifecycle stage)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(best &amp; avg across strategies per lifecycle stage)</span> <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="space-y-2">
 				{#each profitByStatus as r}
 					<div class="flex items-center gap-3">
@@ -2218,8 +2217,7 @@
 	{#if runDepthDistribution}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Strategy Research Depth
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(strategies grouped by total run count)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(strategies grouped by total run count)</span> <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="flex items-end gap-4 h-24">
 				{#each runDepthDistribution as r}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -2244,8 +2242,7 @@
 		{@const svd = sharpeVsDrawdown}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Sharpe vs Drawdown Map
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({svd.dots.length} strategies · right = higher Sharpe · up = lower drawdown)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({svd.dots.length} strategies · right = higher Sharpe · up = lower drawdown)</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<svg viewBox="0 0 {svd.W} {svd.H}" class="w-full" style="height:140px">
 				<!-- zero-sharpe line -->
 				{#if svd.zeroX >= svd.PAD && svd.zeroX <= svd.W - svd.PAD}
@@ -2271,8 +2268,7 @@
 		{@const avr = strategyAgeVsRuns}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Strategy Age vs Run Depth
-				<span class="ml-1 font-normal text-muted-foreground text-xs">({avr.dots.length} strategies · left = recently active · up = heavily tested)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">({avr.dots.length} strategies · left = recently active · up = heavily tested)</span> <ChartInfo metric="scatter" {lang} /></h2>
 			<svg viewBox="0 0 {avr.W} {avr.H}" class="w-full" style="height:130px">
 				{#each avr.dots as d}
 					<circle cx={d.x.toFixed(1)} cy={d.y.toFixed(1)} r="5" fill={d.color} opacity="0.85">
@@ -2296,8 +2292,7 @@
 	{#if factorUsageBar}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Factor Usage Across Strategies
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies use each factor)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies use each factor)</span> <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each factorUsageBar as r, i}
 					<div class="flex items-center gap-2">
@@ -2320,8 +2315,7 @@
 	{#if bestWinRateRanking}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Win Rate Ranking
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(best win rate achieved across all runs)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(best win rate achieved across all runs)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each bestWinRateRanking as r, i}
 					<div class="flex items-center gap-2">
@@ -2343,8 +2337,7 @@
 	{#if sortinoLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-5">
 			<h2 class="mb-3 text-sm font-semibold">Best Sortino Ranking
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(best Sortino ratio achieved · return per unit of downside deviation)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(best Sortino ratio achieved · return per unit of downside deviation)</span> <ChartInfo metric="sortino" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each sortinoLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2366,8 +2359,7 @@
 	{#if calmarLeaderboard}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Calmar Ratio Leaderboard
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(best Calmar = annual return ÷ max drawdown · higher = better risk-adjusted return)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(best Calmar = annual return ÷ max drawdown · higher = better risk-adjusted return)</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each calmarLeaderboard as r, i}
 					<div class="flex items-center gap-2">
@@ -2389,8 +2381,7 @@
 	{#if leastDrawdownRanking}
 		<section class="mt-6 rounded-lg border bg-card p-4">
 			<h2 class="mb-3 text-sm font-semibold">Lowest Max Drawdown Ranking
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(strategies with best drawdown control · shorter bar = less loss from peak)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(strategies with best drawdown control · shorter bar = less loss from peak)</span> <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<div class="space-y-1.5">
 				{#each leastDrawdownRanking as r, i}
 					<div class="flex items-center gap-2">
@@ -2411,8 +2402,7 @@
 	{#if runsPerStrategyHistogram}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Strategies by Run Count
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies have been tested N times)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many strategies have been tested N times)</span> <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-2" style="height:72px">
 				{#each runsPerStrategyHistogram as b}
 					<div class="flex flex-1 flex-col items-center gap-0.5">
@@ -2433,8 +2423,7 @@
 		{@const swd = strategyWinRateVsDrawdown}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Win Rate vs Drawdown
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(ideal = top-left: high win rate, low drawdown · dot size = run count)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(ideal = top-left: high win rate, low drawdown · dot size = run count)</span> <ChartInfo metric="winRate" {lang} /></h2>
 			<svg viewBox="0 0 {swd.W} {swd.H}" class="w-full" style="height:110px">
 				{#each swd.dots as d}
 					<circle cx={d.cx} cy={d.cy} r={d.r} fill={d.color} opacity="0.8"><title>{d.title}</title></circle>
@@ -2449,8 +2438,7 @@
 	{#if strategyModeComparison}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Avg Sortino by Trading Mode
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how strategies perform across live, dry-run, and backtest modes)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how strategies perform across live, dry-run, and backtest modes)</span> <ChartInfo metric="sortino" {lang} /></h2>
 			<div class="mt-3 space-y-2">
 				{#each strategyModeComparison as r}
 					<div class="flex items-center gap-3">
@@ -2471,8 +2459,7 @@
 		{@const rdc = runDepthVsCalmar}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Run Depth vs Best Calmar
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(does more backtesting → higher Calmar? · r = {rdc.corr >= 0 ? '+' : ''}{rdc.corr.toFixed(2)})</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(does more backtesting → higher Calmar? · r = {rdc.corr >= 0 ? '+' : ''}{rdc.corr.toFixed(2)})</span> <ChartInfo metric="calmar" {lang} /></h2>
 			<svg viewBox="0 0 {rdc.W} {rdc.H}" class="mt-3 w-full" style="height:130px">
 				{#if rdc.zeroY != null}
 					<line x1={rdc.PL} x2={rdc.W - rdc.PR} y1={rdc.zeroY} y2={rdc.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 3"/>
@@ -2491,8 +2478,7 @@
 		{@const sfc = strategyFactorCountDist}
 		<section class="mt-8 rounded-lg border border-border bg-card p-5">
 			<h2 class="text-sm font-semibold">Factor Count Distribution
-				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many signal factors each strategy uses · {sfc.total} strategies total)</span>
-			</h2>
+				<span class="ml-1 font-normal text-muted-foreground text-xs">(how many signal factors each strategy uses · {sfc.total} strategies total)</span> <ChartInfo metric="distribution" {lang} /></h2>
 			<div class="mt-3 flex items-end gap-2" style="height:72px">
 				{#each sfc.buckets as b}
 					<div class="flex flex-1 flex-col items-center gap-1">
@@ -2512,7 +2498,7 @@
 
 	{#if strategyBestSortinoRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Best Sortino Ranking</h2>
+			<h2 class="text-base font-semibold">Best Sortino Ranking <ChartInfo metric="sortino" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies by peak Sortino ratio across all runs</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyBestSortinoRanking as r, i}
@@ -2532,7 +2518,7 @@
 
 	{#if strategyLowestDrawdown}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Lowest Drawdown Strategies</h2>
+			<h2 class="text-base font-semibold">Lowest Drawdown Strategies <ChartInfo metric="maxDrawdown" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies with the smallest worst max drawdown% (min 3 runs) — risk-first ranking</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyLowestDrawdown as r, i}
@@ -2553,7 +2539,7 @@
 
 	{#if strategyAvgProfitRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Top Strategies by Best Profit%</h2>
+			<h2 class="text-base font-semibold">Top Strategies by Best Profit% <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies by their best recorded total profit% (min 2 runs) — identifies peak performers</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyAvgProfitRanking as r, i}
@@ -2575,7 +2561,7 @@
 	{#if strategyRunsVsProfit}
 		{@const srvp = strategyRunsVsProfit}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Run Count vs Best Profit Scatter</h2>
+			<h2 class="text-base font-semibold">Run Count vs Best Profit Scatter <ChartInfo metric="scatter" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Each dot = one strategy · X = number of backtest runs · Y = best profit% achieved — does more research yield better results?</p>
 			<svg viewBox="0 0 {srvp.W} {srvp.H}" class="mt-2 w-full" style="height:80px">
 				<line x1={srvp.PAD} y1={srvp.H - srvp.PAD - ((0 - srvp.yMin) / (srvp.yMax - srvp.yMin)) * (srvp.H - srvp.PAD * 2)} x2={srvp.W - srvp.PAD} y2={srvp.H - srvp.PAD - ((0 - srvp.yMin) / (srvp.yMax - srvp.yMin)) * (srvp.H - srvp.PAD * 2)} stroke="var(--ch-rule)" stroke-width="0.5"/>
@@ -2592,7 +2578,7 @@
 
 	{#if strategyBestCalmarRanking}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Top Strategies by Best Calmar Ratio</h2>
+			<h2 class="text-base font-semibold">Top Strategies by Best Calmar Ratio <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Top 10 strategies by their best Calmar ratio (annualised return ÷ max drawdown, min 2 runs)</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyBestCalmarRanking as r, i}
@@ -2614,7 +2600,7 @@
 	{#if strategyProfitDistribution}
 		{@const spd = strategyProfitDistribution}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Best Profit Distribution</h2>
+			<h2 class="text-base font-semibold">Strategy Best Profit Distribution <ChartInfo metric="distribution" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Histogram of best profit% across {spd.total} strategies · median {spd.median.toFixed(1)}% — overall portfolio quality shape</p>
 			<div class="mt-3 flex items-end gap-1" style="height:72px">
 				{#each spd.buckets as b}
@@ -2633,7 +2619,7 @@
 
 	{#if strategyStatusBreakdown}
 		<section class="mt-8 rounded-xl border border-border bg-card p-5">
-			<h2 class="text-base font-semibold">Strategy Status Breakdown</h2>
+			<h2 class="text-base font-semibold">Strategy Status Breakdown <ChartInfo metric="portfolio" {lang} /></h2>
 			<p class="mt-0.5 text-xs text-muted-foreground">Count of strategies by deployment status — portfolio composition at a glance</p>
 			<div class="mt-3 space-y-1.5">
 				{#each strategyStatusBreakdown as r}
@@ -2652,7 +2638,7 @@
 
 	{#if strategyTimeframeBreakdown}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy Timeframe Breakdown</h2>
+			<h2 class="text-sm font-semibold">Strategy Timeframe Breakdown <ChartInfo metric="timeframe" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Number of strategies per primary timeframe, with avg best profit</p>
 			<div class="space-y-1">
 				{#each strategyTimeframeBreakdown as r}
@@ -2673,7 +2659,7 @@
 	{#if strategyWinRateVsRuns}
 		{@const swr = strategyWinRateVsRuns}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Win Rate vs Run Count Scatter</h2>
+			<h2 class="text-sm font-semibold">Win Rate vs Run Count Scatter <ChartInfo metric="winRate" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Each dot = one strategy · x = number of backtest runs · y = best win rate% · upper-right = well-tested with high win rate</p>
 			<svg viewBox="0 0 {swr.W} {swr.H}" class="w-full" style="height:90px">
 				<line x1="8" y1={swr.zeroY} x2={swr.W - 8} y2={swr.zeroY} stroke="var(--ch-rule)" stroke-width="0.8" stroke-dasharray="3,2"/>
@@ -2690,7 +2676,7 @@
 
 	{#if strategyModeBreakdown}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Strategy Mode Breakdown</h2>
+			<h2 class="text-sm font-semibold">Strategy Mode Breakdown <ChartInfo metric="portfolio" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Count of strategies per deployment mode with avg best profit</p>
 			<div class="space-y-2">
 				{#each strategyModeBreakdown as r}
@@ -2711,7 +2697,7 @@
 	{#if strategyCalmarVsWinRate}
 		{@const scw = strategyCalmarVsWinRate}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Calmar vs Win Rate Scatter</h2>
+			<h2 class="text-sm font-semibold">Calmar vs Win Rate Scatter <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Best Calmar ratio vs best win rate per strategy · upper-right = strong risk-adjusted return + high accuracy</p>
 			<svg viewBox="0 0 {scw.W} {scw.H}" class="w-full" style="height:120px">
 				{#if scw.x1 >= scw.PAD && scw.x1 <= scw.W - scw.PAD}
@@ -2731,7 +2717,7 @@
 
 	{#if strategyRunDurationProfile}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Avg Backtest Duration by Status</h2>
+			<h2 class="text-sm font-semibold">Avg Backtest Duration by Status <ChartInfo metric="portfolio" {lang} /></h2>
 			<p class="mb-3 text-[11px] text-muted-foreground">Average backtest runtime per strategy status group · longer = more complex strategies or larger timerange</p>
 			<div class="space-y-1">
 				{#each strategyRunDurationProfile as r}
@@ -2751,7 +2737,7 @@
 
 	{#if strategyLastImportTimeline}
 		<section class="rounded-xl border border-border bg-card p-5">
-			<h2 class="text-sm font-semibold">Research Activity by Month</h2>
+			<h2 class="text-sm font-semibold">Research Activity by Month <ChartInfo metric="leaderboard" {lang} /></h2>
 			<p class="mb-2 text-[11px] text-muted-foreground">Count of strategies with last import in each calendar month · shows research cadence and active periods</p>
 			<div class="flex items-end gap-1" style="height:56px">
 				{#each strategyLastImportTimeline as r}
@@ -2769,7 +2755,7 @@
 	{/if}
 	{#if strategyAssetCoverage}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Strategy Asset Coverage</h2>
+			<h2 class="mb-3 text-sm font-semibold">Strategy Asset Coverage <ChartInfo metric="portfolio" {lang} /></h2>
 			<div class="space-y-1">
 				{#each strategyAssetCoverage as r}
 					{@const modeColor = r.mode === 'futures' ? 'var(--ch-warn)' : r.mode === 'hybrid' ? 'var(--ch-violet-light)' : 'var(--ch-violet)'}
@@ -2789,7 +2775,7 @@
 	{/if}
 	{#if strategySharpeRanking}
 		<section class="rounded-lg border border-border bg-card p-4">
-			<h2 class="mb-3 text-sm font-semibold">Strategy Sharpe Ratio Ranking</h2>
+			<h2 class="mb-3 text-sm font-semibold">Strategy Sharpe Ratio Ranking <ChartInfo metric="sharpe" {lang} /></h2>
 			<div class="space-y-1">
 				{#each strategySharpeRanking as r}
 					{@const color = r.positive ? 'var(--ch-violet-strong)' : 'var(--ch-loss)'}
@@ -2808,7 +2794,7 @@
 	{/if}
 	{#if strategyProfitVsSortino}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Best Profit vs Best Sortino (Strategy Scatter)</h2>
+			<h2 class="mb-1 text-sm font-semibold">Best Profit vs Best Sortino (Strategy Scatter) <ChartInfo metric="sortino" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Each dot = one strategy · x = best Sortino · y = best profit % · color = mode</p>
 			<svg viewBox="0 0 {strategyProfitVsSortino.W} {strategyProfitVsSortino.H}" class="w-full">
 				<line x1="0" y1={strategyProfitVsSortino.zeroY} x2={strategyProfitVsSortino.W} y2={strategyProfitVsSortino.zeroY} stroke="var(--ch-axis-faint)" stroke-width="1" stroke-dasharray="4,3"/>
@@ -2826,7 +2812,7 @@
 	{/if}
 	{#if strategyDrawdownVsCalmar}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h2 class="mb-1 text-sm font-semibold">Worst Drawdown vs Best Calmar (Strategy Scatter)</h2>
+			<h2 class="mb-1 text-sm font-semibold">Worst Drawdown vs Best Calmar (Strategy Scatter) <ChartInfo metric="calmar" {lang} /></h2>
 			<p class="mb-2 text-[10px] text-muted-foreground">Each dot = one strategy · x = worst drawdown % · y = best Calmar ratio · color = status · upper-left = ideal (low drawdown, high Calmar)</p>
 			<svg viewBox="0 0 {strategyDrawdownVsCalmar.W} {strategyDrawdownVsCalmar.H}" class="w-full">
 				{#if strategyDrawdownVsCalmar.zeroY !== null}

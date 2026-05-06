@@ -19,11 +19,11 @@
 **Goal**: Every chart `<h2>` on /archive has a ChartInfo button.
 **Success Criteria**: ~25 chart cards have working tooltips; popover positioning OK on widescreen + mobile.
 **Tests**: `pnpm exec vite build`; deploy; reload `/archive`; click 5 random tooltips.
-**Status**: Not Started
+**Status**: Complete (44 h2s wired, build clean, deployed)
 
 ## Stage 2: /strategies + /strategies/[name]
 **Goal**: Strategy listing + detail pages.
-**Status**: Not Started
+**Status**: Complete (35 + 31 = 66 charts wired; glossary +11 entries: equityCurve, monteCarlo, expectancy, streak, exitReason, enterTag, holdingTime, calendar, rollingWinRate, portfolio)
 
 ## Stage 3: /factors
 **Goal**: Factor attribution charts. May add factor-related glossary entries.
