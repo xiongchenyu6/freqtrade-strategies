@@ -5061,7 +5061,6 @@
 			<p class="mt-1 text-[9px] text-muted-foreground">Avg (PF−1)% by pair count · green=positive · red=negative · more pairs may reduce or amplify returns depending on diversification quality</p>
 		</section>
 	{/if}
-</main>
 
 <!-- ── Comparison panel (sticky bottom) ────────────────────────────────── -->
 {#if selected.size >= 2}
@@ -5165,8 +5164,10 @@
 	</div>
 {/if}
 
+<!-- ── Analytic charts grid (uniform card heights via 2-col grid) ──────── -->
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
 {#if timeframeCalmarRanking}
-	<section class="mt-6 rounded-lg border bg-card p-5">
+	<section class="rounded-lg border bg-card p-5 flex flex-col">
 		<h2 class="mb-3 text-sm font-semibold">Calmar Ranking by Timeframe
 			<span class="ml-1 font-normal text-muted-foreground text-xs">({timeframeCalmarRanking.reduce((s,r)=>s+r.count,0)} runs · avg Calmar, profit%, win rate per timeframe)</span>
 		</h2>
@@ -5213,7 +5214,7 @@
 
 {#if profitVsSortino}
 	{@const pvs = profitVsSortino}
-	<section class="mt-6 rounded-lg border bg-card p-5">
+	<section class="rounded-lg border bg-card p-5 flex flex-col">
 		<h2 class="mb-2 text-sm font-semibold">Profit vs Sortino
 			<span class="ml-1 font-normal text-muted-foreground text-xs">({pvs.dots.length} runs · colored by timeframe)</span>
 		</h2>
@@ -5241,7 +5242,7 @@
 
 {#if calmarVsSortino}
 	{@const cvs = calmarVsSortino}
-	<section class="mt-6 rounded-lg border bg-card p-5">
+	<section class="rounded-lg border bg-card p-5 flex flex-col">
 		<h2 class="mb-2 text-sm font-semibold">Calmar vs Sortino Risk Map
 			<span class="ml-1 font-normal text-muted-foreground text-xs">({cvs.dots.length} runs · r = {cvs.corr >= 0 ? '+' : ''}{cvs.corr.toFixed(2)})</span>
 		</h2>
@@ -5262,7 +5263,7 @@
 {/if}
 
 {#if strategyRunProfitRange}
-	<section class="mt-6 rounded-lg border bg-card p-5">
+	<section class="rounded-lg border bg-card p-5 flex flex-col">
 		<h2 class="mb-3 text-sm font-semibold">Strategy Profit Range
 			<span class="ml-1 font-normal text-muted-foreground text-xs">(best vs worst run profit% · min 3 runs per strategy)</span>
 		</h2>
@@ -5293,7 +5294,7 @@
 {/if}
 
 {#if profitFactorByTimeframe}
-	<section class="mt-6 rounded-lg border bg-card p-5">
+	<section class="rounded-lg border bg-card p-5 flex flex-col">
 		<h2 class="mb-3 text-sm font-semibold">Avg Profit Factor by Timeframe
 			<span class="ml-1 font-normal text-muted-foreground text-xs">(gross wins ÷ gross losses · min 3 runs per timeframe)</span>
 		</h2>
@@ -5314,7 +5315,7 @@
 	</section>
 {/if}
 {#if runSortinoStrategyRanking}
-	<section class="mt-6 rounded-xl border border-border bg-card p-4">
+	<section class="rounded-xl border border-border bg-card p-4 flex flex-col">
 		<h3 class="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Avg Sortino by Strategy</h3>
 		<svg viewBox="0 0 {runSortinoStrategyRanking.W} {runSortinoStrategyRanking.H}" class="w-full" style="height:{runSortinoStrategyRanking.H}px">
 			<line x1={runSortinoStrategyRanking.zeroX} y1="0" x2={runSortinoStrategyRanking.zeroX} y2={runSortinoStrategyRanking.H} stroke="var(--ch-axis-faint)" stroke-width="1"/>
@@ -5332,7 +5333,7 @@
 	</section>
 {/if}
 {#if runProfitVsSharpeScatter}
-	<section class="mt-6 rounded-xl border border-border bg-card p-4">
+	<section class="rounded-xl border border-border bg-card p-4 flex flex-col">
 		<h3 class="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Profit% vs Sharpe Scatter</h3>
 		<svg viewBox="0 0 {runProfitVsSharpeScatter.W} {runProfitVsSharpeScatter.H}" class="w-full" style="height:{runProfitVsSharpeScatter.H}px">
 			<line x1={runProfitVsSharpeScatter.zeroX} y1={runProfitVsSharpeScatter.PAD} x2={runProfitVsSharpeScatter.zeroX} y2={runProfitVsSharpeScatter.H - runProfitVsSharpeScatter.PAD} stroke="var(--ch-axis-faint)" stroke-width="0.7" stroke-dasharray="3,2"/>
@@ -5348,7 +5349,7 @@
 	</section>
 {/if}
 {#if runAvgTradeCountByTFBars}
-	<section class="mt-6 rounded-xl border border-border bg-card p-4">
+	<section class="rounded-xl border border-border bg-card p-4 flex flex-col">
 		<h3 class="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Avg Trade Count by Timeframe</h3>
 		<svg viewBox="0 0 {runAvgTradeCountByTFBars.W} {runAvgTradeCountByTFBars.H}" class="w-full" style="height:{runAvgTradeCountByTFBars.H}px">
 			{#each runAvgTradeCountByTFBars.rows as row, i}
@@ -5363,7 +5364,7 @@
 	</section>
 {/if}
 {#if runWinRateCDF}
-	<section class="mt-6 rounded-xl border border-border bg-card p-4">
+	<section class="rounded-xl border border-border bg-card p-4 flex flex-col">
 		<h3 class="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Win Rate% CDF (All Archive Runs)</h3>
 		<svg viewBox="0 0 {runWinRateCDF.W} {runWinRateCDF.H}" class="w-full" style="height:{runWinRateCDF.H}px">
 			<line x1={runWinRateCDF.p50X} y1={runWinRateCDF.PAD} x2={runWinRateCDF.p50X} y2={runWinRateCDF.H - runWinRateCDF.PAD} stroke="var(--ch-axis-faint)" stroke-width="0.7" stroke-dasharray="3,2"/>
@@ -5375,3 +5376,5 @@
 		<p class="mt-1 text-[9px] text-muted-foreground">CDF of win rate% across all archive backtest runs · green S-curve · dashed median line · right-skewed = most strategies exceed 50% win rate</p>
 	</section>
 {/if}
+</div>
+</main>
