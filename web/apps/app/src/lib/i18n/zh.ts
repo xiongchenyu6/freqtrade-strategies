@@ -8,8 +8,8 @@ export default {
 	// --- topbar ---
 	'nav.home': '主页',
 	'nav.live': 'Live',
-	'nav.strategies': '📚 策略',
-	'nav.dca': '💰 DCA',
+	'nav.strategies': '策略',
+	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': '档案',
 	'nav.wf': 'WF',

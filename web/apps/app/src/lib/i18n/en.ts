@@ -8,8 +8,8 @@ export default {
 	// --- topbar ---
 	'nav.home': 'Home',
 	'nav.live': 'Live',
-	'nav.strategies': '📚 Strategies',
-	'nav.dca': '💰 DCA',
+	'nav.strategies': 'Strategies',
+	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': 'Archive',
 	'nav.wf': 'WF',

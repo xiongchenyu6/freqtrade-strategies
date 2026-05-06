@@ -3,30 +3,57 @@
 	import { realtimeStatus } from '$lib/realtime';
 	import { t, type Lang } from '$lib/i18n';
 	import bearMark from '$lib/assets/bear-mark.svg';
+	import {
+		Home,
+		Radio,
+		LineChart,
+		Layers,
+		Archive,
+		Wallet,
+		CandlestickChart,
+		Repeat2,
+		Sparkles,
+		Network,
+		FileText,
+		BookOpen
+	} from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
 
 	let { open = $bindable(false), onclose }: { open?: boolean; onclose?: () => void } = $props();
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 
-	type NavItem = { href: string; labelKey: string; external?: boolean };
+	type NavItem = {
+		href: string;
+		labelKey: string;
+		icon?: ComponentType;
+		external?: boolean;
+	};
 
 	// Single flat nav, primary group then secondary group, separated by a divider.
+	// `nav.live` deliberately has no icon — its dot doubles as a connection
+	// status indicator and would conflict with a static glyph.
 	const PRIMARY_NAV = $derived<NavItem[]>([
-		{ href: '/', labelKey: 'nav.home' },
+		{ href: '/', labelKey: 'nav.home', icon: Home },
 		{ href: '/live', labelKey: 'nav.live' },
-		{ href: '/signals', labelKey: 'nav.signals' },
-		{ href: '/market', labelKey: 'nav.market' },
-		{ href: '/strategies', labelKey: 'nav.strategies' },
-		{ href: '/archive', labelKey: 'nav.archive' }
+		{ href: '/signals', labelKey: 'nav.signals', icon: Radio },
+		{ href: '/market', labelKey: 'nav.market', icon: LineChart },
+		{ href: '/strategies', labelKey: 'nav.strategies', icon: Layers },
+		{ href: '/archive', labelKey: 'nav.archive', icon: Archive }
 	]);
 	const SECONDARY_NAV = $derived<NavItem[]>([
-		{ href: '/dca', labelKey: 'nav.dca' },
-		{ href: '/chart', labelKey: 'nav.chart' },
-		{ href: '/wf', labelKey: 'nav.wf' },
-		{ href: '/hyperopt', labelKey: 'nav.hyperopt' },
-		{ href: '/factors', labelKey: 'nav.factors' },
-		{ href: '/reports', labelKey: 'nav.reports' },
-		{ href: lang === 'en' ? '/docs/en/' : '/docs/', labelKey: 'nav.docs', external: true }
+		{ href: '/dca', labelKey: 'nav.dca', icon: Wallet },
+		{ href: '/chart', labelKey: 'nav.chart', icon: CandlestickChart },
+		{ href: '/wf', labelKey: 'nav.wf', icon: Repeat2 },
+		{ href: '/hyperopt', labelKey: 'nav.hyperopt', icon: Sparkles },
+		{ href: '/factors', labelKey: 'nav.factors', icon: Network },
+		{ href: '/reports', labelKey: 'nav.reports', icon: FileText },
+		{
+			href: lang === 'en' ? '/docs/en/' : '/docs/',
+			labelKey: 'nav.docs',
+			icon: BookOpen,
+			external: true
+		}
 	]);
 
 	const liveDotCls = $derived(
@@ -101,9 +128,13 @@
 						aria-current={active ? 'page' : undefined}
 						onclick={() => onclose?.()}
 					>
-						{#if n.labelKey === 'nav.live'}
-							<span class="inline-block h-2 w-2 shrink-0 rounded-full {liveDotCls} {liveDotPulse}" aria-hidden="true"></span>
-						{/if}
+						<span class="bdv-side-icon grid w-4 h-4 place-items-center shrink-0" aria-hidden="true">
+							{#if n.labelKey === 'nav.live'}
+								<span class="inline-block h-2 w-2 rounded-full {liveDotCls} {liveDotPulse}"></span>
+							{:else if n.icon}
+								<svelte:component this={n.icon} size={16} strokeWidth={1.75} />
+							{/if}
+						</span>
 						<span>{t(lang, n.labelKey)}</span>
 					</a>
 				</li>
@@ -121,12 +152,17 @@
 					<a
 						href={n.href}
 						data-sveltekit-reload={n.external ? '' : undefined}
-						class="bdv-side-item flex items-center justify-between rounded-md px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+						class="bdv-side-item flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 						class:bdv-side-active={active}
 						aria-current={active ? 'page' : undefined}
 						onclick={() => onclose?.()}
 					>
-						<span>{t(lang, n.labelKey)}</span>
+						<span class="bdv-side-icon grid w-4 h-4 place-items-center shrink-0" aria-hidden="true">
+							{#if n.icon}
+								<svelte:component this={n.icon} size={16} strokeWidth={1.75} />
+							{/if}
+						</span>
+						<span class="flex-1">{t(lang, n.labelKey)}</span>
 						{#if n.external}
 							<span class="text-[10px] text-muted-foreground/70">↗</span>
 						{/if}
@@ -146,9 +182,19 @@
 </aside>
 
 <style>
+	:global(.bdv-side-icon) {
+		color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+		transition: color 120ms ease-out;
+	}
+	:global(.bdv-side-item:hover .bdv-side-icon) {
+		color: var(--foreground);
+	}
 	:global(.bdv-side-item.bdv-side-active) {
 		background: linear-gradient(90deg, color-mix(in oklab, var(--dawn-500) 14%, transparent), color-mix(in oklab, var(--dawn-500) 3%, transparent));
 		color: var(--foreground);
 		box-shadow: inset 2px 0 0 var(--dawn-500);
+	}
+	:global(.bdv-side-item.bdv-side-active .bdv-side-icon) {
+		color: var(--dawn-500);
 	}
 </style>
