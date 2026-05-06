@@ -2344,67 +2344,58 @@
 					{@const e = signal.item}
 					{@const borderCls = KIND_BORDER[e.kind] ?? 'border-l-[#4a9eff]'}
 					{@const badgeCls = KIND_BADGE[e.kind] ?? 'bg-blue-950/60 text-blue-400'}
-					<li class="rounded-xl border border-border bg-card border-l-4 {borderCls} px-5 py-4">
-						<div class="mb-2 flex flex-wrap items-center gap-2">
-							<span class="rounded-full px-2 py-0.5 text-xs font-bold {badgeCls}">{e.kind}</span>
-							<span class="text-xs text-muted-foreground">{fmtTime(e.ts)}</span>
-							<span class="ml-auto rounded-full bg-orange-950/60 px-2 py-0.5 text-[10px] font-semibold text-orange-400 border border-orange-900">EVENT DCA</span>
-						</div>
-						<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-							<span class="font-medium">BTC {fmtUSD(e.price)}</span>
+					<li class="rounded-xl border border-border bg-card border-l-4 {borderCls} px-4 py-3">
+						<!-- Single-row on lg+, wrap groups on smaller screens. -->
+						<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+							<span class="rounded-full px-2 py-0.5 text-xs font-bold shrink-0 {badgeCls}">{e.kind}</span>
+							<span class="text-xs text-muted-foreground shrink-0 tabular-nums">{fmtTime(e.ts)}</span>
+							<span class="font-medium shrink-0">BTC {fmtUSD(e.price)}</span>
 							{#if e.fng != null}
-								<span class="text-muted-foreground">FnG <span class="font-mono text-foreground">{e.fng}</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">FnG <span class="font-mono text-foreground">{e.fng}</span></span>
 							{/if}
 							{#if e.severity != null}
-								<span class="text-muted-foreground">
+								<span class="text-xs text-muted-foreground shrink-0">
 									{lang === 'zh' ? '严重度' : 'Severity'}
 									<span class="font-mono font-semibold text-foreground">{(e.severity * 100).toFixed(1)}%</span>
 								</span>
 							{/if}
-						</div>
-						<div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 							{#if e.amount_usdt != null}
-								<span>{lang === 'zh' ? '金额' : 'Amount'}: <span class="font-mono text-foreground">{fmtUSD(e.amount_usdt)} USDT</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">{lang === 'zh' ? '金额' : 'Amount'} <span class="font-mono text-foreground">{fmtUSD(e.amount_usdt)} USDT</span></span>
 							{/if}
 							{#if e.mode}
-								<span>mode: <span class="font-mono text-foreground">{e.mode}</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">mode <span class="font-mono text-foreground">{e.mode}</span></span>
 							{/if}
+							<span class="ml-auto rounded-full bg-orange-950/60 px-2 py-0.5 text-[10px] font-semibold text-orange-400 border border-orange-900 shrink-0">EVENT DCA</span>
 						</div>
 					</li>
 				{:else}
 					{@const r = signal.item}
 					{@const profit = r.total_profit_pct ?? 0}
-					<li class="rounded-xl border border-border bg-card border-l-4 border-l-green-500 px-5 py-4">
-						<div class="mb-2 flex flex-wrap items-center gap-2">
-							<span class="rounded-full bg-green-950/60 px-2 py-0.5 text-xs font-bold text-green-400">BACKTEST</span>
-							<span class="text-xs text-muted-foreground">{fmtTime(r.started_at ?? r.imported_at)}</span>
+					<li class="rounded-xl border border-border bg-card border-l-4 border-l-green-500 px-4 py-3">
+						<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+							<span class="rounded-full bg-green-950/60 px-2 py-0.5 text-xs font-bold text-green-400 shrink-0">BACKTEST</span>
+							<span class="text-xs text-muted-foreground shrink-0 tabular-nums">{fmtTime(r.started_at ?? r.imported_at)}</span>
 							{#if r.timeframe}
-								<span class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{r.timeframe}</span>
+								<span class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">{r.timeframe}</span>
 							{/if}
-						</div>
-						<div class="mb-1 flex items-baseline gap-2">
-							<span class="font-semibold">{r.strategy}</span>
-						</div>
-						<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+							<span class="font-semibold shrink-0">{r.strategy}</span>
 							<span
 								class:text-green-400={profit > 0}
 								class:text-red-400={profit < 0}
 								class:text-muted-foreground={profit === 0}
-								class="font-mono font-semibold"
+								class="font-mono font-semibold shrink-0"
 							>{fmtPct(profit)}</span>
 							{#if r.calmar != null}
-								<span class="text-muted-foreground">Calmar <span class="font-mono text-foreground">{r.calmar.toFixed(2)}</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">Calmar <span class="font-mono text-foreground">{r.calmar.toFixed(2)}</span></span>
 							{/if}
 							{#if r.sharpe != null}
-								<span class="text-muted-foreground">Sharpe <span class="font-mono text-foreground">{r.sharpe.toFixed(2)}</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">Sharpe <span class="font-mono text-foreground">{r.sharpe.toFixed(2)}</span></span>
 							{/if}
-						</div>
-						<div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 							{#if r.total_trades != null}
-								<span><span class="font-mono text-foreground">{r.total_trades}</span> trades</span>
+								<span class="text-xs text-muted-foreground shrink-0"><span class="font-mono text-foreground">{r.total_trades}</span> trades</span>
 							{/if}
 							{#if r.max_drawdown_pct != null}
-								<span>MaxDD <span class="font-mono text-red-500">{r.max_drawdown_pct.toFixed(1)}%</span></span>
+								<span class="text-xs text-muted-foreground shrink-0">MaxDD <span class="font-mono text-red-500">{r.max_drawdown_pct.toFixed(1)}%</span></span>
 							{/if}
 						</div>
 					</li>
