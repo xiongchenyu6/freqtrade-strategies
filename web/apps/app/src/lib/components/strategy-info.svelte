@@ -18,11 +18,30 @@
 	let open = $state(false);
 	let popover: HTMLDivElement | undefined;
 	let trigger: HTMLButtonElement | undefined;
+	// Computed (top, left) for the popover when open. Rendered with
+	// `position: fixed` so it escapes any ancestor overflow:hidden / clipping
+	// (e.g. sticky filter bars, table cells with truncate).
+	let popoverPos = $state<{ top: number; left: number } | null>(null);
 
 	const copy = $derived(getStrategy(strategy, lang));
+	const POPOVER_W = 420;
+
+	function computePosition() {
+		if (!trigger) return;
+		const r = trigger.getBoundingClientRect();
+		const margin = 8;
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+		const wantBelow = r.bottom + margin + 260 < vh || r.top - margin - 260 < 0;
+		const top = wantBelow ? r.bottom + margin : Math.max(margin, r.top - margin - 320);
+		let left = r.left;
+		if (left + POPOVER_W + margin > vw) left = Math.max(margin, vw - POPOVER_W - margin);
+		popoverPos = { top, left };
+	}
 
 	function toggle(e: MouseEvent) {
 		e.stopPropagation();
+		if (!open) computePosition();
 		open = !open;
 	}
 
@@ -46,19 +65,29 @@
 		open = false;
 	}
 
+	function handleReposition() {
+		if (open) computePosition();
+	}
+
 	$effect(() => {
 		if (open) {
 			document.addEventListener('click', handleDocClick, true);
 			document.addEventListener('keydown', handleKeydown);
+			window.addEventListener('scroll', handleReposition, true);
+			window.addEventListener('resize', handleReposition);
 		} else {
 			document.removeEventListener('click', handleDocClick, true);
 			document.removeEventListener('keydown', handleKeydown);
+			window.removeEventListener('scroll', handleReposition, true);
+			window.removeEventListener('resize', handleReposition);
 		}
 	});
 
 	onDestroy(() => {
 		document.removeEventListener('click', handleDocClick, true);
 		document.removeEventListener('keydown', handleKeydown);
+		window.removeEventListener('scroll', handleReposition, true);
+		window.removeEventListener('resize', handleReposition);
 	});
 
 	const btnSize = $derived(size === 'xs' ? 'h-3.5 w-3.5 text-[9px]' : 'h-4 w-4 text-[10px]');
@@ -76,12 +105,13 @@
 		i
 	</button>
 
-	{#if open && copy}
+	{#if open && copy && popoverPos}
 		<div
 			bind:this={popover}
 			role="dialog"
 			aria-modal="false"
-			class="absolute left-0 top-full z-[60] mt-1.5 w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-4 text-left text-xs leading-relaxed shadow-2xl shadow-black/40 sm:w-[420px]"
+			style="top: {popoverPos.top}px; left: {popoverPos.left}px;"
+			class="fixed z-[1000] w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-4 text-left text-xs leading-relaxed shadow-2xl shadow-black/40 sm:w-[420px]"
 		>
 			<div class="mb-2 flex items-baseline justify-between gap-2">
 				<h3 class="text-sm font-semibold text-foreground">{copy.name}</h3>
@@ -134,11 +164,12 @@
 				</div>
 			{/if}
 		</div>
-	{:else if open}
+	{:else if open && popoverPos}
 		<div
 			bind:this={popover}
 			role="dialog"
-			class="absolute left-0 top-full z-[60] mt-1.5 w-[260px] rounded-lg border border-yellow-700/50 bg-yellow-950/40 p-3 text-xs text-yellow-200 shadow-2xl"
+			style="top: {popoverPos.top}px; left: {popoverPos.left}px;"
+			class="fixed z-[1000] w-[260px] rounded-lg border border-yellow-700/50 bg-yellow-950/40 p-3 text-xs text-yellow-200 shadow-2xl"
 		>
 			<p>{lang === 'zh' ? '策略说明缺失' : 'No strategy entry'}: <code>{strategy}</code></p>
 		</div>

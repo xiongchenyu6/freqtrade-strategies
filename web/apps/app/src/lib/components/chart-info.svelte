@@ -25,17 +25,38 @@
 	let open = $state(false);
 	let popover: HTMLDivElement | undefined;
 	let trigger: HTMLButtonElement | undefined;
+	// Computed (top, left) for the popover when open. We render the popover
+	// with `position: fixed` so it escapes any ancestor `overflow:hidden` —
+	// the only way to ensure it's never clipped by a sticky filter bar or a
+	// table cell with `truncate`.
+	let popoverPos = $state<{ top: number; left: number } | null>(null);
 
 	const copy = $derived(getMetric(metric, lang));
+	const POPOVER_W = 360;
+
+	function computePosition() {
+		if (!trigger) return;
+		const r = trigger.getBoundingClientRect();
+		const margin = 8;
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+		// Prefer below-the-button. Flip above if there isn't enough room.
+		const wantBelow = r.bottom + margin + 200 < vh || r.top - margin - 200 < 0;
+		const top = wantBelow ? r.bottom + margin : Math.max(margin, r.top - margin - 240);
+		// Left-anchor unless that would clip the right edge.
+		let left = r.left;
+		if (left + POPOVER_W + margin > vw) left = Math.max(margin, vw - POPOVER_W - margin);
+		popoverPos = { top, left };
+	}
 
 	function toggle(e: MouseEvent) {
 		e.stopPropagation();
+		if (!open) computePosition();
 		open = !open;
 	}
 
 	function close() {
 		open = false;
-		// Return focus to the trigger so keyboard users don't lose their place.
 		trigger?.focus();
 	}
 
@@ -54,19 +75,29 @@
 		open = false;
 	}
 
+	function handleReposition() {
+		if (open) computePosition();
+	}
+
 	$effect(() => {
 		if (open) {
 			document.addEventListener('click', handleDocClick, true);
 			document.addEventListener('keydown', handleKeydown);
+			window.addEventListener('scroll', handleReposition, true);
+			window.addEventListener('resize', handleReposition);
 		} else {
 			document.removeEventListener('click', handleDocClick, true);
 			document.removeEventListener('keydown', handleKeydown);
+			window.removeEventListener('scroll', handleReposition, true);
+			window.removeEventListener('resize', handleReposition);
 		}
 	});
 
 	onDestroy(() => {
 		document.removeEventListener('click', handleDocClick, true);
 		document.removeEventListener('keydown', handleKeydown);
+		window.removeEventListener('scroll', handleReposition, true);
+		window.removeEventListener('resize', handleReposition);
 	});
 
 	const btnSize = $derived(size === 'xs' ? 'h-3.5 w-3.5 text-[9px]' : 'h-4 w-4 text-[10px]');
@@ -84,12 +115,13 @@
 		i
 	</button>
 
-	{#if open && copy}
+	{#if open && copy && popoverPos}
 		<div
 			bind:this={popover}
 			role="dialog"
 			aria-modal="false"
-			class="absolute left-0 top-full z-[60] mt-1.5 w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-3.5 text-left text-xs leading-relaxed shadow-2xl shadow-black/40 sm:w-[360px]"
+			style="top: {popoverPos.top}px; left: {popoverPos.left}px;"
+			class="fixed z-[1000] w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-3.5 text-left text-xs leading-relaxed shadow-2xl shadow-black/40 sm:w-[360px]"
 		>
 			<div class="mb-2 flex items-baseline justify-between gap-2">
 				<h3 class="text-sm font-semibold text-foreground">{extraTitle ?? copy.name}</h3>
@@ -137,12 +169,13 @@
 				</div>
 			{/if}
 		</div>
-	{:else if open}
-		<!-- Glossary entry missing — silently surface in dev console only. -->
+	{:else if open && popoverPos}
+		<!-- Glossary entry missing — visible warning so the gap is obvious. -->
 		<div
 			bind:this={popover}
 			role="dialog"
-			class="absolute left-0 top-full z-[60] mt-1.5 w-[260px] rounded-lg border border-yellow-700/50 bg-yellow-950/40 p-3 text-xs text-yellow-200 shadow-2xl"
+			style="top: {popoverPos.top}px; left: {popoverPos.left}px;"
+			class="fixed z-[1000] w-[260px] rounded-lg border border-yellow-700/50 bg-yellow-950/40 p-3 text-xs text-yellow-200 shadow-2xl"
 		>
 			<p>{lang === 'zh' ? '说明缺失' : 'No glossary entry'}: <code>{metric}</code></p>
 			{#if note}<p class="mt-1 text-yellow-100/80">{note}</p>{/if}
