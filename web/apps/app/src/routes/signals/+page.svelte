@@ -4,6 +4,7 @@
 	import { fmtTime, fmtUSD, fmtPct } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import StrategyInfo from '$lib/components/strategy-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2380,6 +2381,7 @@
 								<span class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">{r.timeframe}</span>
 							{/if}
 							<span class="font-semibold shrink-0">{r.strategy}</span>
+							<StrategyInfo strategy={r.strategy} {lang} size="xs" />
 							<span
 								class:text-green-400={profit > 0}
 								class:text-red-400={profit < 0}

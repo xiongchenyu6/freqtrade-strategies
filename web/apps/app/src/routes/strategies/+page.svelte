@@ -4,6 +4,7 @@
 	import { fmtPct } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import StrategyInfo from '$lib/components/strategy-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -1891,7 +1892,10 @@
 					>
 						<span class="text-2xl leading-none">{rankEmoji[i]}</span>
 						<div class="min-w-0 flex-1">
-							<p class="truncate font-semibold text-foreground text-sm">{s.name}</p>
+							<p class="flex items-center gap-1.5 truncate font-semibold text-foreground text-sm">
+								<span class="truncate">{s.name}</span>
+								<StrategyInfo strategy={s.name} {lang} size="xs" />
+							</p>
 							<div class="mt-1 flex items-center gap-3 text-xs text-muted-foreground font-mono">
 								<span
 									class:text-green-500={(s.best_profit_pct ?? 0) > 0}
@@ -2049,6 +2053,7 @@
 						<tr class="border-b border-border/50 transition-colors hover:bg-muted/30">
 							<td class="px-3 py-2">
 								<a href={`/strategies/${s.name}`} class="font-medium text-foreground hover:text-primary hover:underline">{s.name}</a>
+								<StrategyInfo strategy={s.name} {lang} size="xs" />
 							</td>
 							<td class="px-3 py-2 text-muted-foreground">{modeIcon[s.mode] ?? '⚫'} {s.mode}</td>
 							<td class="px-3 py-2">
@@ -2077,6 +2082,7 @@
 						<div class="flex items-center gap-2">
 							<span class="text-base">{modeIcon[s.mode] ?? '⚫'}</span>
 							<h2 class="truncate font-semibold text-foreground">{s.name}</h2>
+							<StrategyInfo strategy={s.name} {lang} />
 						</div>
 						<p class="mt-1 text-xs text-muted-foreground">{s.tagline}</p>
 					</div>

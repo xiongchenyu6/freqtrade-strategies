@@ -7,6 +7,7 @@
 	import { t, type Lang } from '$lib/i18n';
 	import StatusPill from '$lib/components/status-pill.svelte';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import StrategyInfo from '$lib/components/strategy-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2967,6 +2968,7 @@
 						<div>
 							<span class="text-muted-foreground">#{r.id}</span>
 							<span class="ml-2 font-semibold">{r.strategy}</span>
+							<StrategyInfo strategy={r.strategy} {lang} size="xs" />
 						</div>
 						<span
 							class:text-green-500={(r.total_profit_pct ?? 0) > 0}

@@ -10,6 +10,7 @@
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import StrategyInfo from '$lib/components/strategy-info.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const s = data.summary;
@@ -2322,6 +2323,7 @@
 							<a href={`/strategies/${r.strategy}`} class="flex items-center gap-2 rounded-lg border border-green-800/30 bg-green-950/15 px-3 py-2 text-xs transition hover:border-green-600/50">
 								<span class="w-4 shrink-0 font-bold text-green-400">#{i + 1}</span>
 								<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+								<StrategyInfo strategy={r.strategy} {lang} size="xs" />
 								<span class="shrink-0 font-mono font-semibold text-green-400">+{r.total_profit_pct!.toFixed(1)}%</span>
 								<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
 							</a>
@@ -2335,6 +2337,7 @@
 							<a href={`/strategies/${r.strategy}`} class="flex items-center gap-2 rounded-lg border border-red-800/30 bg-red-950/15 px-3 py-2 text-xs transition hover:border-red-600/50">
 								<span class="w-4 shrink-0 font-bold text-red-400">#{lb.total - lb.bottom.length + i + 1}</span>
 								<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+								<StrategyInfo strategy={r.strategy} {lang} size="xs" />
 								<span class="shrink-0 font-mono font-semibold {(r.total_profit_pct ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}">{(r.total_profit_pct ?? 0) >= 0 ? '+' : ''}{r.total_profit_pct!.toFixed(1)}%</span>
 								<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
 							</a>

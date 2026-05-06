@@ -1,0 +1,146 @@
+<script lang="ts">
+	import { onDestroy } from 'svelte';
+	import { getStrategy } from '$lib/charts/strategies';
+	import type { Lang } from '$lib/i18n';
+
+	let {
+		strategy,
+		lang,
+		size = 'sm'
+	}: {
+		// Strategy ID — looked up in $lib/charts/strategies. Missing IDs render
+		// a yellow "no entry" warning so gaps are visible during rollout.
+		strategy: string;
+		lang: Lang;
+		size?: 'xs' | 'sm';
+	} = $props();
+
+	let open = $state(false);
+	let popover: HTMLDivElement | undefined;
+	let trigger: HTMLButtonElement | undefined;
+
+	const copy = $derived(getStrategy(strategy, lang));
+
+	function toggle(e: MouseEvent) {
+		e.stopPropagation();
+		open = !open;
+	}
+
+	function close() {
+		open = false;
+		trigger?.focus();
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && open) {
+			e.preventDefault();
+			close();
+		}
+	}
+
+	function handleDocClick(e: MouseEvent) {
+		if (!open) return;
+		const t = e.target as Node;
+		if (popover?.contains(t)) return;
+		if (trigger?.contains(t)) return;
+		open = false;
+	}
+
+	$effect(() => {
+		if (open) {
+			document.addEventListener('click', handleDocClick, true);
+			document.addEventListener('keydown', handleKeydown);
+		} else {
+			document.removeEventListener('click', handleDocClick, true);
+			document.removeEventListener('keydown', handleKeydown);
+		}
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('click', handleDocClick, true);
+		document.removeEventListener('keydown', handleKeydown);
+	});
+
+	const btnSize = $derived(size === 'xs' ? 'h-3.5 w-3.5 text-[9px]' : 'h-4 w-4 text-[10px]');
+</script>
+
+<span class="relative inline-block align-middle">
+	<button
+		type="button"
+		bind:this={trigger}
+		onclick={toggle}
+		aria-label={lang === 'zh' ? '查看策略说明' : 'About this strategy'}
+		aria-expanded={open}
+		class="inline-grid {btnSize} place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+	>
+		i
+	</button>
+
+	{#if open && copy}
+		<div
+			bind:this={popover}
+			role="dialog"
+			aria-modal="false"
+			class="absolute left-0 top-full z-[60] mt-1.5 w-[360px] max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-4 text-left text-xs leading-relaxed shadow-2xl shadow-black/40 sm:w-[420px]"
+		>
+			<div class="mb-2 flex items-baseline justify-between gap-2">
+				<h3 class="text-sm font-semibold text-foreground">{copy.name}</h3>
+				<button
+					type="button"
+					onclick={close}
+					aria-label={lang === 'zh' ? '关闭' : 'Close'}
+					class="-mr-1 -mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded text-base text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+				>
+					×
+				</button>
+			</div>
+
+			<p class="mb-3 text-foreground italic">{copy.pitch}</p>
+
+			<p class="mb-2 text-foreground">
+				<span class="font-semibold text-muted-foreground">{lang === 'zh' ? '逻辑' : 'Philosophy'}</span>
+				· {copy.philosophy}
+			</p>
+
+			{#if copy.factors && copy.factors.length > 0}
+				<div class="mb-2">
+					<span class="font-semibold text-muted-foreground">{lang === 'zh' ? '核心因子' : 'Factors'}</span>
+					<div class="mt-1 flex flex-wrap gap-1">
+						{#each copy.factors as f}
+							<span class="rounded-full border border-border bg-secondary/60 px-2 py-0.5 font-mono text-[10px] text-foreground">{f}</span>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			{#if copy.bestFor}
+				<p class="mb-1 text-foreground">
+					<span class="font-semibold text-green-400">{lang === 'zh' ? '擅长' : 'Best for'}</span>
+					· {copy.bestFor}
+				</p>
+			{/if}
+
+			{#if copy.worstFor}
+				<p class="mb-1 text-foreground">
+					<span class="font-semibold text-red-400">{lang === 'zh' ? '不适合' : 'Worst for'}</span>
+					· {copy.worstFor}
+				</p>
+			{/if}
+
+			{#if copy.risk}
+				<div class="mt-2 rounded border border-dashed border-border bg-secondary/40 px-2 py-1.5 text-[11px] text-muted-foreground">
+					<span class="font-semibold">{lang === 'zh' ? '风险特征' : 'Risk profile'}:</span>
+					{copy.risk}
+				</div>
+			{/if}
+		</div>
+	{:else if open}
+		<div
+			bind:this={popover}
+			role="dialog"
+			class="absolute left-0 top-full z-[60] mt-1.5 w-[260px] rounded-lg border border-yellow-700/50 bg-yellow-950/40 p-3 text-xs text-yellow-200 shadow-2xl"
+		>
+			<p>{lang === 'zh' ? '策略说明缺失' : 'No strategy entry'}: <code>{strategy}</code></p>
+		</div>
+	{/if}
+</span>
