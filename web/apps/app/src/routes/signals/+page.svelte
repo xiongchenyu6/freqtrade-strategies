@@ -2240,7 +2240,7 @@
 	<title>{t(lang, 'signals.title')} · Crypto Quant</title>
 </svelte:head>
 
-<main class="mx-auto max-w-4xl px-3 sm:px-5 py-8">
+<main class="mx-auto max-w-7xl px-3 sm:px-5 py-8">
 	<!-- Page header -->
 	<header class="mb-6">
 		<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'signals.title')}</h1>

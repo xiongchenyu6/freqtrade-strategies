@@ -129,8 +129,8 @@
 	<title>{t(lang, 'nav.market')} · Crypto Quant</title>
 </svelte:head>
 
-<main class="px-3 sm:px-4 py-8">
-	<div class="mx-auto max-w-6xl">
+<main class="mx-auto max-w-7xl px-3 sm:px-5 py-8">
+	<div class="">
 		<!-- Page header -->
 		<div class="mb-6">
 			<h1 class="text-2xl font-bold tracking-tight text-foreground">
