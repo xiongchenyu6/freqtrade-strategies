@@ -51,7 +51,14 @@ type TakerRatioEntry = { buySellRatio: string; buyVol: string; sellVol: string; 
 
 async function fetchJson<T>(url: string, fetchFn: typeof fetch): Promise<T> {
 	const res = await fetchFn(url);
-	if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+	if (!res.ok) {
+		// Cloudflare Workers warn ("A stalled HTTP response was canceled to
+		// prevent deadlock") if a Response is dropped without its body being
+		// read or cancelled. Cancel explicitly so the runtime releases the
+		// concurrent-request slot immediately.
+		await res.body?.cancel().catch(() => {});
+		throw new Error(`HTTP ${res.status} for ${url}`);
+	}
 	return res.json() as Promise<T>;
 }
 
