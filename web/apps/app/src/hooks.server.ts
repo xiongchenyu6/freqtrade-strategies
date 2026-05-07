@@ -14,12 +14,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 // with context (path, error name, stack head) without dumping full traces.
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
 	const err = error as Error;
-	console.error('[ssr-error]', {
+	const cookieKeys = event.cookies.getAll().map((c) => c.name);
+	console.error('[ssr-error]', JSON.stringify({
 		path: event.url.pathname,
 		status,
+		cookieKeys,
 		errorName: err?.name,
 		errorMessage: err?.message,
-		stackHead: err?.stack?.split('\n').slice(0, 4).join(' | ')
-	});
+		stack: err?.stack
+	}));
 	return { message: message ?? 'Internal Error' };
 };
