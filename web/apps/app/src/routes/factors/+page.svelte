@@ -1,8 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import type { Lang } from '$lib/i18n';
 
 	let { data }: { data: PageData } = $props();
+	// ChartInfo references {lang} in every chart h2; without this declaration
+	// SSR throws "lang is not defined" before any markup renders.
+	const lang = $derived<Lang>(data.lang ?? 'zh');
 	const runs = $derived(data.runs);
 	// `factors` is referenced bare by analytics blocks expecting a derived
 	// per-factor stats array; the existing per-factor computation lives in
