@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
 	import { getMetric } from '$lib/charts/glossary';
 	import type { Lang } from '$lib/i18n';
 
@@ -79,25 +78,22 @@
 		if (open) computePosition();
 	}
 
+	// $effect runs client-only and its cleanup callback handles both
+	// dependency changes and unmount — so document/window references here
+	// are always safe. The previous onDestroy block touched `document`
+	// unconditionally and crashed SSR with "document is not defined".
 	$effect(() => {
-		if (open) {
-			document.addEventListener('click', handleDocClick, true);
-			document.addEventListener('keydown', handleKeydown);
-			window.addEventListener('scroll', handleReposition, true);
-			window.addEventListener('resize', handleReposition);
-		} else {
+		if (!open) return;
+		document.addEventListener('click', handleDocClick, true);
+		document.addEventListener('keydown', handleKeydown);
+		window.addEventListener('scroll', handleReposition, true);
+		window.addEventListener('resize', handleReposition);
+		return () => {
 			document.removeEventListener('click', handleDocClick, true);
 			document.removeEventListener('keydown', handleKeydown);
 			window.removeEventListener('scroll', handleReposition, true);
 			window.removeEventListener('resize', handleReposition);
-		}
-	});
-
-	onDestroy(() => {
-		document.removeEventListener('click', handleDocClick, true);
-		document.removeEventListener('keydown', handleKeydown);
-		window.removeEventListener('scroll', handleReposition, true);
-		window.removeEventListener('resize', handleReposition);
+		};
 	});
 
 	const btnSize = $derived(size === 'xs' ? 'h-3.5 w-3.5 text-[9px]' : 'h-4 w-4 text-[10px]');
