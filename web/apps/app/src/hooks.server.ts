@@ -10,18 +10,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 	});
 };
 
-// Surface SSR errors to wrangler tail so unexpected page failures show up
-// with context (path, error name, stack head) without dumping full traces.
+// Surface SSR errors to wrangler tail with just enough context (path, error
+// name, message, top of stack) to triage. Full stack + cookieKeys are
+// useful when actively debugging but too noisy for steady-state logs.
 export const handleError: HandleServerError = ({ error, event, status, message }) => {
 	const err = error as Error;
-	const cookieKeys = event.cookies.getAll().map((c) => c.name);
+	const stackHead = err?.stack?.split('\n').slice(0, 3).join(' | ');
 	console.error('[ssr-error]', JSON.stringify({
 		path: event.url.pathname,
 		status,
-		cookieKeys,
 		errorName: err?.name,
 		errorMessage: err?.message,
-		stack: err?.stack
+		stackHead
 	}));
 	return { message: message ?? 'Internal Error' };
 };

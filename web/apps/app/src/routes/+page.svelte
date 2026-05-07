@@ -338,13 +338,18 @@
 					<p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-green-400">Top Performers</p>
 					<div class="space-y-1.5">
 						{#each lb.top as r, i}
-							<a href={`/strategies/${r.strategy}`} class="flex items-center gap-2 rounded-lg border border-green-800/30 bg-green-950/15 px-3 py-2 text-xs transition hover:border-green-600/50">
-								<span class="w-4 shrink-0 font-bold text-green-400">#{i + 1}</span>
-								<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+							<!-- StrategyInfo (a <button>) sits next to but outside the <a>
+								 so HTML stays valid (no nested interactive controls) and the
+								 i-click doesn't accidentally fire the link navigation. -->
+							<div class="flex items-center gap-2 rounded-lg border border-green-800/30 bg-green-950/15 px-3 py-2 text-xs transition hover:border-green-600/50">
+								<a href={`/strategies/${r.strategy}`} class="flex flex-1 items-center gap-2 min-w-0">
+									<span class="w-4 shrink-0 font-bold text-green-400">#{i + 1}</span>
+									<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+									<span class="shrink-0 font-mono font-semibold text-green-400">+{r.total_profit_pct!.toFixed(1)}%</span>
+									<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
+								</a>
 								<StrategyInfo strategy={r.strategy} {lang} size="xs" />
-								<span class="shrink-0 font-mono font-semibold text-green-400">+{r.total_profit_pct!.toFixed(1)}%</span>
-								<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
-							</a>
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -352,13 +357,15 @@
 					<p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-red-400">Underperformers</p>
 					<div class="space-y-1.5">
 						{#each lb.bottom as r, i}
-							<a href={`/strategies/${r.strategy}`} class="flex items-center gap-2 rounded-lg border border-red-800/30 bg-red-950/15 px-3 py-2 text-xs transition hover:border-red-600/50">
-								<span class="w-4 shrink-0 font-bold text-red-400">#{lb.total - lb.bottom.length + i + 1}</span>
-								<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+							<div class="flex items-center gap-2 rounded-lg border border-red-800/30 bg-red-950/15 px-3 py-2 text-xs transition hover:border-red-600/50">
+								<a href={`/strategies/${r.strategy}`} class="flex flex-1 items-center gap-2 min-w-0">
+									<span class="w-4 shrink-0 font-bold text-red-400">#{lb.total - lb.bottom.length + i + 1}</span>
+									<span class="flex-1 truncate font-semibold text-foreground">{r.strategy}</span>
+									<span class="shrink-0 font-mono font-semibold {(r.total_profit_pct ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}">{(r.total_profit_pct ?? 0) >= 0 ? '+' : ''}{r.total_profit_pct!.toFixed(1)}%</span>
+									<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
+								</a>
 								<StrategyInfo strategy={r.strategy} {lang} size="xs" />
-								<span class="shrink-0 font-mono font-semibold {(r.total_profit_pct ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}">{(r.total_profit_pct ?? 0) >= 0 ? '+' : ''}{r.total_profit_pct!.toFixed(1)}%</span>
-								<span class="shrink-0 font-mono text-muted-foreground text-[10px]">S {r.sharpe == null ? '—' : r.sharpe.toFixed(1)}</span>
-							</a>
+							</div>
 						{/each}
 					</div>
 				</div>

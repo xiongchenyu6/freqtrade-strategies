@@ -11,8 +11,14 @@
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
 	const triggers = $derived(data.triggers);
-	const dcaEvents = $derived(data.triggers);
 	const orders = $derived(data.log);
+	// Legacy unified view used by several "by-asset / weekly / dow" charts that
+	// expect a flat shape with `timestamp`, `amount`, optional `asset`, and
+	// `triggered_at`. We never actually populated `asset`/`triggered_at`, so
+	// every consuming chart guards with a length check and bails. Keep an empty
+	// typed list here so those guards short-circuit cleanly without ReferenceErrors.
+	type DcaEvent = { timestamp?: string; amount?: number; asset?: string; kind?: string; triggered_at?: string };
+	const dcaEvents = $derived<DcaEvent[]>([]);
 
 	let kindFilter = $state<string | null>(null);
 	const filteredTriggers = $derived.by(() => {

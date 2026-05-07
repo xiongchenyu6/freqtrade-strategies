@@ -1886,28 +1886,29 @@
 				Top Performers <ChartInfo metric="leaderboard" {lang} /></h2>
 			<div class="grid gap-3 sm:grid-cols-3">
 				{#each podium as s, i (s.name)}
-					<a
-						href={`/strategies/${s.name}`}
-						class="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:border-primary"
-					>
-						<span class="text-2xl leading-none">{rankEmoji[i]}</span>
-						<div class="min-w-0 flex-1">
-							<p class="flex items-center gap-1.5 truncate font-semibold text-foreground text-sm">
-								<span class="truncate">{s.name}</span>
-								<StrategyInfo strategy={s.name} {lang} size="xs" />
-							</p>
-							<div class="mt-1 flex items-center gap-3 text-xs text-muted-foreground font-mono">
-								<span
-									class:text-green-500={(s.best_profit_pct ?? 0) > 0}
-									class:text-red-500={(s.best_profit_pct ?? 0) < 0}
-								>
-									{fmtPct(s.best_profit_pct)}
-								</span>
-								<span>S {s.best_sharpe == null ? '—' : s.best_sharpe.toFixed(2)}</span>
-								<span>C {s.best_calmar == null ? '—' : s.best_calmar.toFixed(2)}</span>
+					<!-- StrategyInfo (a <button>) lives outside the <a> so HTML is valid. -->
+					<div class="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:border-primary">
+						<a
+							href={`/strategies/${s.name}`}
+							class="flex flex-1 items-center gap-3 min-w-0"
+						>
+							<span class="text-2xl leading-none">{rankEmoji[i]}</span>
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-semibold text-foreground text-sm">{s.name}</p>
+								<div class="mt-1 flex items-center gap-3 text-xs text-muted-foreground font-mono">
+									<span
+										class:text-green-500={(s.best_profit_pct ?? 0) > 0}
+										class:text-red-500={(s.best_profit_pct ?? 0) < 0}
+									>
+										{fmtPct(s.best_profit_pct)}
+									</span>
+									<span>S {s.best_sharpe == null ? '—' : s.best_sharpe.toFixed(2)}</span>
+									<span>C {s.best_calmar == null ? '—' : s.best_calmar.toFixed(2)}</span>
+								</div>
 							</div>
-						</div>
-					</a>
+						</a>
+						<StrategyInfo strategy={s.name} {lang} size="xs" />
+					</div>
 				{/each}
 			</div>
 		</section>
@@ -2082,7 +2083,11 @@
 						<div class="flex items-center gap-2">
 							<span class="text-base">{modeIcon[s.mode] ?? '⚫'}</span>
 							<h2 class="truncate font-semibold text-foreground">{s.name}</h2>
-							<StrategyInfo strategy={s.name} {lang} />
+							<!-- StrategyInfo deliberately not rendered here: the card itself
+								 is already an <a>, and a <button> nested in <a> is invalid
+								 HTML. Tooltip is still reachable from the podium card above,
+								 the table view, and the detail page header. -->
+
 						</div>
 						<p class="mt-1 text-xs text-muted-foreground">{s.tagline}</p>
 					</div>
