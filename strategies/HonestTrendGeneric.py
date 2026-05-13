@@ -27,6 +27,11 @@ _STRAT_DIR = Path(__file__).parent
 if str(_STRAT_DIR) not in sys.path:
     sys.path.insert(0, str(_STRAT_DIR))
 from risk_manager import RiskManager  # noqa: E402
+from kelly_sizer import (  # noqa: E402
+    KellyStats,
+    kelly_stake,
+    latest_strategy_stats,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,13 +158,47 @@ class HonestTrendGeneric(IStrategy):
             return False
         return True
 
+    # Cached Kelly stats — loaded once per process from the latest backtest zip
+    # for this concrete strategy class. None means "no usable backtest data yet,
+    # fall back to proposed_stake". We refresh once per bot_loop_start so a
+    # mid-session re-backtest can update sizing without restart.
+    _kelly_stats: Optional[KellyStats] = None
+    _kelly_stats_loaded: bool = False
+
+    def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
+        # Lazy-load stats once, then refresh on subsequent loops only if the
+        # backtest_results folder has new entries (cheap mtime check).
+        if not self._kelly_stats_loaded:
+            self._kelly_stats = latest_strategy_stats(self.__class__.__name__)
+            self._kelly_stats_loaded = True
+            if self._kelly_stats is None:
+                logger.info("Kelly: no backtest stats found, using proposed_stake")
+            else:
+                s = self._kelly_stats
+                logger.info(
+                    "Kelly: loaded stats p=%.3f b=%.2f n=%d f_half=%.4f",
+                    s.win_rate, s.payoff_ratio, s.n_trades, s.half_kelly_clamped(),
+                )
+
     def custom_stake_amount(self, pair: str, current_time: datetime,
                             current_rate: float, proposed_stake: float,
                             min_stake: Optional[float], max_stake: float,
                             leverage: float, entry_tag: Optional[str],
                             side: str, **kwargs) -> float:
-        multiplier = 2.0 if pair == "BTC/USDT" else 1.0
-        return min(proposed_stake * multiplier, max_stake)
+        # Equity in stake currency. wallets is None during backtest replay of
+        # the very first candle, hence the try/except.
+        equity = 0.0
+        try:
+            equity = float(self.wallets.get_total_stake_amount())
+        except Exception:
+            equity = 0.0
+
+        return kelly_stake(
+            equity=equity,
+            stats=self._kelly_stats,
+            proposed_stake=proposed_stake,
+            max_stake=max_stake,
+        )
 
     class HyperOpt:
         """Nested HyperOpt class. Freqtrade looks here for generate_estimator."""
