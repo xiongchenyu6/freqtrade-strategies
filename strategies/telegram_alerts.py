@@ -566,13 +566,27 @@ def send_daily_report():
     ])
     message = "\n".join(parts) + history_str + bot_status + format_kelly_report()
 
-    # Snapshot the structured Kelly status alongside the Telegram send so a
-    # dashboard / monitoring consumer can read the same numbers without
-    # re-running the Python.
-    try:
-        write_kelly_status_json(PROJECT_DIR / "sentiment_data" / "kelly_status.json")
-    except Exception as e:
-        logger.warning(f"Kelly status write failed: {e}")
+    # Snapshot the structured Kelly status alongside the Telegram send so
+    # dashboards / monitoring can read the same numbers without re-running
+    # this script.
+    #
+    # We write to two locations:
+    #   - `sentiment_data/kelly_status.json` — local copy for jq / monitoring
+    #     pipelines that already look in sentiment_data/ for daily artifacts.
+    #   - `web/apps/app/static/kelly_status.json` — the path the dashboard
+    #     fetches. A subsequent `wrangler deploy` is still required to push
+    #     this to Cloudflare, but writing it here means the static asset on
+    #     disk always reflects the most recent backtest data so the next
+    #     deploy carries fresh numbers automatically.
+    for path in (
+        PROJECT_DIR / "sentiment_data" / "kelly_status.json",
+        PROJECT_DIR / "web" / "apps" / "app" / "static" / "kelly_status.json",
+    ):
+        try:
+            if path.parent.exists():
+                write_kelly_status_json(path)
+        except Exception as e:
+            logger.warning(f"Kelly status write to {path} failed: {e}")
 
     send_telegram(message)
     logger.info("Daily report sent")
