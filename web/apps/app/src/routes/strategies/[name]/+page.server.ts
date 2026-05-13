@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { vps } from '$lib/api';
+import { loadKellyStatus } from '$lib/server/kelly';
 import { getStrategyMeta, pickStrategy } from '$lib/strategies';
 import type { BacktestRun, WfResult } from '$lib/types';
 
@@ -8,14 +9,16 @@ export const load: PageServerLoad = async ({ fetch, params, locals, cookies }) =
 	const { name } = params;
 	const jwt = cookies.get('qt_jwt');
 	const auth = jwt ? `Bearer ${jwt}` : undefined;
-	const [runs, wf] = await Promise.all([
+	const [runs, wf, kellyStatus] = await Promise.all([
 		vps
 			.backtestRuns(fetch, { strategy: name, limit: 200, authHeader: auth })
 			.catch(() => [] as BacktestRun[]),
 		vps
 			.walkForward(fetch, { strategy: name, limit: 200, authHeader: auth })
-			.catch(() => [] as WfResult[])
+			.catch(() => [] as WfResult[]),
+		loadKellyStatus(fetch)
 	]);
+	const kelly = kellyStatus?.strategies.find((e) => e.name === name) ?? null;
 	const meta = getStrategyMeta(name);
 	if (!meta && runs.length === 0) throw error(404, `Unknown strategy: ${name}`);
 
@@ -34,6 +37,7 @@ export const load: PageServerLoad = async ({ fetch, params, locals, cookies }) =
 		currentFactors: runs[0]?.factors ?? null,
 		runs: sortedRuns,
 		wfLatest,
-		wfDate: latestWfDate
+		wfDate: latestWfDate,
+		kelly
 	};
 };

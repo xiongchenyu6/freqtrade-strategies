@@ -14,6 +14,16 @@
 	// `return null` once `runs` is empty.
 	const runs = $derived<any[]>([]);
 
+	// Kelly verdict lookup by strategy name. The loader returns null when the
+	// JSON snapshot is missing; the map then stays empty and StrategyInfo
+	// falls back to its original behaviour with no Kelly block.
+	const kellyByName = $derived.by(() => {
+		const m = new Map<string, NonNullable<typeof data.kellyStatus>['strategies'][number]>();
+		const ks = data.kellyStatus?.strategies ?? [];
+		for (const e of ks) m.set(e.name, e);
+		return m;
+	});
+
 	const statusTone: Record<string, string> = {
 		live: 'bg-green-950 text-green-400 border-green-800',
 		dryrun: 'bg-yellow-950 text-yellow-400 border-yellow-800',
@@ -1907,7 +1917,7 @@
 								</div>
 							</div>
 						</a>
-						<StrategyInfo strategy={s.name} {lang} size="xs" />
+						<StrategyInfo strategy={s.name} {lang} kelly={kellyByName.get(s.name) ?? null} size="xs" />
 					</div>
 				{/each}
 			</div>
@@ -2054,7 +2064,7 @@
 						<tr class="border-b border-border/50 transition-colors hover:bg-muted/30">
 							<td class="px-3 py-2">
 								<a href={`/strategies/${s.name}`} class="font-medium text-foreground hover:text-primary hover:underline">{s.name}</a>
-								<StrategyInfo strategy={s.name} {lang} size="xs" />
+								<StrategyInfo strategy={s.name} {lang} kelly={kellyByName.get(s.name) ?? null} size="xs" />
 							</td>
 							<td class="px-3 py-2 text-muted-foreground">{modeIcon[s.mode] ?? '⚫'} {s.mode}</td>
 							<td class="px-3 py-2">

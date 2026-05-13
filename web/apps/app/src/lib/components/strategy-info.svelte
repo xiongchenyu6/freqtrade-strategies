@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { getStrategy } from '$lib/charts/strategies';
 	import type { Lang } from '$lib/i18n';
+	import type { KellyStatusEntry } from '$lib/types';
 
 	let {
 		strategy,
 		lang,
+		kelly = null,
 		size = 'sm'
 	}: {
 		// Strategy ID — looked up in $lib/charts/strategies. Missing IDs render
 		// a yellow "no entry" warning so gaps are visible during rollout.
 		strategy: string;
 		lang: Lang;
+		// Optional Kelly verdict block. When provided, the popover shows a
+		// "Kelly sizing" section with status-coded styling.
+		kelly?: KellyStatusEntry | null;
 		size?: 'xs' | 'sm';
 	} = $props();
 
@@ -157,6 +162,34 @@
 				<div class="mt-2 rounded border border-dashed border-border bg-secondary/40 px-2 py-1.5 text-[11px] text-muted-foreground">
 					<span class="font-semibold">{lang === 'zh' ? '风险特征' : 'Risk profile'}:</span>
 					{copy.risk}
+				</div>
+			{/if}
+
+			{#if kelly}
+				{@const kellyClasses = {
+					ok: 'border-green-700/40 bg-green-950/30 text-green-200',
+					negative_edge: 'border-red-700/40 bg-red-950/30 text-red-200',
+					insufficient_n: 'border-yellow-700/40 bg-yellow-950/30 text-yellow-200',
+					no_data: 'border-border bg-secondary/40 text-muted-foreground'
+				}[kelly.status]}
+				<div class="mt-2 rounded border {kellyClasses} px-2 py-1.5 text-[11px]">
+					<div class="font-semibold">
+						{lang === 'zh' ? 'Kelly 仓位' : 'Kelly sizing'}:
+					</div>
+					<div class="mt-0.5">{kelly.verdict}</div>
+					{#if kelly.n_trades != null && kelly.win_rate != null && kelly.payoff_ratio != null}
+						<div class="mt-0.5 font-mono text-[10px] opacity-80">
+							p={kelly.win_rate.toFixed(2)} · b={kelly.payoff_ratio.toFixed(2)} · n={kelly.n_trades}
+							{#if kelly.f_half_point != null && kelly.f_half_shrunk != null && kelly.status === 'negative_edge'}
+								<br />
+								{lang === 'zh' ? '点估计' : 'point'} f½={(kelly.f_half_point * 100).toFixed(2)}%
+								→ {lang === 'zh' ? '收缩后' : 'after Wilson'} 0%
+							{:else if kelly.f_half_shrunk != null && kelly.status === 'ok'}
+								<br />
+								f½={(kelly.f_half_shrunk * 100).toFixed(2)}%
+							{/if}
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>

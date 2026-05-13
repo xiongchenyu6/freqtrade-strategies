@@ -2869,7 +2869,7 @@
 	<header class="mb-8">
 		<div class="flex flex-wrap items-center gap-3">
 			<h1 class="text-3xl font-semibold tracking-tight">{strategyName}</h1>
-			<StrategyInfo strategy={strategyName} {lang} />
+			<StrategyInfo strategy={strategyName} {lang} kelly={data.kelly ?? null} />
 			{#if meta}
 				<span class="rounded border px-2 py-0.5 text-[10px] font-mono uppercase {statusTone[meta.status]}">
 					{t(lang, `strategies.status.${meta.status}`)}

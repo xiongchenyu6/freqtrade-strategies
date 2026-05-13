@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-05-13T12:42:10Z",
+  "min_trades_for_kelly": 30,
+  "wilson_z": 1.96,
+  "strategies": [
+    {
+      "name": "HonestTrend15mDry",
+      "win_rate": 0.125,
+      "payoff_ratio": 12.2068,
+      "n_trades": 8,
+      "f_half_point": 0.026659,
+      "f_half_shrunk": 0.0,
+      "status": "insufficient_n",
+      "verdict": "n=8 below 30 \u2192 fallback"
+    },
+    {
+      "name": "HonestTrend15mProtections",
+      "win_rate": 0.3316,
+      "payoff_ratio": 2.1798,
+      "n_trades": 570,
+      "f_half_point": 0.012465,
+      "f_half_shrunk": 0.0,
+      "status": "negative_edge",
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=1.25%)"
+    },
+    {
+      "name": "HonestTrend1mLive",
+      "win_rate": 0.3556,
+      "payoff_ratio": 1.4464,
+      "n_trades": 135,
+      "f_half_point": 0.0,
+      "f_half_shrunk": 0.0,
+      "status": "negative_edge",
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=0.00%)"
+    },
+    {
+      "name": "HonestTrend1mMTF",
+      "status": "no_data",
+      "verdict": "no recent backtest"
+    },
+    {
+      "name": "HonestTrendFutures",
+      "win_rate": 0.3296,
+      "payoff_ratio": 1.4924,
+      "n_trades": 901,
+      "f_half_point": 0.0,
+      "f_half_shrunk": 0.0,
+      "status": "negative_edge",
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=0.00%)"
+    }
+  ]
+}

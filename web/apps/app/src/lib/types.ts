@@ -154,3 +154,26 @@ export interface DcaLogRow {
 	explain: Record<string, unknown> | null;
 	order_result: unknown | null;
 }
+
+// Kelly sizing verdict — generated server-side by
+// strategies/telegram_alerts.py --write-kelly-status. Refreshed on every
+// daily-report run; the file lives at static/data/kelly_status.json.
+export interface KellyStatusEntry {
+	name: string;
+	status: 'ok' | 'negative_edge' | 'insufficient_n' | 'no_data';
+	verdict: string;
+	win_rate?: number;
+	payoff_ratio?: number;
+	n_trades?: number;
+	f_half_point?: number;
+	f_half_shrunk?: number;
+	error?: string;
+}
+
+export interface KellyStatusFile {
+	generated_at: string;
+	min_trades_for_kelly: number;
+	wilson_z: number;
+	strategies: KellyStatusEntry[];
+	error?: string;
+}

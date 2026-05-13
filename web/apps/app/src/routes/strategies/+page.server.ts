@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { vps } from '$lib/api';
+import { loadKellyStatus } from '$lib/server/kelly';
 import { STRATEGIES, pickStrategy } from '$lib/strategies';
 import type { BacktestRun } from '$lib/types';
 
@@ -44,9 +45,10 @@ function min<T>(xs: T[], score: (x: T) => number | null | undefined): number | n
 export const load: PageServerLoad = async ({ fetch, locals, cookies }) => {
 	const jwt = cookies.get('qt_jwt');
 	const auth = jwt ? `Bearer ${jwt}` : undefined;
-	const runs = await vps
-		.backtestRuns(fetch, { limit: 1000, authHeader: auth })
-		.catch(() => [] as BacktestRun[]);
+	const [runs, kellyStatus] = await Promise.all([
+		vps.backtestRuns(fetch, { limit: 1000, authHeader: auth }).catch(() => [] as BacktestRun[]),
+		loadKellyStatus(fetch)
+	]);
 	const byName = new Map<string, BacktestRun[]>();
 	for (const r of runs) {
 		if (!r.strategy) continue;
@@ -103,5 +105,5 @@ export const load: PageServerLoad = async ({ fetch, locals, cookies }) => {
 			)
 		});
 	}
-	return { strategies: aggregates };
+	return { strategies: aggregates, kellyStatus };
 };
