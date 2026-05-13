@@ -187,3 +187,69 @@ class TestLatestStrategyStats:
     def test_empty_dir_returns_none(self, tmp_path):
         out = kelly_sizer.latest_strategy_stats("Whatever", backtest_dir=tmp_path)
         assert out is None
+
+
+class TestStatsOptionalContext:
+    """The optional context fields (profit_total_pct, backtest_start/end) don't
+    affect Kelly math but must round-trip through the zip-loading path so the
+    dashboard popover can show 'Kelly says X but backtest made Y'."""
+
+    def _make_zip(self, tmp_path, strategy_name="Strat", trades=None, extra=None):
+        import json
+        import zipfile
+
+        if trades is None:
+            trades = [{"profit_ratio": 0.10}] * 3 + [{"profit_ratio": -0.05}] * 2
+        sd = {"trades": trades}
+        if extra:
+            sd.update(extra)
+        payload = {"strategy": {strategy_name: sd}}
+        zp = tmp_path / "backtest-result-test.zip"
+        with zipfile.ZipFile(zp, "w") as z:
+            z.writestr("backtest-result-test.json", json.dumps(payload))
+        return zp
+
+    def test_loads_context_fields_when_present(self, tmp_path):
+        zp = self._make_zip(
+            tmp_path,
+            extra={
+                "profit_total": 0.4275,
+                "backtest_start": "2024-01-01 00:00:00",
+                "backtest_end": "2026-05-01 12:00:00",
+            },
+        )
+        stats = kelly_sizer._load_stats_from_zip(zp, "Strat")
+        assert stats is not None
+        assert stats.profit_total_pct == pytest.approx(42.75, abs=1e-6)
+        assert stats.backtest_start == "2024-01-01 00:00:00"
+        assert stats.backtest_end == "2026-05-01 12:00:00"
+
+    def test_context_fields_default_none_when_absent(self, tmp_path):
+        # No profit_total / backtest_start / backtest_end in the strategy dict
+        zp = self._make_zip(tmp_path)
+        stats = kelly_sizer._load_stats_from_zip(zp, "Strat")
+        assert stats is not None
+        assert stats.profit_total_pct is None
+        assert stats.backtest_start is None
+        assert stats.backtest_end is None
+
+    def test_non_numeric_profit_total_is_ignored(self, tmp_path):
+        # Defensive: a string in profit_total shouldn't crash the loader.
+        zp = self._make_zip(tmp_path, extra={"profit_total": "not a number"})
+        stats = kelly_sizer._load_stats_from_zip(zp, "Strat")
+        assert stats is not None
+        assert stats.profit_total_pct is None
+
+    def test_kelly_math_unaffected_by_context_fields(self):
+        # Two KellyStats with identical (p, b, n) but different context should
+        # produce identical Kelly fractions. Locks in the contract that the
+        # optional fields are pure metadata.
+        s1 = KellyStats(win_rate=0.55, payoff_ratio=1.5, n_trades=1000)
+        s2 = KellyStats(
+            win_rate=0.55, payoff_ratio=1.5, n_trades=1000,
+            profit_total_pct=200.0,
+            backtest_start="2018-01-01",
+            backtest_end="2026-04-20",
+        )
+        assert s1.kelly_fraction() == s2.kelly_fraction()
+        assert s1.half_kelly_clamped() == s2.half_kelly_clamped()
