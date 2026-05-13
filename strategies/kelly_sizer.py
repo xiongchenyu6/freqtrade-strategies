@@ -84,11 +84,20 @@ def wilson_lower_bound(successes: int, n: int, z: float = WILSON_Z) -> float:
 
 @dataclass
 class KellyStats:
-    """Aggregate win/payoff stats for a single strategy across all pairs."""
+    """Aggregate win/payoff stats for a single strategy across all pairs.
+
+    The ``profit_total_pct`` / ``backtest_start`` / ``backtest_end`` fields
+    are optional context — they don't affect Kelly math but let downstream
+    consumers (dashboard, daily report) surface "Kelly says X, backtest
+    actually made Y" together so the user sees the disagreement.
+    """
 
     win_rate: float
     payoff_ratio: float
     n_trades: int
+    profit_total_pct: Optional[float] = None
+    backtest_start: Optional[str] = None
+    backtest_end: Optional[str] = None
 
     def conservative_win_rate(self, z: float = WILSON_Z) -> float:
         """Wilson lower bound on the win rate. Falls back to point estimate
@@ -193,6 +202,14 @@ def _load_stats_from_zip(zip_path: Path, strategy_name: str) -> Optional[KellySt
             if sd and "trades" in sd:
                 stats = stats_from_trades(sd.get("trades", []))
                 if stats is not None:
+                    # Decorate with backtest-level profit + window so the
+                    # dashboard / daily report can surface the gap between
+                    # "Kelly verdict" and "backtest profit" together.
+                    pt = sd.get("profit_total")
+                    if isinstance(pt, (int, float)):
+                        stats.profit_total_pct = float(pt) * 100.0
+                    stats.backtest_start = sd.get("backtest_start") or None
+                    stats.backtest_end = sd.get("backtest_end") or None
                     return stats
     return None
 

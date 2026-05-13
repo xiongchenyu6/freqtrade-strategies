@@ -394,6 +394,12 @@ def kelly_status_dict() -> dict:
             f_half_point=round(f_half_point, 6),
             f_half_shrunk=round(f_half_shrunk, 6),
         )
+        if stats.profit_total_pct is not None:
+            entry["profit_total_pct"] = round(stats.profit_total_pct, 2)
+        if stats.backtest_start:
+            entry["backtest_start"] = stats.backtest_start
+        if stats.backtest_end:
+            entry["backtest_end"] = stats.backtest_end
         if stats.n_trades < MIN_TRADES_FOR_KELLY:
             entry["status"] = "insufficient_n"
             entry["verdict"] = f"n={stats.n_trades} below {MIN_TRADES_FOR_KELLY} → fallback"

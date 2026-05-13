@@ -190,6 +190,27 @@
 							{/if}
 						</div>
 					{/if}
+					{#if kelly.profit_total_pct != null}
+						{@const profitColor = kelly.profit_total_pct > 0 ? 'text-green-400' : kelly.profit_total_pct < 0 ? 'text-red-400' : 'text-muted-foreground'}
+						<div class="mt-1.5 border-t border-current/20 pt-1.5 text-[10px] opacity-80">
+							{lang === 'zh' ? '同期回测' : 'Same-window backtest'}:
+							<span class="font-mono font-semibold {profitColor}">
+								{kelly.profit_total_pct > 0 ? '+' : ''}{kelly.profit_total_pct.toFixed(1)}%
+							</span>
+							{#if kelly.backtest_start && kelly.backtest_end}
+								<span class="opacity-70">
+									({kelly.backtest_start.slice(0, 10)} → {kelly.backtest_end.slice(0, 10)})
+								</span>
+							{/if}
+							{#if kelly.status === 'negative_edge' && kelly.profit_total_pct > 0}
+								<div class="mt-0.5 italic opacity-90">
+									{lang === 'zh'
+										? 'Kelly 单笔模型未捕获金字塔加仓的复利收益'
+										: "Kelly's single-bet model doesn't capture pyramid compounding"}
+								</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>

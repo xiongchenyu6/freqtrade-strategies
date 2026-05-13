@@ -167,6 +167,12 @@ export interface KellyStatusEntry {
 	n_trades?: number;
 	f_half_point?: number;
 	f_half_shrunk?: number;
+	// Backtest-level context (optional). Useful for surfacing "Kelly says
+	// negative-edge but backtest made +X% over Y days" together so the user
+	// sees the disagreement.
+	profit_total_pct?: number;
+	backtest_start?: string;
+	backtest_end?: string;
 	error?: string;
 }
 
