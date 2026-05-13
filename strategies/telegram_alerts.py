@@ -343,57 +343,134 @@ _KELLY_TRACKED_STRATEGIES = [
 ]
 
 
-def format_kelly_report() -> str:
-    """Return a Markdown block summarising Kelly stats for tracked strategies.
+def kelly_status_dict() -> dict:
+    """Return Kelly status for tracked strategies as a serialisable dict.
 
-    Empty string if the kelly_sizer module can't be imported or none of the
-    strategies have a recent backtest — keeps the daily report short when
-    there's nothing useful to say.
+    Shape (one entry per strategy):
+      {
+        "generated_at": "2026-05-13T09:30:00Z",
+        "min_trades_for_kelly": 30,
+        "wilson_z": 1.96,
+        "strategies": [
+          {"name": "...", "status": "ok|negative_edge|insufficient_n|no_data",
+           "win_rate": 0.33, "payoff_ratio": 2.18, "n_trades": 570,
+           "f_half_point": 0.0125, "f_half_shrunk": 0.0, "verdict": "<text>"}
+        ]
+      }
+
+    This is the machine-readable counterpart of format_kelly_report() — same
+    underlying data, useful for dashboards, monitoring, or piping to jq.
     """
+    sys.path.insert(0, str(PROJECT_DIR / "strategies"))
     try:
-        import sys
-        sys.path.insert(0, str(PROJECT_DIR / "strategies"))
         from kelly_sizer import (
             MIN_TRADES_FOR_KELLY,
+            WILSON_Z,
             latest_strategy_stats,
         )
     except Exception as e:
-        logger.debug(f"Kelly report skipped (import failed): {e}")
-        return ""
+        logger.debug(f"Kelly status skipped (import failed): {e}")
+        return {"error": f"import failed: {e}", "strategies": []}
 
-    rows = []
+    strategies = []
     for name in _KELLY_TRACKED_STRATEGIES:
+        entry: dict = {"name": name}
         try:
             stats = latest_strategy_stats(name)
-        except Exception:
+        except Exception as e:
             stats = None
+            entry["error"] = str(e)
         if stats is None:
-            rows.append(f"  {name}: _no recent backtest_")
+            entry["status"] = "no_data"
+            entry["verdict"] = "no recent backtest"
+            strategies.append(entry)
             continue
-        # Show both the point-estimate Kelly (what classical Kelly would size
-        # to) and the Wilson-shrunk Kelly we actually use. Big gap = sample
-        # too small to trust the point estimate.
         f_half_point = stats.half_kelly_clamped(use_lower_bound=False)
         f_half_shrunk = stats.half_kelly_clamped(use_lower_bound=True)
+        entry.update(
+            win_rate=round(stats.win_rate, 4),
+            payoff_ratio=round(stats.payoff_ratio, 4),
+            n_trades=stats.n_trades,
+            f_half_point=round(f_half_point, 6),
+            f_half_shrunk=round(f_half_shrunk, 6),
+        )
         if stats.n_trades < MIN_TRADES_FOR_KELLY:
-            verdict = f"n={stats.n_trades} — _below {MIN_TRADES_FOR_KELLY}, fallback_"
+            entry["status"] = "insufficient_n"
+            entry["verdict"] = f"n={stats.n_trades} below {MIN_TRADES_FOR_KELLY} → fallback"
         elif f_half_shrunk == 0:
-            verdict = (
-                f"⛔ negative edge after shrinkage "
-                f"(point f½={f_half_point * 100:.2f}% → 0 after Wilson; "
-                f"p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
+            entry["status"] = "negative_edge"
+            entry["verdict"] = (
+                f"negative edge after Wilson shrinkage "
+                f"(point f½={f_half_point * 100:.2f}%)"
             )
         else:
-            verdict = (
-                f"✅ {f_half_shrunk * 100:.2f}% per trade "
-                f"(point f½ would be {f_half_point * 100:.2f}%; "
-                f"p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
+            entry["status"] = "ok"
+            entry["verdict"] = (
+                f"size {f_half_shrunk * 100:.2f}% per trade "
+                f"(point f½ {f_half_point * 100:.2f}%)"
             )
-        rows.append(f"  {name}: {verdict}")
+        strategies.append(entry)
 
-    if not rows:
+    return {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "min_trades_for_kelly": MIN_TRADES_FOR_KELLY,
+        "wilson_z": WILSON_Z,
+        "strategies": strategies,
+    }
+
+
+def _format_kelly_entry(e: dict) -> str:
+    name = e["name"]
+    status = e.get("status")
+    if status == "no_data":
+        return f"  {name}: _no recent backtest_"
+    if status == "insufficient_n":
+        return f"  {name}: n={e['n_trades']} — _below {e.get('_min_trades', '?')}, fallback_"
+    if status == "negative_edge":
+        return (
+            f"  {name}: ⛔ negative edge after shrinkage "
+            f"(point f½={e['f_half_point'] * 100:.2f}% → 0 after Wilson; "
+            f"p={e['win_rate']:.2f} b={e['payoff_ratio']:.2f} n={e['n_trades']})"
+        )
+    if status == "ok":
+        return (
+            f"  {name}: ✅ {e['f_half_shrunk'] * 100:.2f}% per trade "
+            f"(point f½ would be {e['f_half_point'] * 100:.2f}%; "
+            f"p={e['win_rate']:.2f} b={e['payoff_ratio']:.2f} n={e['n_trades']})"
+        )
+    return f"  {name}: {e.get('verdict', '?')}"
+
+
+def format_kelly_report() -> str:
+    """Return a Markdown block summarising Kelly stats for tracked strategies.
+
+    Empty string if no strategies have a recent backtest — keeps the daily
+    report short when there's nothing useful to say.
+    """
+    payload = kelly_status_dict()
+    strategies = payload.get("strategies", [])
+    if not strategies:
         return ""
+    min_n = payload.get("min_trades_for_kelly")
+    rows = []
+    for e in strategies:
+        if "_min_trades" not in e and min_n is not None:
+            e["_min_trades"] = min_n
+        rows.append(_format_kelly_entry(e))
     return "\n*Kelly Sizing:*\n" + "\n".join(rows)
+
+
+def write_kelly_status_json(target: Path) -> Path:
+    """Compute Kelly status and write it as JSON to ``target``.
+
+    Used by the daily report path so external consumers (dashboard, monitoring,
+    jq pipelines) get a fresh snapshot once a day without having to invoke
+    the Python directly.
+    """
+    payload = kelly_status_dict()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, indent=2))
+    return target
 
 
 # --------------------------------------------------------------------------
@@ -482,6 +559,14 @@ def send_daily_report():
         f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)",
     ])
     message = "\n".join(parts) + history_str + bot_status + format_kelly_report()
+
+    # Snapshot the structured Kelly status alongside the Telegram send so a
+    # dashboard / monitoring consumer can read the same numbers without
+    # re-running the Python.
+    try:
+        write_kelly_status_json(PROJECT_DIR / "sentiment_data" / "kelly_status.json")
+    except Exception as e:
+        logger.warning(f"Kelly status write failed: {e}")
 
     send_telegram(message)
     logger.info("Daily report sent")
@@ -581,11 +666,24 @@ if __name__ == "__main__":
     parser.add_argument("--dca", action="store_true", help="Check DCA triggers")
     parser.add_argument("--kelly", action="store_true",
                         help="Print Kelly verdict per strategy (does not send Telegram)")
+    parser.add_argument("--json", action="store_true",
+                        help="With --kelly, emit machine-readable JSON instead of Markdown")
+    parser.add_argument("--write-kelly-status",
+                        metavar="PATH",
+                        help="Compute Kelly status and write JSON to PATH, then exit")
     parser.add_argument("--all", action="store_true", help="Run all checks (default)")
     args = parser.parse_args()
 
+    if args.write_kelly_status:
+        out = write_kelly_status_json(Path(args.write_kelly_status))
+        print(f"wrote {out}")
+        sys.exit(0)
+
     if args.kelly:
-        print(format_kelly_report() or "(no Kelly data)")
+        if args.json:
+            print(json.dumps(kelly_status_dict(), indent=2))
+        else:
+            print(format_kelly_report() or "(no Kelly data)")
         sys.exit(0)
 
     run_all = args.all or not (args.kol or args.sentiment or args.health or args.daily or args.dca)
