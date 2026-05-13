@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -327,6 +328,66 @@ def check_bot_health() -> bool:
 
 
 # --------------------------------------------------------------------------
+# Helper: per-strategy Kelly verdict
+# --------------------------------------------------------------------------
+# The Kelly sizer (strategies/kelly_sizer.py) lazy-loads per-strategy stats
+# during bot_loop_start; once that's done they live only in the bot process
+# memory. This helper recomputes the same stats on demand so the daily
+# Telegram report and the --kelly CLI can both surface them.
+_KELLY_TRACKED_STRATEGIES = [
+    "HonestTrend15mDry",
+    "HonestTrend15mProtections",
+    "HonestTrend1mLive",
+    "HonestTrend1mMTF",
+    "HonestTrendFutures",
+]
+
+
+def format_kelly_report() -> str:
+    """Return a Markdown block summarising Kelly stats for tracked strategies.
+
+    Empty string if the kelly_sizer module can't be imported or none of the
+    strategies have a recent backtest — keeps the daily report short when
+    there's nothing useful to say.
+    """
+    try:
+        import sys
+        sys.path.insert(0, str(PROJECT_DIR / "strategies"))
+        from kelly_sizer import (
+            MIN_TRADES_FOR_KELLY,
+            latest_strategy_stats,
+        )
+    except Exception as e:
+        logger.debug(f"Kelly report skipped (import failed): {e}")
+        return ""
+
+    rows = []
+    for name in _KELLY_TRACKED_STRATEGIES:
+        try:
+            stats = latest_strategy_stats(name)
+        except Exception:
+            stats = None
+        if stats is None:
+            rows.append(f"  {name}: _no recent backtest_")
+            continue
+        f_half = stats.half_kelly_clamped()
+        if stats.n_trades < MIN_TRADES_FOR_KELLY:
+            verdict = f"n={stats.n_trades} — _below {MIN_TRADES_FOR_KELLY}, fallback_"
+        elif f_half == 0:
+            verdict = f"⛔ negative edge (p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f})"
+        else:
+            verdict = (
+                f"✅ {f_half * 100:.2f}% per trade "
+                f"(p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
+            )
+        rows.append(f"  {name}: {verdict}")
+
+    if not rows:
+        return ""
+    return "\n*Kelly Sizing:*\n" + "\n".join(rows)
+
+
+# --------------------------------------------------------------------------
 # Alert 4: Daily Report
 # --------------------------------------------------------------------------
 def send_daily_report():
@@ -395,17 +456,23 @@ def send_daily_report():
     except Exception:
         bot_status = "\n_Bot API unavailable_"
 
-    message = (
-        f"*Daily Report* 📊 {today}\n"
-        f"{'─' * 30}\n"
-        f"*Market:*\n"
-        f"  BTC: ${btc:,.0f}\n" if btc else ""
-        f"  Fear & Greed: {fng} ({fng_class})\n"
-        f"  Sentiment: {score:+.2f}\n"
-        f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)"
-        f"{history_str}"
-        f"{bot_status}"
-    )
+    # Build the message line-by-line. Previous version chained f-strings inside
+    # parentheses with a `... if btc else ""` ternary on one of them — that
+    # binds the conditional at the PYTHON expression level (not string level),
+    # which silently collapsed the *entire* message to "" whenever btc was 0.
+    parts = [
+        f"*Daily Report* 📊 {today}",
+        "─" * 30,
+        "*Market:*",
+    ]
+    if btc:
+        parts.append(f"  BTC: ${btc:,.0f}")
+    parts.extend([
+        f"  Fear & Greed: {fng} ({fng_class})",
+        f"  Sentiment: {score:+.2f}",
+        f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)",
+    ])
+    message = "\n".join(parts) + history_str + bot_status + format_kelly_report()
 
     send_telegram(message)
     logger.info("Daily report sent")
@@ -503,8 +570,14 @@ if __name__ == "__main__":
     parser.add_argument("--health", action="store_true", help="Check bot health only")
     parser.add_argument("--daily", action="store_true", help="Send daily report")
     parser.add_argument("--dca", action="store_true", help="Check DCA triggers")
+    parser.add_argument("--kelly", action="store_true",
+                        help="Print Kelly verdict per strategy (does not send Telegram)")
     parser.add_argument("--all", action="store_true", help="Run all checks (default)")
     args = parser.parse_args()
+
+    if args.kelly:
+        print(format_kelly_report() or "(no Kelly data)")
+        sys.exit(0)
 
     run_all = args.all or not (args.kol or args.sentiment or args.health or args.daily or args.dca)
 
