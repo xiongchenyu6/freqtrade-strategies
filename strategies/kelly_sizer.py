@@ -8,22 +8,40 @@ Why Half-Kelly and not full Kelly:
   preserves ~75% of the growth rate with dramatically lower variance, which
   is the standard practitioner choice (Thorp 1997).
 
+Parameter-uncertainty shrinkage (Wilson lower bound on p):
+  Backtest p̂ is a point estimate with sampling variance. Plugging it into
+  Kelly as if it were the true p systematically over-bets — the more so the
+  smaller n is. We replace p̂ with its Wilson score lower bound at a
+  configurable confidence level (default z=1.96, i.e. one-sided 97.5%).
+  This is equivalent to a small-sample shrinkage toward 0.5 and disappears
+  asymptotically as n → ∞.
+
+  Concretely: a strategy with p̂=0.55 on n=100 trades has a Wilson lower
+  bound of ~0.46 — Kelly says do *not* bet. The same p̂=0.55 on n=10_000
+  trades has a lower bound of ~0.54 — bet close to the point estimate.
+
 Sample-size guard:
   We refuse Kelly when the backtest has fewer than MIN_TRADES_FOR_KELLY
-  trades. Below that threshold the (p, b) estimate is dominated by sampling
-  noise; we fall back to whatever stake freqtrade proposed from the config.
+  trades. Below that threshold even the lower bound is too unstable; fall
+  back to whatever stake freqtrade proposed from the config.
 
 Hard cap:
   Even with a clean Kelly answer we never bet more than KELLY_CAP_FRAC of
-  equity per trade. This is belt-and-suspenders against parameter drift —
+  equity per trade. Belt-and-suspenders against parameter drift —
   the strategy that hit p=0.9 on the past 6 months might be at p=0.5 next
   month, and Kelly answers there differ by 4×.
+
+Known limitations (not addressed here, see project_kelly_findings.md):
+  - Multi-strategy correlation is not modelled. We rely on KELLY_CAP_FRAC
+    to bound the joint exposure. The principled fix is f* = Σ⁻¹ μ.
+  - No vol-targeting overlay; sizing assumes stationary return distribution.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import math
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,7 +52,34 @@ logger = logging.getLogger(__name__)
 KELLY_HALF_DIVISOR = 2.0
 KELLY_CAP_FRAC = 0.05
 MIN_TRADES_FOR_KELLY = 30
+# z=1.96 → one-sided 97.5% lower bound on p (standard for finance risk work).
+# Higher z = more conservative shrinkage = smaller positions.
+WILSON_Z = 1.96
 DEFAULT_BACKTEST_DIR = Path("user_data/backtest_results")
+
+
+def wilson_lower_bound(successes: int, n: int, z: float = WILSON_Z) -> float:
+    """One-sided Wilson score lower bound on a binomial proportion.
+
+    The Wilson interval is well-defined for small n and at extremes (0, 1),
+    where the naive Wald interval (p ± z·√(p(1-p)/n)) collapses. The closed
+    form for the lower bound:
+
+        p̂ + z²/(2n)        z·√(p̂(1-p̂)/n + z²/(4n²))
+        ───────────────  −  ───────────────────────────
+          1 + z²/n                  1 + z²/n
+
+    Equivalent to a Bayesian posterior under a uniform-ish prior, with the
+    shrinkage strength controlled by z.
+    """
+    if n <= 0:
+        return 0.0
+    p_hat = successes / n
+    denom = 1.0 + (z * z) / n
+    centre = p_hat + (z * z) / (2.0 * n)
+    margin = z * math.sqrt(p_hat * (1.0 - p_hat) / n + (z * z) / (4.0 * n * n))
+    lower = (centre - margin) / denom
+    return max(0.0, min(1.0, lower))
 
 
 @dataclass
@@ -45,16 +90,36 @@ class KellyStats:
     payoff_ratio: float
     n_trades: int
 
-    def kelly_fraction(self) -> float:
-        """Raw Kelly fraction f* = (p*b - q) / b, clamped at 0 for negative edge."""
+    def conservative_win_rate(self, z: float = WILSON_Z) -> float:
+        """Wilson lower bound on the win rate. Falls back to point estimate
+        if we somehow lost track of the trade count."""
+        if self.n_trades <= 0:
+            return self.win_rate
+        wins = int(round(self.win_rate * self.n_trades))
+        return wilson_lower_bound(wins, self.n_trades, z=z)
+
+    def kelly_fraction(self, use_lower_bound: bool = True, z: float = WILSON_Z) -> float:
+        """Raw Kelly fraction f* = (p·b − q) / b, clamped at 0 for negative edge.
+
+        :param use_lower_bound: if True, shrink p toward 0.5 via the Wilson
+            lower bound before solving (recommended; matches the "parameter
+            uncertainty" practice in [[project-kelly-findings]]).
+        :param z: critical value for the Wilson interval. 1.96 ≈ 97.5%.
+        """
         if self.payoff_ratio <= 0:
             return 0.0
-        p, b = self.win_rate, self.payoff_ratio
+        p = self.conservative_win_rate(z=z) if use_lower_bound else self.win_rate
+        b = self.payoff_ratio
         f = (p * b - (1 - p)) / b
         return max(f, 0.0)
 
-    def half_kelly_clamped(self, cap: float = KELLY_CAP_FRAC) -> float:
-        f = self.kelly_fraction()
+    def half_kelly_clamped(
+        self,
+        cap: float = KELLY_CAP_FRAC,
+        use_lower_bound: bool = True,
+        z: float = WILSON_Z,
+    ) -> float:
+        f = self.kelly_fraction(use_lower_bound=use_lower_bound, z=z)
         if f <= 0:
             return 0.0
         return min(f / KELLY_HALF_DIVISOR, cap)

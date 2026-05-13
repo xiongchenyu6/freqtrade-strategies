@@ -370,15 +370,24 @@ def format_kelly_report() -> str:
         if stats is None:
             rows.append(f"  {name}: _no recent backtest_")
             continue
-        f_half = stats.half_kelly_clamped()
+        # Show both the point-estimate Kelly (what classical Kelly would size
+        # to) and the Wilson-shrunk Kelly we actually use. Big gap = sample
+        # too small to trust the point estimate.
+        f_half_point = stats.half_kelly_clamped(use_lower_bound=False)
+        f_half_shrunk = stats.half_kelly_clamped(use_lower_bound=True)
         if stats.n_trades < MIN_TRADES_FOR_KELLY:
             verdict = f"n={stats.n_trades} — _below {MIN_TRADES_FOR_KELLY}, fallback_"
-        elif f_half == 0:
-            verdict = f"⛔ negative edge (p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f})"
+        elif f_half_shrunk == 0:
+            verdict = (
+                f"⛔ negative edge after shrinkage "
+                f"(point f½={f_half_point * 100:.2f}% → 0 after Wilson; "
+                f"p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
+            )
         else:
             verdict = (
-                f"✅ {f_half * 100:.2f}% per trade "
-                f"(p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
+                f"✅ {f_half_shrunk * 100:.2f}% per trade "
+                f"(point f½ would be {f_half_point * 100:.2f}%; "
+                f"p={stats.win_rate:.2f} b={stats.payoff_ratio:.2f} n={stats.n_trades})"
             )
         rows.append(f"  {name}: {verdict}")
 
