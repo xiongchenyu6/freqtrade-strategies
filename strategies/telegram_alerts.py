@@ -194,30 +194,136 @@ def check_sentiment_shift():
 
 
 # --------------------------------------------------------------------------
-# Alert 3: Bot Health
+# Alert 3: Bot Health (auto-restart + cooldown)
 # --------------------------------------------------------------------------
-def check_bot_health():
-    """Check if freqtrade bot is still running."""
+#
+# Old behavior: every 30 min, fire the same "Bot Down" alert. Useless after
+# the first one. New behavior:
+#  - On detection of a missing process, try to relaunch the bot exactly once,
+#    then re-pgrep ~3s later to confirm it took.
+#  - Only re-alert if (a) this is the first time we've seen it down since the
+#    last healthy check, OR (b) at least HEALTH_RE_ALERT_HOURS have elapsed
+#    since the last alert.
+#  - Alerts now include what the restart attempt did so the user knows whether
+#    to manually intervene.
+HEALTH_RE_ALERT_HOURS = 6
+
+
+def _restart_freqtrade() -> tuple[bool, str]:
+    """Best-effort relaunch of `freqtrade trade`. Returns (started, detail).
+
+    The command and config are configurable via env so this stays generic:
+      - FREQTRADE_TRADE_CMD   full shell command; takes priority if set
+      - FREQTRADE_TRADE_CONFIG  config path; default = configs/config_dryrun_honest15m.json
+      - FREQTRADE_TRADE_USERDIR userdir; default = user_data
+      - FREQTRADE_PYTHON       python interpreter; default = python (whatever's on PATH)
+
+    NixOS user services need `/run/current-system/sw/bin` in PATH or `nohup`,
+    `python`, etc. won't resolve — we explicitly extend PATH for that reason.
+    """
+    cmd = os.environ.get("FREQTRADE_TRADE_CMD", "")
+    if not cmd:
+        py = os.environ.get("FREQTRADE_PYTHON", "python")
+        cfg = os.environ.get(
+            "FREQTRADE_TRADE_CONFIG", "configs/config_dryrun_honest15m.json"
+        )
+        userdir = os.environ.get("FREQTRADE_TRADE_USERDIR", "user_data")
+        log_path = PROJECT_DIR / "user_data" / "logs" / "freqtrade-autorestart.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        cmd = (
+            f"nohup {py} -m freqtrade trade -c {cfg} --userdir {userdir} "
+            f">> {log_path} 2>&1 &"
+        )
+
+    env = os.environ.copy()
+    extra_path = "/run/current-system/sw/bin"
+    if extra_path not in env.get("PATH", "").split(":"):
+        env["PATH"] = extra_path + ":" + env.get("PATH", "")
+
+    try:
+        subprocess.Popen(
+            ["bash", "-lc", cmd],
+            cwd=str(PROJECT_DIR),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except Exception as e:
+        return False, f"launch failed: {e}"
+
+    # Give it a moment to fork past the bash wrapper, then check.
+    time.sleep(3)
+    probe = subprocess.run(
+        ["pgrep", "-f", "freqtrade trade"], capture_output=True, text=True
+    )
+    if probe.returncode == 0:
+        return True, f"restarted (PID={probe.stdout.strip()})"
+    return False, "still not running after launch"
+
+
+def check_bot_health() -> bool:
+    """Detect missing freqtrade trade process, try to auto-restart, alert with cooldown."""
     try:
         result = subprocess.run(
-            ["pgrep", "-f", "freqtrade trade"],
-            capture_output=True, text=True,
+            ["pgrep", "-f", "freqtrade trade"], capture_output=True, text=True
         )
-        if result.returncode != 0:
-            send_telegram(
-                "*Bot Down* ⚠️\n"
-                "Freqtrade bot is not running!\n"
-                "Restart with:\n"
-                "`nohup python -m freqtrade trade ...`"
-            )
-            logger.warning("Bot is DOWN — alert sent")
-            return False
-        else:
-            logger.info(f"Bot healthy, PID={result.stdout.strip()}")
-            return True
     except Exception as e:
         logger.warning(f"Health check failed: {e}")
         return False
+
+    state = load_state()
+    now = time.time()
+
+    if result.returncode == 0:
+        logger.info(f"Bot healthy, PID={result.stdout.strip()}")
+        # Clear the down-state so the next outage alerts immediately.
+        if state.get("bot_down_since") or state.get("last_health_alert_ts"):
+            state["bot_down_since"] = 0
+            state["last_health_alert_ts"] = 0
+            save_state(state)
+        return True
+
+    # --- bot is down ---
+    if not state.get("bot_down_since"):
+        state["bot_down_since"] = now
+
+    started, detail = _restart_freqtrade()
+    if started:
+        # Restart worked — tell the user once and clear cooldown.
+        send_telegram(
+            "*Bot Recovered* ✅\n"
+            "Freqtrade was down; auto-restart succeeded.\n"
+            f"`{detail}`"
+        )
+        state["bot_down_since"] = 0
+        state["last_health_alert_ts"] = 0
+        save_state(state)
+        logger.info(f"Bot auto-restarted: {detail}")
+        return True
+
+    # Restart failed — apply cooldown so we don't spam.
+    last_alert = state.get("last_health_alert_ts", 0)
+    cooldown_s = HEALTH_RE_ALERT_HOURS * 3600
+    if last_alert and (now - last_alert) < cooldown_s:
+        next_in_min = int((cooldown_s - (now - last_alert)) / 60)
+        logger.info(
+            f"Bot DOWN, restart failed ({detail}); suppressed (next alert in ~{next_in_min}m)"
+        )
+        return False
+
+    down_for_min = int((now - state["bot_down_since"]) / 60)
+    send_telegram(
+        "*Bot Down* ⚠️\n"
+        "Freqtrade is not running and auto-restart failed.\n"
+        f"Down for: {down_for_min}m\n"
+        f"Attempt: `{detail}`\n"
+        "Investigate logs at `user_data/logs/freqtrade-autorestart.log`."
+    )
+    state["last_health_alert_ts"] = now
+    save_state(state)
+    logger.warning(f"Bot DOWN — alert sent (restart failed: {detail})")
+    return False
 
 
 # --------------------------------------------------------------------------
