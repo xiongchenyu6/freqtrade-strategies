@@ -1,33 +1,33 @@
 {
-  "generated_at": "2026-05-13T12:42:10Z",
+  "generated_at": "2026-05-13T14:09:24Z",
   "min_trades_for_kelly": 30,
   "wilson_z": 1.96,
   "strategies": [
     {
       "name": "HonestTrend15mDry",
-      "win_rate": 0.125,
-      "payoff_ratio": 12.2068,
-      "n_trades": 8,
-      "f_half_point": 0.026659,
+      "win_rate": 0.3388,
+      "payoff_ratio": 1.6484,
+      "n_trades": 853,
+      "f_half_point": 0.0,
       "f_half_shrunk": 0.0,
-      "status": "insufficient_n",
-      "verdict": "n=8 below 30 \u2192 fallback"
+      "status": "negative_edge",
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=0.00%)"
     },
     {
       "name": "HonestTrend15mProtections",
-      "win_rate": 0.3316,
-      "payoff_ratio": 2.1798,
-      "n_trades": 570,
-      "f_half_point": 0.012465,
+      "win_rate": 0.3388,
+      "payoff_ratio": 1.6501,
+      "n_trades": 853,
+      "f_half_point": 0.0,
       "f_half_shrunk": 0.0,
       "status": "negative_edge",
-      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=1.25%)"
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=0.00%)"
     },
     {
       "name": "HonestTrend1mLive",
-      "win_rate": 0.3556,
-      "payoff_ratio": 1.4464,
-      "n_trades": 135,
+      "win_rate": 0.4286,
+      "payoff_ratio": 1.2473,
+      "n_trades": 91,
       "f_half_point": 0.0,
       "f_half_shrunk": 0.0,
       "status": "negative_edge",
@@ -35,14 +35,19 @@
     },
     {
       "name": "HonestTrend1mMTF",
-      "status": "no_data",
-      "verdict": "no recent backtest"
+      "win_rate": 0.4667,
+      "payoff_ratio": 1.6498,
+      "n_trades": 45,
+      "f_half_point": 0.05,
+      "f_half_shrunk": 0.0,
+      "status": "negative_edge",
+      "verdict": "negative edge after Wilson shrinkage (point f\u00bd=5.00%)"
     },
     {
       "name": "HonestTrendFutures",
-      "win_rate": 0.3296,
-      "payoff_ratio": 1.4924,
-      "n_trades": 901,
+      "win_rate": 0.3272,
+      "payoff_ratio": 1.5253,
+      "n_trades": 975,
       "f_half_point": 0.0,
       "f_half_shrunk": 0.0,
       "status": "negative_edge",
