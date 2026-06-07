@@ -87,12 +87,31 @@ The −13% DD floor won't move because the strategy under-deploys (~20% in marke
 — it's structurally low-DD; there's little DD to cut. The earlier "high DD problem" was the
 −60% measurement bug, not real.
 
-### 🏁 CRYPTO SEARCH CONVERGED
-Winner: **ETH+BTC 1h multi-asset trend (EMA72/144 + pyramid, FNG<80, 10% each)**
-→ +211% / Sharpe 2.41 / −13.2% maxDD. Optional +30% static gold → +231%/2.46/−13.2%.
-Exhausted: timeframe, params, breakout vs EMA, pyramid, multi-asset, gold (trend & static).
-Further crypto iterations are low-value. **Next real edge = US equities (Mon IB) for genuine
-cross-asset-class diversification.**
+## iter18 — mean-reversion (RSI oversold) — REJECTED (wrong family for crypto)
+Rough test (results identical across RSI thresholds + nan Sharpe → implementation suspect,
+don't trust exact #s) but directionally clear: ~−65% maxDD vs trend's −13%. MR buys "oversold"
+into crypto downtrends = catching falling knives. Crypto strongly trends → trend ≫ mean-reversion.
+Confirms the trend family is correct for crypto.
+
+## 🚩 iter19 — ROBUSTNESS CHECK FAILS: the edge has DECAYED (most important finding)
+Split ETH+BTC trend into time halves:
+| period | return | Sharpe | maxDD |
+|---|---|---|---|
+| 1st half (early ~2020-22) | +166% | 4.47 | −13% |
+| **2nd half (recent ~2023-26)** | **+11%** | **−2.13** | −6.6% |
+
+**The +211% is almost entirely an early-regime artifact.** In recent years the EMA-trend
+edge has largely decayed — recent-half Sharpe is NEGATIVE (−2.13). Crypto 2023-26 is
+choppier/more efficient → trend-following gets whipsawed. **Deploying on the full-history
++211% would be deploying a decayed edge.** This is the #1 takeaway of the whole search:
+the full-history headline overstates forward expectancy.
+
+### 🏁 CRYPTO SEARCH CONVERGED (with the decay caveat)
+Best full-history config: **ETH+BTC 1h multi-asset trend** → +211% / Sharpe 2.41 / −13% maxDD,
+BUT recent-half edge is weak/negative. Before any real deployment: re-validate on recent data
+only, and size DOWN / treat as regime-dependent. Exhausted families: trend (best but decaying),
+breakout (≈trend), mean-reversion (catches knives), accumulation (rides BTC), options (mediocre).
+**Next real edge = US equities (Mon IB).**
 
 ## Current best by objective (with the honest DD caveat)
 - **OVERALL ✅:** ETH+BTC 1h multi-asset trend, 10% each → **+211% / Sharpe 2.41 / −13.2% maxDD** (validated)
