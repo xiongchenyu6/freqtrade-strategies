@@ -64,6 +64,36 @@ losers. Calmar ≈ 1.1 (vs BTC buy&hold's 0.64 with −76% DD). This is a genuin
 low-drawdown strategy. Method: a lightweight Actor records total equity (USDT + Σ balance×close)
 every bar → real drawdown. Use this Actor for all future DD numbers.
 
+## Unified trend family — TRUE maxDD (iter15, all via EquityRecorder)
+| config | return | Sharpe | TRUE maxDD | note |
+|---|---|---|---|---|
+| **ETH+BTC @10%** | **+211%** | **2.41** | **−13.2%** | 🏆 best balance |
+| 4-asset @5% | +292% | 2.20 | −19.2% | most return, worst DD (SOL/BNB hurt tail) |
+| ETH single @10% | +119% | 1.80 | −13.5% | |
+| BTC single @10% | +49% | 4.08* | −10.6% | *Sharpe inflated by sparse trading (25 trades, mostly flat) |
+
+All trend DDs are a healthy −10% to −19% (NOT the retracted −60%). ETH+BTC is the pick.
+
+**iter16 — gold (PAXG) diversifier didn't help:** ETH+BTC+GOLD = +218%/2.30/−13.2% (DD
+unchanged). Trend-on-gold is flat most of the time (gold barely trends: GOLD-only +5%),
+so it's NOT positioned during crypto crashes → no hedge. Lesson: adding more TREND sleeves
+can't lower DD below ~−13%; a real hedge needs a STATIC/counter-cyclical allocation, not
+another trend sleeve. The crypto-trend DD floor is ~−13%. **Crypto search has converged →
+ETH+BTC 1h multi-asset trend is the winner. Real cross-asset diversification needs equities (Mon IB).**
+
+## iter17 — static gold hedge + CONVERGENCE
+ETH+BTC trend +30% static PAXG hold = +231% / 2.46 / −13.2% (DD unchanged, +20% free return).
+The −13% DD floor won't move because the strategy under-deploys (~20% in market, rest cash)
+— it's structurally low-DD; there's little DD to cut. The earlier "high DD problem" was the
+−60% measurement bug, not real.
+
+### 🏁 CRYPTO SEARCH CONVERGED
+Winner: **ETH+BTC 1h multi-asset trend (EMA72/144 + pyramid, FNG<80, 10% each)**
+→ +211% / Sharpe 2.41 / −13.2% maxDD. Optional +30% static gold → +231%/2.46/−13.2%.
+Exhausted: timeframe, params, breakout vs EMA, pyramid, multi-asset, gold (trend & static).
+Further crypto iterations are low-value. **Next real edge = US equities (Mon IB) for genuine
+cross-asset-class diversification.**
+
 ## Current best by objective (with the honest DD caveat)
 - **OVERALL ✅:** ETH+BTC 1h multi-asset trend, 10% each → **+211% / Sharpe 2.41 / −13.2% maxDD** (validated)
 - **Return-focused single:** ETH 1h EMA+pyramid → +119% / Sharpe 1.80
@@ -98,7 +128,11 @@ every bar → real drawdown. Use this Actor for all future DD numbers.
 - [x] SOL/BNB added (4-asset) → +292%/Sharpe 2.20: more return, Sharpe plateaus (majors correlated)
 - [x] maxDD attempt → RETRACTED (an.returns() cumprod is not true equity DD; stop-insensitive)
 - [x] equity-curve Actor → TRUE maxDD −13.2% (iter11's −60% was a bug); strategy validated
-- [ ] commit the leaderboard + equity Actor as reusable tooling  ← next
+- [x] committed leaderboard + equity_recorder.py + run_portfolio_trend.py (ac7b3a6)
+- [x] unified TRUE maxDD for trend family: all −10% to −19% (ETH+BTC −13% best balance)
+- [x] gold (PAXG) as trend sleeve → no DD help (flat during crashes; trend≠hedge)
+- [ ] crypto search CONVERGED — winner = ETH+BTC 1h trend. Next genuine edge = equities (Mon IB)
+- [ ] (optional) static gold/cash hedge overlay to cut the −13% floor
 - [ ] DEPLOY: ETH+BTC 1h multi-asset trend (+211%/2.41/−13%) is the clear winner
 - [ ] DEPLOY: multi-asset ETH+BTC 1h trend is the validated winner — switch testnet trend to it
 - [ ] ETH/BNB/SOL accumulation (vs BTC) — need BNB/SOL data
