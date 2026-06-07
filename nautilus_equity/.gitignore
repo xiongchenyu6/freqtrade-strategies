@@ -1,0 +1,5 @@
+.venv/
+catalog/
+logs/
+*.parquet
+__pycache__/
