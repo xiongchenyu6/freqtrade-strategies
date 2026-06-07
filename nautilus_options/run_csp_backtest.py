@@ -1,13 +1,11 @@
-"""Backtest a monthly Cash-Secured Put (CSP) wheel on BTC using FREE Tardis Deribit
-option-chain snapshots (data/deribit_chains/*.csv) + real BTC spot for settlement.
+"""Backtest BTC put-selling on FREE Tardis Deribit chains + real BTC spot, comparing:
+  - naked  : cash-secured put (collateral = strike)
+  - spread : bull put spread (sell OTM put, buy a further-OTM put as tail hedge;
+             collateral = width = defined risk)
+  - fng    : naked CSP but skip selling when Fear&Greed >= 80 (don't sell into euphoria
+             right before crashes)
 
-Strategy (mirrors strategies/deribit_monitor.py):
-  - Each month: from the opening chain, pick OTM puts with DTE 5-30, strike 10-25% OTM,
-    bid>0. Rank by annual_yield x liquidity - IV penalty. Sell the top candidate.
-  - Hold to expiry. Settle vs real BTC spot:
-      assigned (spot_exp < strike): pnl = premium - (strike - spot_exp)
-      expires worthless:            pnl = premium  (full premium kept)
-  - Collateral = strike (cash-secured). Compound return-on-collateral month to month.
+Settlement vs real BTC spot at expiry. Return is on collateral, compounded monthly.
 
 Run: nautilus_equity/.venv/bin/python nautilus_options/run_csp_backtest.py
 """
@@ -23,22 +21,12 @@ import pandas as pd
 _ROOT = Path(__file__).resolve().parent.parent
 _CHAINS = _ROOT / "data" / "deribit_chains"
 _BTC = _ROOT / "user_data" / "data" / "binance" / "BTC_USDT-1d.feather"
+_FNG = _ROOT / "data" / "fng_history.csv"
 
 MIN_DAYS, MAX_DAYS = 5, 30
 MIN_OTM, MAX_OTM = 0.10, 0.25
-
-
-def _btc_spot_by_date() -> dict[str, float]:
-    df = pd.read_feather(_BTC)
-    return {d.strftime("%Y-%m-%d"): float(c) for d, c in zip(df["date"], df["close"])}
-
-
-def _spot_on_or_before(spot: dict[str, float], day: dt.date) -> float | None:
-    for back in range(0, 7):
-        k = (day - dt.timedelta(days=back)).strftime("%Y-%m-%d")
-        if k in spot:
-            return spot[k]
-    return None
+HEDGE_BELOW = 0.15  # long put ~15% below the short strike
+FNG_GREED = 80
 
 
 def _f(v):
@@ -48,15 +36,37 @@ def _f(v):
         return None
 
 
-def select_csp(rows, snap_dt, spot):
+def _btc_spot():
+    df = pd.read_feather(_BTC)
+    return {d.strftime("%Y-%m-%d"): float(c) for d, c in zip(df["date"], df["close"])}
+
+
+def _fng():
+    d = {}
+    if _FNG.exists():
+        for r in csv.DictReader(open(_FNG)):
+            try:
+                d[r["date"]] = int(r["value"])
+            except (KeyError, ValueError):
+                pass
+    return d
+
+
+def _spot_on_or_before(spot, day):
+    for back in range(7):
+        k = (day - dt.timedelta(days=back)).strftime("%Y-%m-%d")
+        if k in spot:
+            return spot[k]
+    return None
+
+
+def _select_short(rows, snap_dt, spot):
     best = None
     for r in rows:
         bid = _f(r.get("bid_price"))
-        if not bid or bid <= 0:
-            continue
         strike = _f(r.get("strike_price"))
         exp_us = _f(r.get("expiration"))
-        if not strike or not exp_us:
+        if not bid or bid <= 0 or not strike or not exp_us:
             continue
         exp = dt.datetime.fromtimestamp(exp_us / 1e6, tz=dt.timezone.utc)
         days = (exp - snap_dt).total_seconds() / 86400
@@ -65,93 +75,124 @@ def select_csp(rows, snap_dt, spot):
         otm = (spot - strike) / spot
         if otm < MIN_OTM or otm > MAX_OTM:
             continue
-        premium_usd = bid * spot
-        annual_yield = (premium_usd / strike) * (365 / days) * 100
+        prem = bid * spot
+        ann = (prem / strike) * (365 / days) * 100
         oi = _f(r.get("open_interest")) or 0
-        iv = (_f(r.get("mark_iv")) or 0) / 100.0
-        liq = min(oi / 100, 1.0)
-        score = annual_yield * (1 + liq) - iv * 20
-        cand = {
-            "strike": strike, "days": days, "otm": otm * 100,
-            "premium_usd": premium_usd, "annual_yield": annual_yield,
-            "expiry": exp.date(), "score": score,
-            "delta": _f(r.get("delta")),
-        }
+        iv = (_f(r.get("mark_iv")) or 0) / 100
+        score = ann * (1 + min(oi / 100, 1.0)) - iv * 20
+        c = {"strike": strike, "days": days, "prem": prem, "ann": ann,
+             "exp": exp, "exp_us": exp_us, "score": score}
         if best is None or score > best["score"]:
-            best = cand
+            best = c
     return best
 
 
-def main() -> int:
-    spot = _btc_spot_by_date()
-    files = sorted(_CHAINS.glob("*.csv"))
-    if not files:
-        print("no chain data — run fetch_deribit_chains.py first")
-        return 1
+def _hedge_put(rows, short, spot):
+    """Cheapest-suitable long put: same expiry, strike closest to short*(1-HEDGE_BELOW)."""
+    target = short["strike"] * (1 - HEDGE_BELOW)
+    best = None
+    for r in rows:
+        strike = _f(r.get("strike_price"))
+        exp_us = _f(r.get("expiration"))
+        if not strike or exp_us != short["exp_us"] or strike >= short["strike"]:
+            continue
+        ask = _f(r.get("ask_price")) or _f(r.get("mark_price"))
+        if not ask or ask <= 0:
+            continue
+        cost = ask * spot
+        if best is None or abs(strike - target) < abs(best["strike"] - target):
+            best = {"strike": strike, "cost": cost}
+    return best
 
-    capital = 100_000.0
-    eq = [capital]
+
+def _run(mode, files, spot, fng):
+    cap = 100_000.0
+    eq = [cap]
     trades = []
     for fp in files:
         rows = list(csv.DictReader(open(fp)))
         if not rows:
             continue
         snap_us = _f(rows[0].get("timestamp"))
-        if not snap_us:
+        snap_spot = _f(rows[0].get("underlying_price"))
+        if not snap_us or not snap_spot:
             continue
         snap_dt = dt.datetime.fromtimestamp(snap_us / 1e6, tz=dt.timezone.utc)
-        snap_spot = _f(rows[0].get("underlying_price"))
-        if not snap_spot:
+
+        if mode == "fng" and fng.get(snap_dt.strftime("%Y-%m-%d"), 50) >= FNG_GREED:
+            continue  # skip selling into euphoria
+
+        short = _select_short(rows, snap_dt, snap_spot)
+        if not short:
             continue
-        pick = select_csp(rows, snap_dt, snap_spot)
-        if pick is None:
-            continue
-        spot_exp = _spot_on_or_before(spot, pick["expiry"])
+        spot_exp = _spot_on_or_before(spot, short["exp"].date())
         if spot_exp is None:
             continue
-        assigned = spot_exp < pick["strike"]
-        pnl = pick["premium_usd"] - (pick["strike"] - spot_exp) if assigned else pick["premium_usd"]
-        ret = pnl / pick["strike"]  # return on collateral
-        capital *= (1 + ret)
-        eq.append(capital)
-        trades.append({
-            "month": fp.stem, "strike": pick["strike"], "dte": round(pick["days"], 1),
-            "otm": round(pick["otm"], 1), "ann_yield": round(pick["annual_yield"], 1),
-            "assigned": assigned, "ret_pct": round(ret * 100, 2),
-        })
+
+        if mode == "spread":
+            hedge = _hedge_put(rows, short, snap_spot)
+            if not hedge:
+                continue
+            width = short["strike"] - hedge["strike"]
+            net = short["prem"] - hedge["cost"]
+            if width <= 0 or net <= 0:
+                continue
+            if spot_exp >= short["strike"]:
+                pnl = net
+            elif spot_exp >= hedge["strike"]:
+                pnl = net - (short["strike"] - spot_exp)
+            else:
+                pnl = net - width
+            # Cash-secure the SHORT strike (same capital basis as naked); the long put is a
+            # cheap tail hedge that caps the crash loss. Apples-to-apples with naked CSP.
+            ret = pnl / short["strike"]
+        else:  # naked / fng
+            assigned = spot_exp < short["strike"]
+            pnl = short["prem"] - (short["strike"] - spot_exp) if assigned else short["prem"]
+            ret = pnl / short["strike"]
+
+        cap *= (1 + ret)
+        eq.append(cap)
+        trades.append({"month": fp.stem, "ret": ret * 100,
+                       "assigned": spot_exp < short["strike"]})
 
     if not trades:
-        print("no qualifying CSP trades")
-        return 1
-
+        return None
     n = len(trades)
-    wins = sum(1 for t in trades if t["ret_pct"] > 0)
-    assigns = sum(1 for t in trades if t["assigned"])
+    wins = sum(1 for t in trades if t["ret"] > 0)
     peak, mdd = eq[0], 0.0
     for v in eq:
         peak = max(peak, v)
         mdd = max(mdd, (peak - v) / peak)
-    total_ret = capital / 100_000 - 1
-    span_years = n / 12.0
-    cagr = (capital / 100_000) ** (1 / span_years) - 1 if span_years > 0 else 0
+    yrs = n / 12.0
+    cagr = (cap / 100_000) ** (1 / yrs) - 1 if yrs else 0
+    worst = min(trades, key=lambda t: t["ret"])
+    return {"mode": mode, "n": n, "win": wins / n * 100, "total": cap / 100_000 - 1,
+            "cagr": cagr, "mdd": mdd, "final": cap, "worst": worst,
+            "calmar": (cagr / mdd) if mdd else float("inf")}
 
-    print("=" * 60)
-    print("  BTC Cash-Secured Put backtest — free Tardis Deribit chains")
-    print("=" * 60)
-    print(f"  months traded   : {n}  ({files[0].stem} → {files[-1].stem})")
-    print(f"  win rate        : {wins}/{n} ({wins/n*100:.0f}%)")
-    print(f"  assignment rate : {assigns}/{n} ({assigns/n*100:.0f}%)")
-    print(f"  avg ann. yield* : {sum(t['ann_yield'] for t in trades)/n:.1f}%  (*of selected puts)")
-    print(f"  total return    : {total_ret*100:+.1f}%  over ~{span_years:.1f}y")
-    print(f"  CAGR            : {cagr*100:+.1f}%")
-    print(f"  max drawdown    : {mdd*100:.1f}%")
-    print(f"  final capital   : ${capital:,.0f}")
-    print("-" * 60)
-    print("  worst 5 months by return:")
-    for t in sorted(trades, key=lambda x: x["ret_pct"])[:5]:
-        print(f"    {t['month']}  strike {t['strike']:.0f}  {t['otm']}% OTM  "
-              f"DTE {t['dte']}  {'ASSIGNED' if t['assigned'] else 'expired'}  {t['ret_pct']:+.2f}%")
-    print("=" * 60)
+
+def main() -> int:
+    files = sorted(_CHAINS.glob("*.csv"))
+    if not files:
+        print("no chain data — run fetch_deribit_chains.py first")
+        return 1
+    spot, fng = _btc_spot(), _fng()
+    print("=" * 78)
+    print(f"  BTC put-selling backtest — free Tardis Deribit chains ({files[0].stem}→{files[-1].stem})")
+    print("=" * 78)
+    print(f"  {'mode':8} {'n':>3} {'win%':>5} {'CAGR':>7} {'maxDD':>7} {'Calmar':>7} {'total':>8}  worst month")
+    print("  " + "-" * 74)
+    for mode in ("naked", "spread", "fng"):
+        r = _run(mode, files, spot, fng)
+        if not r:
+            continue
+        w = r["worst"]
+        print(f"  {r['mode']:8} {r['n']:>3} {r['win']:>4.0f}% {r['cagr']*100:>6.1f}% "
+              f"{r['mdd']*100:>6.1f}% {r['calmar']:>7.2f} {r['total']*100:>+7.1f}%  "
+              f"{w['month']} {w['ret']:+.1f}%")
+    print("=" * 78)
+    print("  naked = cash-secured put | spread = bull put spread (tail-hedged) | fng = skip greed≥80")
     return 0
 
 
