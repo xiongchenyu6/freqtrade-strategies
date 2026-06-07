@@ -33,7 +33,28 @@ ROI +57.5 pts** over plain DCA. Same number of scheduled buys; smart just sizes 
 | `crypto_data.py` | freqtrade feather → Nautilus bars; `FngSeries` Fear&Greed loader |
 | `accumulator.py` | `Accumulator` strategy (smart/naive modes) |
 | `run_accumulation.py` | smart-vs-naive backtest runner |
+| `live_accumulation.py` | **live** TradingNode (Binance, testnet by default) — Stage 4 |
 | `test_crypto_accumulator.py` | 8 tests on real data |
+
+## Live execution (Stage 4 — terminal state, replaces freqtrade's live loop)
+
+The SAME `Accumulator` runs live under a `TradingNode` against Binance — Nautilus's
+backtest=live guarantee. Defaults to **testnet** (no real money).
+
+```bash
+P=nautilus_equity/.venv/bin/python
+# Validate the full live wiring offline (no keys needed — builds & disposes the node):
+$P nautilus_crypto/live_accumulation.py --check        # → "TradingNode built OK ... testnet=True"
+
+# Run against Binance testnet (free keys: https://testnet.binance.vision):
+BINANCE_API_KEY=... BINANCE_API_SECRET=... $P nautilus_crypto/live_accumulation.py
+# mainnet (only after a long clean testnet/dry-run): add BINANCE_TESTNET=0
+```
+
+Credentials via env only (sops in production), never committed. `--check` builds the
+DataEngine + RiskEngine + Binance exec client + strategy offline; only `run()` connects.
+The hard part is operational reliability (reconnect / order timeout / reconciliation) —
+prove it on testnet over weeks before mainnet, mirroring the freqtrade dry-run discipline.
 
 ## Tunables (`AccumulatorConfig`)
 `base_buy_usd`, `interval_bars` (7 = weekly on daily), `fear_threshold`/`fear_multiplier`,

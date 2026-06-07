@@ -1,100 +1,80 @@
-# Migration Plan — Add US Equities via NautilusTrader
+# Terminal State — single-stack NautilusTrader, retire freqtrade
 
-**Decision (2026-06-07):** Adopt NautilusTrader as the engine for **active US-equity
-trend trading**. Crypto reverts to **pure accumulation** (keep the existing Event/Smart
-DCA daemon — do NOT port it). The HonestTrend trend logic, which Kelly flags as
-negative-edge on crypto, moves to trending equity markets (semiconductors) where it
-has a better home. Unify everything at the TimescaleDB + Svelte dashboard layer.
+**Decision (2026-06-07):** Consolidate onto **one engine: NautilusTrader**. freqtrade is
+retired entirely. Driven by: (a) not wanting to maintain two stacks long-term, and
+(b) freqtrade cannot trade US equities (CCXT-only), so the surviving single stack must be
+the one that does both crypto and equities → Nautilus.
 
-**Reuse unchanged:** `strategies/kelly_sizer.py` (pure Python), TimescaleDB schema
-`quant`, the Svelte dashboard. **Rewrite:** strategy indicators (vectorized pandas →
-event-driven incremental) and entry/exit logic. **Leave alone:** crypto DCA daemon.
+This is feasible because the **actual freqtrade footprint is thin** (recon 2026-06-07):
+FreqAI unused (overfitting — dropped), hyperopt not a live dependency, pairlists is just
+StaticPairList (BTC/ETH/BNB), no protections configured, the factor library is not imported
+by any live strategy, and monitoring (telegram_alerts.py) + dashboard + TimescaleDB are
+already custom and stack-agnostic.
 
----
+## Terminal architecture
+- **One engine (Nautilus)** runs all three: crypto accumulation, US-equity trend, and
+  (later) crypto live execution.
+- **Crypto = pure accumulation.** The fear-driven accumulator replaces the crypto trend
+  strategies. `HonestTrend1mLive` (current crypto-trend live bot) is RETIRED with
+  freqtrade, NOT ported — its trend edge moves to US equities. *(Confirm this assumption.)*
+- **US equities = trend.** HonestTrend ported to event-driven (done).
+- **Hyperopt** = Optuna/vectorbt wrapping Nautilus `BacktestNode`. Built only when
+  optimizing; never a runtime dependency.
+- **FreqAI = dropped.** Not migrated.
 
-## Stage 1: Spike — prove the engine + data link
-**Goal:** A NautilusTrader BacktestEngine runs one trivial EMA-cross on one semiconductor
-ticker (e.g. NVDA), reading bars downloaded from IB into a ParquetDataCatalog.
-**Success Criteria:** Backtest completes deterministically; trades + equity curve printed.
-**Tests:** Smoke test that the catalog has bars and `engine.run()` produces ≥1 trade.
-**Status:** In Progress — synthetic-data spike DONE (`nautilus_equity/backtest_spike.py`
-runs: 400 bars, EMA cross, kelly_stake reused, +2.03% on synthetic NVDA, 12 fills).
-nautilus-trader 1.227.0 + ib extra installed in isolated `nautilus_equity/.venv`.
-REMAINING: run `download_ib.py` against a live IB Gateway/TWS to replace synthetic data
-with real adjusted bars (blocked on IB Gateway running — ports currently closed).
+## Keep (stack-agnostic, untouched)
+`strategies/telegram_alerts.py`, the Svelte dashboard, TimescaleDB, `strategies/kelly_sizer.py`,
+the standalone Event/Smart DCA daemon (0 freqtrade imports — independent until folded in).
 
-## Stage 2: Port one HonestTrend strategy to event-driven
-**Goal:** Reimplement the HonestTrend trend logic as a Nautilus `Strategy` with
-incremental indicators. Wire `kelly_stake()` into the sizing path (reuse module as-is).
-**Success Criteria:** Same-window backtest profit is in the same ballpark as the
-freqtrade backtest for the equivalent logic on equity data (not identical — different
-asset — but directionally sane).
-**Tests:** Unit tests for the incremental indicator(s) vs a pandas reference;
-`test_kelly_sizer.py` still green (no changes expected there).
-**Status:** In Progress — port DONE (`nautilus_equity/honest_trend_equity.py`). Runs on
-synthetic data (`run_honest_equity.py`): 4 entries / 6 pyramids / 4 exits / 14 fills,
-exercising every path. Migration-cost finding: only ADX (Wilder-smoothed DX), volume-SMA,
-crossover-edge, min-hold and pyramid bookkeeping needed hand-porting; EMA + DirectionalMovement
-(+DI/-DI) and kelly_sizer carried over for free. FNG filter is crypto-only → stubbed,
-needs a VIX/put-call equity replacement. REMAINING: feed real KellyStats; validate
-indicator values vs talib on real bars (needs catalog/IB).
-
-## Stage 3: Equity realities — sessions, gaps, brackets, corporate actions
-**Goal:** Restrict decisions to RTH; replace soft stops with exchange-side bracket
-orders (gap-safe); confirm IB historical bars are split/dividend adjusted in the catalog.
-**Success Criteria:** No overnight soft-stop assumption anywhere; a known split (e.g.
-NVDA 10:1, 2024-06) does not produce a phantom gap in the backtest.
-**Tests:** Regression test asserting bracket SL is placed on entry; data-integrity test
-on the split date.
-**Status:** Mostly done (logic) — `honest_trend_equity.py` now places exchange-side
-STOP_MARKET protective stops (re-placed on each pyramid at the new avg, cancelled on
-EMA-cross exit), RTH gating (`rth_only`), and a pluggable `regime_gate.py` replacing the
-crypto FNG filter (VIX/put-call, disabled by default — operator picks the signal).
-Bracket() rejected (it forces a TP); standalone STOP_MARKET used instead. Tests
-(`test_honest_trend_equity.py`, `test_regime_gate.py`): 9 pass incl. a crafted gap-down
-that fires the exchange stop (stop_exits>=1, loss capped at ~-1.4% vs the -39% crash) and
-a regime CSV that vetoes all entries. NOTE: pytest needs `bypass_logging=True` (Rust
-logger inits once/process; a 2nd BacktestEngine aborts otherwise). REMAINING: the NVDA
-2024 split data-integrity check needs real IB bars (blocked on IB).
-
-## Stage 4: Persistence + dashboard unification
-**Goal:** Write Nautilus fills/positions to TimescaleDB via `on_order_filled` /
-`on_position_closed`. Add `asset_class` ('crypto'|'equity') to the relevant tables/views.
-Dashboard shows crypto-accumulation + equity-trend side by side.
-**Success Criteria:** `quant.panda.qzz.io` renders both asset classes; backtest_runs
-distinguishes them; Kelly popover works for equity strategies too.
-**Tests:** SSR smoke check (page renders 200, not just build success); a row round-trips
-engine → DB → dashboard.
-**Status:** Not Started
-
-## Stage 5: IB paper account live (dry-run equivalent)
-**Goal:** TradingNode against IB paper (TWS port 7497 / Gateway 4001). Run the ported
-strategy live-paper on the semiconductor pool. No real money.
-**Success Criteria:** Node connects, receives live RTH bars, places + fills paper orders,
-writes to DB. Runs unattended for a full session without crashing.
-**Tests:** Connection/health check; an end-of-session reconciliation (Nautilus Cache vs
-DB) shows no drift.
-**Status:** Not Started
+## Retire / archive
+The `freqtrade` package + all `configs/config_*.json`, the crypto-trend strategies
+(`HonestTrend*` except as reference), the unused factor library and `freqaimodels/`
+(archive, don't migrate).
 
 ---
 
-## Crypto accumulation engine (done 2026-06-07, parallel track)
-While IB equities were pending activation, built `nautilus_crypto/` — the crypto half on
-the same Nautilus engine, using REAL local Binance data (no account needed). Per the
-"crypto = pure accumulation" philosophy: a fear-driven buy-the-dip DCA (`accumulator.py`)
-that buys harder when Fear&Greed is low / price is in a drawdown, and never sells.
-Backtested on BTC 2017-2026: smart fear+dip DCA beats naive fixed DCA by 9.73% lower cost
-basis and +57.5 pts ROI. 8 tests on real data, all green. Does NOT replace the live
-Event/Smart DCA daemon yet — that's a later decision. This proved the Nautilus engine on
-REAL data (equities were stuck on synthetic until IB activates).
+## Stage 1 — Nautilus engine foundation — DONE
+Equity trend port (`nautilus_equity/honest_trend_equity.py`) + crypto accumulator
+(`nautilus_crypto/accumulator.py`). kelly_sizer reused. Exchange-side stops, RTH gate,
+VIX regime gate (real VIX 2011-2026). 48 tests green. Crypto accumulator validated on real
+Binance data through the 2026-06 dip (smart DCA: -9.56% cost basis, +44 pts ROI vs naive).
+
+## Stage 2 — Equity real data + validation — BLOCKED on IB (paper active ~Mon 6/8)
+`download_ib.py` (NVDA/AMD/QQQ adjusted bars → ParquetDataCatalog); feed real KellyStats;
+validate ADX/indicators vs talib; NVDA 2024 10:1 split data-integrity check.
+
+## Stage 3 — Persistence + dashboard unification
+Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position_closed`;
+add `asset_class` ('crypto'|'equity') dimension; dashboard shows both side by side.
+Do this with REAL data only (don't pollute prod DB with synthetic trades).
+
+## Stage 4 — Crypto live execution on Nautilus — THE careful one
+`TradingNode` + native Binance adapter running the accumulator. Replaces freqtrade's live
+loop AND folds in the standalone DCA daemon. freqtrade gives reliability for free
+(reconnect, order timeout, reconciliation) — all of that must be re-proven on Nautilus.
+Path: Binance testnet/sandbox → long dry-run → real money. Keep `DCA_LIVE_ENABLED=false`
+until the dry-run has run unattended for weeks without drift.
+
+## Stage 5 — Equity live (IB paper → real)
+`TradingNode` against IB paper, semiconductor pool, full sessions unattended; reconcile
+Cache vs DB. Promote to real only after sustained clean paper operation.
+
+## Stage 6 — Hyperopt via Optuna (build when needed)
+Optuna study wrapping a Nautilus `BacktestNode` run; objective = Calmar/Sharpe with DD
+penalty (mirror the old HonestHyperOptLoss). Not a blocker for going live.
+
+## Stage 7 — Decommission freqtrade
+Remove the freqtrade dependency; archive freqtrade strategies/configs/factor-lib/freqaimodels;
+update CLAUDE.md and docs to describe the single Nautilus stack. Delete the freqtrade `.venv`.
+
+---
 
 ## Joint Kelly (deferred but flagged)
-Semiconductors are highly correlated internally and with BTC (risk-on/off). The current
-per-instrument Half-Kelly will over-allocate. Once Stage 2-4 are stable, replace the
-scalar Kelly with the covariance form f* = Σ⁻¹μ across the equity pool, using Nautilus's
-unified Portfolio. Tracked separately; not a blocker for first paper-live.
+Semis are highly correlated with each other and with BTC. Replace scalar Half-Kelly with
+the covariance form f* = Σ⁻¹μ across the pool once Stages 2-3 are stable.
 
 ## Hard guardrails
-- Keep `DCA_LIVE_ENABLED=false` and IB on **paper** until explicitly promoted.
-- Marketing/positioning: tools/signals/dashboard only — never 代客理财/资金池.
-- Never commit secrets; IB creds go through sops, not the repo.
+- Everything paper/dry-run/testnet first; real money only after sustained clean operation.
+- `DCA_LIVE_ENABLED=false` until crypto live on Nautilus is proven.
+- Secrets stay sops-encrypted (already verified: secrets.env/secrets.yaml are sops, safe).
+- Never commit plaintext secrets, venvs, or generated data/catalogs.
