@@ -32,7 +32,11 @@ class FngSeries:
     def __init__(self, csv_path: Path | None = None, default: int = 50):
         self.default = default
         self._by_date: dict[str, int] = {}
-        path = csv_path or _FNG_CSV
+        # Allow prod/deploy to point at a runtime-fetched FNG CSV via env, since the
+        # repo-relative default path doesn't exist inside the Nix store / on the server.
+        import os
+
+        path = Path(csv_path or os.environ.get("FNG_CSV") or _FNG_CSV)
         if path.exists():
             with open(path) as f:
                 for row in csv.DictReader(f):

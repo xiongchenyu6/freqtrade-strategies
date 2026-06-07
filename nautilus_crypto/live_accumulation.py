@@ -58,7 +58,14 @@ def build_node() -> TradingNode:
     # lets build() validate the full wiring offline; run() (which connects) is gated on real
     # keys in main(), so the placeholder never reaches the network.
     api_key = os.environ.get("BINANCE_API_KEY") or "CHECK_ONLY_NO_CONNECT"
-    api_secret = os.environ.get("BINANCE_API_SECRET") or "CHECK_ONLY_NO_CONNECT"
+    # Ed25519 secret is a multi-line PEM that doesn't fit an env value, so support a
+    # file path (BINANCE_API_SECRET_FILE) for deploy (sops writes the PEM to a file).
+    api_secret = os.environ.get("BINANCE_API_SECRET")
+    if not api_secret:
+        secret_file = os.environ.get("BINANCE_API_SECRET_FILE")
+        if secret_file and Path(secret_file).exists():
+            api_secret = Path(secret_file).read_text().strip()
+    api_secret = api_secret or "CHECK_ONLY_NO_CONNECT"
 
     provider = InstrumentProviderConfig(load_all=True)
     config = TradingNodeConfig(
@@ -92,12 +99,13 @@ def build_node() -> TradingNode:
     # BINANCE_BAR lets a testnet smoke run use a fast bar (e.g. 1-MINUTE-LAST-EXTERNAL) so
     # the order→fill→reconcile path fires within a minute instead of waiting for a daily close.
     bar_spec = os.environ.get("BINANCE_BAR", "1-DAY-LAST-EXTERNAL")
+    instrument = os.environ.get("ACC_INSTRUMENT", INSTRUMENT)
     strategy = Accumulator(AccumulatorConfig(
-        instrument_id=INSTRUMENT,
-        bar_type=BarType.from_str(f"{INSTRUMENT}-{bar_spec}"),
-        base_buy_usd=100.0,   # small on testnet
-        interval_bars=1,      # act every bar to exercise the path faster
-        mode="smart",
+        instrument_id=instrument,
+        bar_type=BarType.from_str(f"{instrument}-{bar_spec}"),
+        base_buy_usd=float(os.environ.get("ACC_BASE_BUY_USD", "100")),
+        interval_bars=int(os.environ.get("ACC_INTERVAL_BARS", "1")),
+        mode=os.environ.get("ACC_MODE", "smart"),
     ))
     node.trader.add_strategy(strategy)
     return node
@@ -105,7 +113,11 @@ def build_node() -> TradingNode:
 
 def main() -> int:
     check_only = "--check" in sys.argv
-    has_keys = bool(os.environ.get("BINANCE_API_KEY") and os.environ.get("BINANCE_API_SECRET"))
+    _secret_present = bool(
+        os.environ.get("BINANCE_API_SECRET")
+        or (os.environ.get("BINANCE_API_SECRET_FILE") and Path(os.environ["BINANCE_API_SECRET_FILE"]).exists())
+    )
+    has_keys = bool(os.environ.get("BINANCE_API_KEY")) and _secret_present
 
     node = build_node()  # constructing + build() validates the full live wiring offline
     print(f"TradingNode built OK (venue={BINANCE_VENUE}, "
