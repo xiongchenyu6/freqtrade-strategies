@@ -48,7 +48,15 @@ Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position
 add `asset_class` ('crypto'|'equity') dimension; dashboard shows both side by side.
 Do this with REAL data only (don't pollute prod DB with synthetic trades).
 
-## Stage 4 — Crypto live execution on Nautilus — TESTNET PROVEN (2026-06-07)
+## Stage 4 — Crypto live execution on Nautilus — DEPLOYED TO PROD (testnet) 2026-06-07
+Packaged nautilus-trader (aarch64 wheel) + a nautilus-accumulator NixOS service in
+nur-packages; deployed to **oracle-arm-002** via dotfiles + nixos-rebuild switch. The box
+also got bumped 26.05→26.11 (fixed a stale supabase-realtime mix-deps FOD hash that blocked
+it). Live on Binance **testnet**: service active, Ed25519 session.logon authenticated,
+1372 instruments, stream connected; buys on hourly bar close. Dashboard/API survived
+(api.panda + quant both 200). Soak running. Flip `testnet=false` only after weeks clean.
+
+### (prior) testnet PROVEN locally 2026-06-07
 `TradingNode` + native Binance adapter running the accumulator (`live_accumulation.py`).
 END-TO-END VALIDATED on Binance testnet: connect → Ed25519 `session.logon` → load account
 (testnet balances) + 1372 instruments → subscribe 1m bars → on first bar (FNG=12 extreme
