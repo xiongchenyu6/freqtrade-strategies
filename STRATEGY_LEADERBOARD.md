@@ -137,6 +137,12 @@ All 3 positive (Sharpe 1.2-2.1) → robust, not a single-param fluke. Modest (~4
 Forward expectation: modest (~mid-single-digit CAGR), low DD, positive Sharpe. Crypto
 trend-following is structurally harder in 2023-26; size accordingly.
 
+**iter22 — fee sensitivity (the edge is THIN):** recent Donchian return by round-trip cost:
+0.10%→+15.6%, 0.25%→+10.3%, 0.50%→+2.1% (nearly dead). The recent edge survives ONLY at
+low execution cost (≤0.25%): use low-fee tier / BNB discount / limit orders, not naive
+market orders with slippage. ~4% gross CAGR has little room for costs. Deploy-viability is
+execution-cost-gated.
+
 ## 🏁 CRYPTO SEARCH CONVERGED (with the decay caveat)
 Best full-history config: **ETH+BTC 1h multi-asset trend** → +211% / Sharpe 2.41 / −13% maxDD,
 BUT recent-half edge is weak/negative. Before any real deployment: re-validate on recent data
