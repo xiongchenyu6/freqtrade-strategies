@@ -48,12 +48,17 @@ Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position
 add `asset_class` ('crypto'|'equity') dimension; dashboard shows both side by side.
 Do this with REAL data only (don't pollute prod DB with synthetic trades).
 
-## Stage 4 — Crypto live execution on Nautilus — THE careful one
-`TradingNode` + native Binance adapter running the accumulator. Replaces freqtrade's live
-loop AND folds in the standalone DCA daemon. freqtrade gives reliability for free
-(reconnect, order timeout, reconciliation) — all of that must be re-proven on Nautilus.
-Path: Binance testnet/sandbox → long dry-run → real money. Keep `DCA_LIVE_ENABLED=false`
-until the dry-run has run unattended for weeks without drift.
+## Stage 4 — Crypto live execution on Nautilus — TESTNET PROVEN (2026-06-07)
+`TradingNode` + native Binance adapter running the accumulator (`live_accumulation.py`).
+END-TO-END VALIDATED on Binance testnet: connect → Ed25519 `session.logon` → load account
+(testnet balances) + 1372 instruments → subscribe 1m bars → on first bar (FNG=12 extreme
+fear → deep-fear 6× boost) the accumulator placed a live order: BUY MARKET 0.0096 BTC
+@ $62,515.86, Submitted → Accepted (venue_order_id) → Filled. The smart fear logic fired
+in a real exchange environment. KEY GOTCHA: execution requires an **Ed25519** API key
+(HMAC/RSA deprecated — they authenticate + load account but fail at session.logon).
+REMAINING before real money: long unattended dry-run/testnet soak (reconnect, order
+timeout, reconciliation, daily restart), fold in the DCA daemon, then mainnet with
+`DCA_LIVE_ENABLED=false` lifted only after weeks of clean operation.
 
 ## Stage 5 — Equity live (IB paper → real)
 `TradingNode` against IB paper, semiconductor pool, full sessions unattended; reconcile
