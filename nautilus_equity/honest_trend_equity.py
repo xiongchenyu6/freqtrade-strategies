@@ -205,10 +205,13 @@ class HonestTrendEquity(Strategy):
         return 9 * 60 + 30 <= mins < 16 * 60  # 09:30–16:00 ET
 
     def _equity_usd(self, instrument) -> float:
-        from nautilus_trader.model.currencies import USD
-
+        # Use the instrument's quote currency so the same strategy works for equities
+        # (USD) and crypto spot (USDT) without hardcoding.
         account = self.portfolio.account(instrument.venue)
-        return float(account.balance_total(USD)) if account else 0.0
+        if account is None:
+            return 0.0
+        bal = account.balance_total(instrument.quote_currency)
+        return float(bal) if bal is not None else 0.0
 
     def _avg_entry(self) -> float | None:
         return self._cost / self._shares if self._shares > 0 else None
