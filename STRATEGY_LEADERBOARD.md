@@ -143,6 +143,12 @@ low execution cost (≤0.25%): use low-fee tier / BNB discount / limit orders, n
 market orders with slippage. ~4% gross CAGR has little room for costs. Deploy-viability is
 execution-cost-gated.
 
+## iter23 — breakout is ASSET-SELECTIVE (trenders yes, range-bound no)
+Recent-half Donchian per coin: ETH/BTC Sharpe 2.10, **SOL +17%/Sharpe 2.71**, **BNB −3%/Sharpe −0.31**.
+Breakout works on coins that trend (ETH/BTC/SOL) and FAILS on range-bound ones (BNB, an
+exchange token). 4-coin incl. BNB → Sharpe 1.74 (dragged down). **Refined deployable set:
+ETH+BTC+SOL (drop BNB).** Asset selection > blindly adding coins.
+
 ## 🏁 CRYPTO SEARCH CONVERGED (with the decay caveat)
 Best full-history config: **ETH+BTC 1h multi-asset trend** → +211% / Sharpe 2.41 / −13% maxDD,
 BUT recent-half edge is weak/negative. Before any real deployment: re-validate on recent data
