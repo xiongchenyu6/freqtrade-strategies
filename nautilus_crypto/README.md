@@ -47,9 +47,16 @@ P=nautilus_equity/.venv/bin/python
 $P nautilus_crypto/live_accumulation.py --check        # → "TradingNode built OK ... testnet=True"
 
 # Run against Binance testnet (free keys: https://testnet.binance.vision):
-BINANCE_API_KEY=... BINANCE_API_SECRET=... $P nautilus_crypto/live_accumulation.py
+BINANCE_API_KEY=... BINANCE_API_SECRET="$(cat ed25519_private.pem)" $P nautilus_crypto/live_accumulation.py
 # mainnet (only after a long clean testnet/dry-run): add BINANCE_TESTNET=0
 ```
+
+**Key type MUST be Ed25519.** Verified on testnet 2026-06-07: an HMAC-SHA-256 key
+connects, authenticates, loads the account + 1372 instruments, syncs server time, and
+opens the user-data WebSocket — then FAILS at `session.logon`
+("HMAC-SHA-256 API key is not supported"). Binance/Nautilus deprecated HMAC/RSA for
+execution; generate an **Ed25519** key and pass its private-key PEM as the secret
+(Nautilus auto-detects the type). Everything up to the logon is already proven working.
 
 Credentials via env only (sops in production), never committed. `--check` builds the
 DataEngine + RiskEngine + Binance exec client + strategy offline; only `run()` connects.

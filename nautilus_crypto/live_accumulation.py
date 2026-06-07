@@ -9,7 +9,14 @@ Credentials via env (never commit): BINANCE_API_KEY, BINANCE_API_SECRET.
   BINANCE_TESTNET=1 (default) → testnet.binance.vision
   BINANCE_TESTNET=0          → live mainnet (only after long clean testnet/dry-run)
 
-Get free testnet keys at https://testnet.binance.vision.
+IMPORTANT — key type: Binance + Nautilus require an **Ed25519** API key for EXECUTION.
+HMAC-SHA-256 / RSA keys authenticate and load the account but FAIL at the WebSocket
+`session.logon` ("HMAC-SHA-256 API key is not supported") — they are deprecated for
+trading. Generate an Ed25519 key; BINANCE_API_SECRET is the Ed25519 private key contents:
+  export BINANCE_API_SECRET="$(cat binance_ed25519_private.pem)"
+Nautilus auto-detects the key type from the secret format.
+
+Get free testnet keys (choose Ed25519) at https://testnet.binance.vision.
 
 Validate wiring without keys (constructs the node, does not connect):
   nautilus_crypto/.../python live_accumulation.py --check
@@ -82,11 +89,14 @@ def build_node() -> TradingNode:
     node.add_exec_client_factory("BINANCE", BinanceLiveExecClientFactory)
     node.build()
 
+    # BINANCE_BAR lets a testnet smoke run use a fast bar (e.g. 1-MINUTE-LAST-EXTERNAL) so
+    # the order→fill→reconcile path fires within a minute instead of waiting for a daily close.
+    bar_spec = os.environ.get("BINANCE_BAR", "1-DAY-LAST-EXTERNAL")
     strategy = Accumulator(AccumulatorConfig(
         instrument_id=INSTRUMENT,
-        bar_type=BarType.from_str(f"{INSTRUMENT}-1-DAY-LAST-EXTERNAL"),
+        bar_type=BarType.from_str(f"{INSTRUMENT}-{bar_spec}"),
         base_buy_usd=100.0,   # small on testnet
-        interval_bars=1,      # testnet: act every daily bar to exercise the path faster
+        interval_bars=1,      # act every bar to exercise the path faster
         mode="smart",
     ))
     node.trader.add_strategy(strategy)
