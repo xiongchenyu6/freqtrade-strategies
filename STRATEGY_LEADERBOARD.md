@@ -106,6 +106,19 @@ choppier/more efficient → trend-following gets whipsawed. **Deploying on the f
 +211% would be deploying a decayed edge.** This is the #1 takeaway of the whole search:
 the full-history headline overstates forward expectancy.
 
+## ✅ iter20 — Donchian breakout SURVIVES the recent regime (rescues the trend approach)
+Recent-half (2023-26) only:
+| strategy | recent return | recent Sharpe | maxDD |
+|---|---|---|---|
+| **Donchian 168/72 1h** | **+17.2%** | **+2.10** | −9.4% |
+| EMA-cross 72/144 1h | +11% | −2.13 | −6.6% |
+
+**Breakout is robust where EMA-cross decayed.** Donchian waits for a confirmed new high
+(filters chop); EMA-cross reacts to every crossover (whipsawed in choppy 2023-26). →
+For forward deployment, prefer **Donchian breakout over EMA-cross**. (Recall iter7: at
+matched sizing Donchian had lower full-history return but higher Sharpe — now we see WHY:
+its edge persists into the recent regime while EMA's faded.)
+
 ### 🏁 CRYPTO SEARCH CONVERGED (with the decay caveat)
 Best full-history config: **ETH+BTC 1h multi-asset trend** → +211% / Sharpe 2.41 / −13% maxDD,
 BUT recent-half edge is weak/negative. Before any real deployment: re-validate on recent data

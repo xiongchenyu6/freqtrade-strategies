@@ -52,6 +52,8 @@ class EquityRecorder(Actor):
         return self.curve[-1] / self.curve[0] - 1 if len(self.curve) > 1 else 0.0
 
     def max_drawdown(self) -> float:
+        if not self.curve:
+            return 0.0
         peak, mdd = self.curve[0], 0.0
         for x in self.curve:
             peak = max(peak, x)
