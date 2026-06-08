@@ -13,6 +13,7 @@ Sizing: `risk_frac` of total account equity (quote currency), spot, no leverage,
 from __future__ import annotations
 
 from collections import deque
+from datetime import timedelta
 
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import Bar, BarType
@@ -40,6 +41,25 @@ class DonchianBreakout(Strategy):
 
     def on_start(self):
         self.subscribe_bars(self.config.bar_type)
+        # Warm the channel from history so live trading starts immediately instead of
+        # idling ~entry_lb bars. Safe for Donchian because the channel is max/min over a
+        # rolling window — order-insensitive, so historical/live interleaving can't corrupt
+        # it (unlike a cumulative EMA). No-op in backtest (no historical data client).
+        try:
+            need = self.config.entry_lb + self.config.exit_lb + 10
+            self.request_bars(
+                self.config.bar_type,
+                start=self.clock.utc_now() - timedelta(hours=need),
+            )
+        except Exception as e:  # never let warmup break startup
+            self.log.warning(f"warmup request_bars skipped: {e!r}")
+
+    def on_historical_data(self, data):
+        # Feed warmup bars into the channel deques (do NOT trade on history).
+        for d in data:
+            if isinstance(d, Bar):
+                self._hi.append(float(d.high))
+                self._lo.append(float(d.low))
 
     def on_stop(self):
         self.close_all_positions(self.iid)
