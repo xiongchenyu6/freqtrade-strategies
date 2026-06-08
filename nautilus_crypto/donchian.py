@@ -56,8 +56,11 @@ class DonchianBreakout(Strategy):
 
     def on_historical_data(self, data):
         # Feed warmup bars into the channel deques (do NOT trade on history).
-        for d in data:
-            if isinstance(d, Bar):
+        # Live delivers one bar per call (BinanceBar); backtest delivers a list — handle both,
+        # and use duck-typing (hasattr) since adapter bar subtypes aren't isinstance(Bar).
+        bars = data if isinstance(data, (list, tuple)) else [data]
+        for d in bars:
+            if hasattr(d, "high") and hasattr(d, "low"):
                 self._hi.append(float(d.high))
                 self._lo.append(float(d.low))
 
