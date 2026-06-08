@@ -15,7 +15,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Override via FREQTRADE_PYTHON env var if your venv lives elsewhere
-PYTHON="${FREQTRADE_PYTHON:-$PROJECT_DIR/../freqtrade/.venv/bin/python}"
+PYTHON="${FREQTRADE_PYTHON:-$PROJECT_DIR/.venv-bots/bin/python}"
 CONFIG="$PROJECT_DIR/configs/config_live.json"
 DB="sqlite:///$PROJECT_DIR/tradesv3_live.sqlite"
 LOG="$PROJECT_DIR/logs/live_bot.log"

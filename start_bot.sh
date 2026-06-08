@@ -9,7 +9,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON="${FREQTRADE_PYTHON:-$PROJECT_DIR/../freqtrade/.venv/bin/python}"
+PYTHON="${FREQTRADE_PYTHON:-$PROJECT_DIR/.venv-bots/bin/python}"
 CONFIG="$PROJECT_DIR/configs/config_dryrun_honest15m.json"
 DB="sqlite:///$(realpath "$PROJECT_DIR")/tradesv3_honest.sqlite"
 LOG="$PROJECT_DIR/logs/honest_bot.log"
