@@ -76,9 +76,35 @@ Cache vs DB. Promote to real only after sustained clean paper operation.
 Optuna study wrapping a Nautilus `BacktestNode` run; objective = Calmar/Sharpe with DD
 penalty (mirror the old HonestHyperOptLoss). Not a blocker for going live.
 
-## Stage 7 — Decommission freqtrade
-Remove the freqtrade dependency; archive freqtrade strategies/configs/factor-lib/freqaimodels;
-update CLAUDE.md and docs to describe the single Nautilus stack. Delete the freqtrade `.venv`.
+## Stage 7 — Decommission freqtrade  (PATH B chosen 2026-06-08: wait for mainnet, then delete)
+**End goal:** `rm -rf ~/Documents/github/public/freqtrade` (the core repo + 8.7G .venv).
+**NOT safe yet** — these still depend on it (mapped 2026-06-08). Delete only after EVERY box ticked.
+
+What still depends on `~/Documents/github/public/freqtrade` (all on the `game` dev machine):
+| dependency | what it is | migration before deletion |
+|---|---|---|
+| `crypto-event-dca.service` (event_dca_bot.py) | live (dry-run) Event DCA bot | → Nautilus accumulator on **mainnet** (oracle-arm-002) takes over |
+| `crypto-reactor.service` (event_reactor.py) | price-spike reactor | fold into Nautilus / retire |
+| `crypto-dca.timer` (dca_executor.py) | weekly DCA | → Nautilus accumulator |
+| `crypto-ts-sync.timer` (sync_local_state) | freqtrade sqlite → quant.trades | obsolete once freqtrade dry-run gone (Nautilus writes quant.nautilus_trades via TradeLedger) |
+| `crypto-alerts.timer` (telegram_alerts.py) | KOL + bot-health + daily report | give own venv OR repoint to Nautilus state |
+| `md_http_server.py` :3001 | market-data HTTP | own venv or retire |
+| `freqtrade download-data` | produces user_data/data/binance/*.feather for Nautilus backtests | replace with standalone ccxt downloader / Nautilus Binance historical |
+| freqtrade CLI scripts (start_bot/start_live/backtest/visualize) | run freqtrade strategies | retire (strategies move to Nautilus) |
+
+Note: the daemons' CODE is freqtrade-independent (0 imports) — they just borrow freqtrade's
+.venv as the Python interpreter (ccxt/websockets/psycopg2). So the blocker is the interpreter
++ the live function, not code coupling.
+
+Deletion checklist (do in order, only when each is green):
+1. ☐ Nautilus crypto accumulator + trend proven on **MAINNET** (post-soak), real money on.
+2. ☐ Stop + remove `crypto-event-dca`, `crypto-reactor`, `crypto-dca.timer` (function now on Nautilus).
+3. ☐ Retire `crypto-ts-sync` (freqtrade sqlite no longer the source; dashboard uses quant.nautilus_trades).
+4. ☐ Repoint `crypto-alerts` + `md_http_server` to their own venv (or retire) — drop freqtrade .venv.
+5. ☐ Replace `download-data` with a freqtrade-free downloader for any backtest data refresh.
+6. ☐ Archive freqtrade strategies/configs/factor-lib/freqaimodels in the freqtrade-strategies repo.
+7. ☐ Update CLAUDE.md / docs to the single Nautilus stack.
+8. ☐ THEN `rm -rf ~/Documents/github/public/freqtrade`.
 
 ---
 
