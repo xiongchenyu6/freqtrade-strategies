@@ -1,3 +1,8 @@
+> **Data refreshed 2026-06-08** (BTC $62,948, FNG=8 Extreme Fear) via the freqtrade-free
+> `download_binance.py`. Re-run after the recent BTC drop: accumulator +376% ROI (now in
+> deep-fear-boost), deployed Donchian ETH+BTC+SOL recent +22.6%/Sharpe 2.20/−10.1% (holds up),
+> ETH+BTC EMA full +211%/2.41/−13.2%. Recent volatility did not degrade the deployed strategy.
+
 # Strategy Leaderboard — Nautilus, all markets
 
 Auto-updated by the `/loop … find best strategy` run. Each iteration tests a config/asset
