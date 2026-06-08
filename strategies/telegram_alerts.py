@@ -210,11 +210,11 @@ def check_sentiment_shift():
 #    last healthy check, OR (b) at least HEALTH_RE_ALERT_HOURS have elapsed.
 HEALTH_RE_ALERT_HOURS = 6
 
-# Watched systemd --user units. Override (space-separated) via env when the
-# live signal bots change — e.g. once execution alerting moves onto Nautilus.
-HEALTH_SERVICES = os.environ.get(
-    "HEALTH_CHECK_SERVICES", "quant-event-dca quant-reactor"
-).split()
+# Watched systemd --user units (opt-in via env, space-separated). Empty by default:
+# crypto execution + signal now run as system services on oracle-arm-002 with
+# Restart=always, so there is no always-on crypto bot to watch on this host. Set
+# HEALTH_CHECK_SERVICES to a space-separated unit list to re-enable a local watchdog.
+HEALTH_SERVICES = os.environ.get("HEALTH_CHECK_SERVICES", "").split()
 
 
 def _service_active(unit: str) -> bool:

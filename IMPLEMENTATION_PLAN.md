@@ -112,8 +112,13 @@ placeholder key that forced an authed fee-tier call). `nautilus-signal` nur modu
 event_dca_triggers rows remain in the DB for the dashboard). Crypto is now single-stack: all
 execution + signal runs on Nautilus@oracle-arm-002 (accumulator + trend + signal). Kept on the
 game box: ts-sync(wf), alerts, deribit, risk-monitor, daily-report (monitoring/reporting only).
-**Out of scope / later**: `md_http_server` :3001 (retire or own venv); CLAUDE.md for /quant;
-the dashboard's event_dca_triggers panel is now historical-only (live execution = /nautilus).
+**Cleanup done 2026-06-08**: `/quant` CLAUDE.md written; daily-report Nautilus P&L wired up
+(`quant-alerts` now runs via `start_telegram_alerts.sh` → `sops exec-env secrets.env`, restoring
+the TIMESCALE_URL the rename dropped); local health watchdog disabled (`HEALTH_CHECK_SERVICES=`,
+default now empty) so it stops false-alarming on the retired event-dca/reactor.
+**Still open**: `md_http_server` :3001 (localhost-only, freqtrade-free, no consumers — user to
+decide retire vs keep as a local view); dashboard event_dca_triggers panel is historical-only
+(live execution = /nautilus route).
 
 **STAGE 8 COMPLETE** — crypto runs on one stack (NautilusTrader); the freqtrade-era parallel
 daemons are gone.
