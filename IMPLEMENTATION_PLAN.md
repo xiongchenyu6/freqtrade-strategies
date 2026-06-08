@@ -76,35 +76,47 @@ Cache vs DB. Promote to real only after sustained clean paper operation.
 Optuna study wrapping a Nautilus `BacktestNode` run; objective = Calmar/Sharpe with DD
 penalty (mirror the old HonestHyperOptLoss). Not a blocker for going live.
 
-## Stage 7 — Decommission freqtrade  (PATH B chosen 2026-06-08: wait for mainnet, then delete)
-**End goal:** `rm -rf ~/Documents/github/public/freqtrade` (the core repo + 8.7G .venv).
-**NOT safe yet** — these still depend on it (mapped 2026-06-08). Delete only after EVERY box ticked.
+## Stage 7 — Decommission freqtrade — CORE DONE (PATH A executed 2026-06-08)
+**Done:** freqtrade core repo deleted (~11G freed); daemons repointed to `.venv-bots`;
+`download-data` replaced by `nautilus_crypto/download_binance.py` (ccxt); repo renamed
+`freqtrade-strategies`→`quant`, services `crypto-*`→`quant-*`. Dead freqtrade strategies/
+scripts/news-cluster git-rm'd. Stale freqtrade refs scrubbed from kept live code
+(telegram_alerts health-check + daily-report P&L → `quant.nautilus_trades`; ts-sync dead
+sqlite stage removed).
 
-What still depends on `~/Documents/github/public/freqtrade` (all on the `game` dev machine):
-| dependency | what it is | migration before deletion |
-|---|---|---|
-| `crypto-event-dca.service` (event_dca_bot.py) | live (dry-run) Event DCA bot | → Nautilus accumulator on **mainnet** (oracle-arm-002) takes over |
-| `crypto-reactor.service` (event_reactor.py) | price-spike reactor | fold into Nautilus / retire |
-| `crypto-dca.timer` (dca_executor.py) | weekly DCA | → Nautilus accumulator |
-| `crypto-ts-sync.timer` (sync_local_state) | freqtrade sqlite → quant.trades | obsolete once freqtrade dry-run gone (Nautilus writes quant.nautilus_trades via TradeLedger) |
-| `crypto-alerts.timer` (telegram_alerts.py) | KOL + bot-health + daily report | give own venv OR repoint to Nautilus state |
-| `md_http_server.py` :3001 | market-data HTTP | own venv or retire |
-| `freqtrade download-data` | produces user_data/data/binance/*.feather for Nautilus backtests | replace with standalone ccxt downloader / Nautilus Binance historical |
-| freqtrade CLI scripts (start_bot/start_live/backtest/visualize) | run freqtrade strategies | retire (strategies move to Nautilus) |
+## Stage 8 — True single-stack crypto: port signal layer onto Nautilus, retire daemons
+**Why:** the only remaining parallelism — `quant-event-dca` (dry-run dip/FNG) + `quant-reactor`
+(spike) are the *signal/alert layer* (Telegram + dashboard feed); Nautilus is *execution* (no
+alerting). Decision 2026-06-08: **port alerts into Nautilus, then retire the daemons** (single
+process). Key constraint: signal detection needs REAL (mainnet) public prices even while
+execution stays testnet → the alerter runs on a mainnet **data-only** feed.
 
-Note: the daemons' CODE is freqtrade-independent (0 imports) — they just borrow freqtrade's
-.venv as the Python interpreter (ccxt/websockets/psycopg2). So the blocker is the interpreter
-+ the live function, not code coupling.
+**Goal**: Nautilus emits the spike (PUMP/DUMP) + accumulation-dip (FLASH/FAST) Telegram alerts;
+then stop event-dca/reactor/dca.
+**P1 (code+test, no deploy)** — `telegram_notifier.py` (sink), `signal_detect.py` (pure
+Spike/Dip detectors ported from the daemons), `signal_alerter.py` (Nautilus Actor wiring
+bars→detectors→notifier) + tests.  **Status: COMPLETE 2026-06-08** — 9 pure unit tests pass;
+integration test drives the actor through a real BacktestEngine (synthetic spike+dip path) and
+confirms both Telegram alerts fire via the subscribe→on_bar wiring. Fixed a latent cooldown bug
+(epoch-0 init suppressed the first alert) the original daemons had.
+**P2 (deploy)** — data-only mainnet signal node + nur module; deploy to oracle-arm-002.
+**Status: DEPLOYED 2026-06-08** — `run_signal_alerter.py` (data-only, no exec client, no keys →
+loads 3591 instruments anonymously via public exchangeInfo; first attempts failed on a
+placeholder key that forced an authed fee-tier call). `nautilus-signal` nur module + dotfiles
+`services.nautilus-signal` (BTC/ETH/SOL, 1-min, mainnet). Telegram creds added to host sops
+(`oracle-arm-002/telegram-{bot-token,chat-id}`, same bot/chat as legacy daemons). Service
+`active`, SignalAlerter RUNNING, startup heartbeat sent (no telegram errors). **Remaining: soak
++ confirm a real spike/dip alert lands before P3.**
+**P3 (retire)** — **DONE 2026-06-08**: stopped+disabled `quant-event-dca`/`quant-reactor`/
+`quant-dca.timer`; trimmed ts-sync to the `wf` stage only (event_dca state frozen; historical
+event_dca_triggers rows remain in the DB for the dashboard). Crypto is now single-stack: all
+execution + signal runs on Nautilus@oracle-arm-002 (accumulator + trend + signal). Kept on the
+game box: ts-sync(wf), alerts, deribit, risk-monitor, daily-report (monitoring/reporting only).
+**Out of scope / later**: `md_http_server` :3001 (retire or own venv); CLAUDE.md for /quant;
+the dashboard's event_dca_triggers panel is now historical-only (live execution = /nautilus).
 
-Deletion checklist (do in order, only when each is green):
-1. ☐ Nautilus crypto accumulator + trend proven on **MAINNET** (post-soak), real money on.
-2. ☐ Stop + remove `crypto-event-dca`, `crypto-reactor`, `crypto-dca.timer` (function now on Nautilus).
-3. ☐ Retire `crypto-ts-sync` (freqtrade sqlite no longer the source; dashboard uses quant.nautilus_trades).
-4. ☐ Repoint `crypto-alerts` + `md_http_server` to their own venv (or retire) — drop freqtrade .venv.
-5. ☐ Replace `download-data` with a freqtrade-free downloader for any backtest data refresh.
-6. ☐ Archive freqtrade strategies/configs/factor-lib/freqaimodels in the freqtrade-strategies repo.
-7. ☐ Update CLAUDE.md / docs to the single Nautilus stack.
-8. ☐ THEN `rm -rf ~/Documents/github/public/freqtrade`.
+**STAGE 8 COMPLETE** — crypto runs on one stack (NautilusTrader); the freqtrade-era parallel
+daemons are gone.
 
 ---
 

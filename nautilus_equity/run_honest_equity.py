@@ -48,7 +48,7 @@ def main() -> int:
     engine.add_data(bars)
 
     # Shorter EMAs on synthetic data so the cross actually fires; the production
-    # equity config will use the tuned 72/144 from HonestTrendGeneric.
+    # equity config will use the tuned 72/144 trend lengths.
     strategy = HonestTrendEquity(
         HonestTrendEquityConfig(
             instrument_id=str(instrument.id),

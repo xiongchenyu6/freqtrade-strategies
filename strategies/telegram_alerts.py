@@ -3,7 +3,8 @@ Telegram Alert System
 
 1. KOL real-time alerts — when Trump/Musk/BlackRock moves, get notified fast
 2. Sentiment shift alerts — when combined_score changes significantly
-3. Bot health watchdog — alert if freqtrade process dies
+3. Bot health watchdog — alert if a live signal-bot systemd unit dies
+4. Daily report — market + Nautilus execution P&L + Kelly verdicts
 
 Run every 30 min via systemd timer (separate from the 4-hour pipeline).
 """
@@ -198,86 +199,49 @@ def check_sentiment_shift():
 # Alert 3: Bot Health (auto-restart + cooldown)
 # --------------------------------------------------------------------------
 #
-# Old behavior: every 30 min, fire the same "Bot Down" alert. Useless after
-# the first one. New behavior:
-#  - On detection of a missing process, try to relaunch the bot exactly once,
-#    then re-pgrep ~3s later to confirm it took.
+# Old behavior: pgrep a `freqtrade trade` process and shell-restart it. Dead
+# since the freqtrade core was removed — the process never exists, so every
+# cycle false-alarmed "Bot Down". New behavior (single-stack era):
+#  - Execution runs on Nautilus (remote, testnet); this machine hosts the
+#    signal/alert bots as systemd --user services with Restart=always.
+#  - systemd owns restart, so we no longer shell one out — we just detect a
+#    sustained outage of the watched units and alert with a cooldown.
 #  - Only re-alert if (a) this is the first time we've seen it down since the
-#    last healthy check, OR (b) at least HEALTH_RE_ALERT_HOURS have elapsed
-#    since the last alert.
-#  - Alerts now include what the restart attempt did so the user knows whether
-#    to manually intervene.
+#    last healthy check, OR (b) at least HEALTH_RE_ALERT_HOURS have elapsed.
 HEALTH_RE_ALERT_HOURS = 6
 
+# Watched systemd --user units. Override (space-separated) via env when the
+# live signal bots change — e.g. once execution alerting moves onto Nautilus.
+HEALTH_SERVICES = os.environ.get(
+    "HEALTH_CHECK_SERVICES", "quant-event-dca quant-reactor"
+).split()
 
-def _restart_freqtrade() -> tuple[bool, str]:
-    """Best-effort relaunch of `freqtrade trade`. Returns (started, detail).
 
-    The command and config are configurable via env so this stays generic:
-      - FREQTRADE_TRADE_CMD   full shell command; takes priority if set
-      - FREQTRADE_TRADE_CONFIG  config path; default = configs/config_dryrun_honest15m.json
-      - FREQTRADE_TRADE_USERDIR userdir; default = user_data
-      - FREQTRADE_PYTHON       python interpreter; default = python (whatever's on PATH)
-
-    NixOS user services need `/run/current-system/sw/bin` in PATH or `nohup`,
-    `python`, etc. won't resolve — we explicitly extend PATH for that reason.
-    """
-    cmd = os.environ.get("FREQTRADE_TRADE_CMD", "")
-    if not cmd:
-        py = os.environ.get("FREQTRADE_PYTHON", "python")
-        cfg = os.environ.get(
-            "FREQTRADE_TRADE_CONFIG", "configs/config_dryrun_honest15m.json"
-        )
-        userdir = os.environ.get("FREQTRADE_TRADE_USERDIR", "user_data")
-        log_path = PROJECT_DIR / "user_data" / "logs" / "freqtrade-autorestart.log"
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        cmd = (
-            f"nohup {py} -m freqtrade trade -c {cfg} --userdir {userdir} "
-            f">> {log_path} 2>&1 &"
-        )
-
-    env = os.environ.copy()
-    extra_path = "/run/current-system/sw/bin"
-    if extra_path not in env.get("PATH", "").split(":"):
-        env["PATH"] = extra_path + ":" + env.get("PATH", "")
-
+def _service_active(unit: str) -> bool:
+    """True if a systemd --user unit is active. Best-effort: a probe failure
+    returns True so a flaky systemctl call never triggers a false outage."""
     try:
-        subprocess.Popen(
-            ["bash", "-lc", cmd],
-            cwd=str(PROJECT_DIR),
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
+        r = subprocess.run(
+            ["systemctl", "--user", "is-active", unit],
+            capture_output=True, text=True, timeout=10,
         )
+        return r.stdout.strip() == "active"
     except Exception as e:
-        return False, f"launch failed: {e}"
-
-    # Give it a moment to fork past the bash wrapper, then check.
-    time.sleep(3)
-    probe = subprocess.run(
-        ["pgrep", "-f", "freqtrade trade"], capture_output=True, text=True
-    )
-    if probe.returncode == 0:
-        return True, f"restarted (PID={probe.stdout.strip()})"
-    return False, "still not running after launch"
+        logger.warning(f"is-active {unit} failed: {e}")
+        return True
 
 
 def check_bot_health() -> bool:
-    """Detect missing freqtrade trade process, try to auto-restart, alert with cooldown."""
-    try:
-        result = subprocess.run(
-            ["pgrep", "-f", "freqtrade trade"], capture_output=True, text=True
-        )
-    except Exception as e:
-        logger.warning(f"Health check failed: {e}")
-        return False
+    """Alert if any live single-stack signal bot is down, with a cooldown.
 
+    systemd Restart=always recovers the units on its own; this only surfaces a
+    sustained outage to Telegram. Returns True when all watched units are up."""
+    down = [u for u in HEALTH_SERVICES if not _service_active(u)]
     state = load_state()
     now = time.time()
 
-    if result.returncode == 0:
-        logger.info(f"Bot healthy, PID={result.stdout.strip()}")
+    if not down:
+        logger.info(f"Bots healthy: {', '.join(HEALTH_SERVICES)}")
         # Clear the down-state so the next outage alerts immediately.
         if state.get("bot_down_since") or state.get("last_health_alert_ts"):
             state["bot_down_since"] = 0
@@ -285,45 +249,29 @@ def check_bot_health() -> bool:
             save_state(state)
         return True
 
-    # --- bot is down ---
+    # --- one or more bots down ---
     if not state.get("bot_down_since"):
         state["bot_down_since"] = now
 
-    started, detail = _restart_freqtrade()
-    if started:
-        # Restart worked — tell the user once and clear cooldown.
-        send_telegram(
-            "*Bot Recovered* ✅\n"
-            "Freqtrade was down; auto-restart succeeded.\n"
-            f"`{detail}`"
-        )
-        state["bot_down_since"] = 0
-        state["last_health_alert_ts"] = 0
-        save_state(state)
-        logger.info(f"Bot auto-restarted: {detail}")
-        return True
-
-    # Restart failed — apply cooldown so we don't spam.
     last_alert = state.get("last_health_alert_ts", 0)
     cooldown_s = HEALTH_RE_ALERT_HOURS * 3600
     if last_alert and (now - last_alert) < cooldown_s:
         next_in_min = int((cooldown_s - (now - last_alert)) / 60)
         logger.info(
-            f"Bot DOWN, restart failed ({detail}); suppressed (next alert in ~{next_in_min}m)"
+            f"Bots DOWN {down}; suppressed (next alert in ~{next_in_min}m)"
         )
         return False
 
     down_for_min = int((now - state["bot_down_since"]) / 60)
     send_telegram(
         "*Bot Down* ⚠️\n"
-        "Freqtrade is not running and auto-restart failed.\n"
+        f"Signal bot(s) not active: `{', '.join(down)}`\n"
         f"Down for: {down_for_min}m\n"
-        f"Attempt: `{detail}`\n"
-        "Investigate logs at `user_data/logs/freqtrade-autorestart.log`."
+        "systemd `Restart=always` should recover them — investigate if persistent."
     )
     state["last_health_alert_ts"] = now
     save_state(state)
-    logger.warning(f"Bot DOWN — alert sent (restart failed: {detail})")
+    logger.warning(f"Bots DOWN — alert sent: {down}")
     return False
 
 
@@ -530,23 +478,37 @@ def send_daily_report():
     except Exception:
         pass
 
-    # Get bot status via freqtrade API
+    # Bot P&L from the Nautilus execution ledger — single-stack source of truth.
+    # (Replaced the freqtrade REST API call removed with the freqtrade core.)
+    # Graceful no-op when TIMESCALE_URL isn't provided to this service.
     bot_status = ""
-    try:
-        ft_user = os.environ.get("FREQTRADE_API_USER", "freqtrader")
-        ft_pass = os.environ.get("FREQTRADE_API_PASSWORD", "")
-        r = requests.get("http://127.0.0.1:8080/api/v1/profit", timeout=5,
-                        auth=(ft_user, ft_pass))
-        if r.status_code == 200:
-            p = r.json()
-            bot_status = (
-                f"\n*Bot P&L:*\n"
-                f"  Trades: {p.get('trade_count', 0)}\n"
-                f"  Profit: {p.get('profit_all_coin', 0):.2f} USDT ({p.get('profit_all_percent', 0):.1f}%)\n"
-                f"  Open: {p.get('open_trade_count', 0)} positions"
-            )
-    except Exception:
-        bot_status = "\n_Bot API unavailable_"
+    timescale_url = os.environ.get("TIMESCALE_URL", "")
+    if psycopg2 is not None and timescale_url:
+        try:
+            conn = psycopg2.connect(timescale_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT
+                          count(*) FILTER (WHERE close_date IS NOT NULL),
+                          count(*) FILTER (WHERE close_date IS NULL),
+                          coalesce(sum(realized_pnl) FILTER (WHERE close_date IS NOT NULL), 0),
+                          coalesce(avg(profit_pct)   FILTER (WHERE close_date IS NOT NULL), 0),
+                          max(environment)
+                        FROM quant.nautilus_trades
+                    """)
+                    closed, open_n, pnl, avg_pct, env = cur.fetchone()
+            finally:
+                conn.close()
+            if (closed or 0) or (open_n or 0):
+                env_tag = f" ({env})" if env else ""
+                bot_status = (
+                    f"\n*Nautilus P&L{env_tag}:*\n"
+                    f"  Closed: {closed}  |  Open: {open_n}\n"
+                    f"  Realized: {float(pnl):+.2f} USDT  (avg {float(avg_pct) * 100:+.1f}%)"
+                )
+        except Exception as e:
+            logger.warning(f"Nautilus P&L query failed: {e}")
 
     # Build the message line-by-line. Previous version chained f-strings inside
     # parentheses with a `... if btc else ""` ternary on one of them — that
