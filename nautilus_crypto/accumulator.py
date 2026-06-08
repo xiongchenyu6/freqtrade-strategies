@@ -25,6 +25,11 @@ from nautilus_trader.trading.strategy import Strategy
 
 from crypto_data import FngSeries
 
+try:
+    from trade_ledger import TradeLedger
+except ImportError:
+    TradeLedger = None
+
 
 class AccumulatorConfig(StrategyConfig, frozen=True):
     instrument_id: str
@@ -57,6 +62,16 @@ class Accumulator(Strategy):
         self.fear_buys = 0
         self.dip_buys = 0
         self.last_price = 0.0
+        self._ledger = TradeLedger() if TradeLedger else None
+
+    def on_position_opened(self, event):
+        if self._ledger:
+            self._ledger.record_open(event)
+
+    def on_position_changed(self, event):
+        # Accumulator grows one position; upsert the updated qty/avg on each add.
+        if self._ledger:
+            self._ledger.record_open(event)
 
     def on_start(self):
         self.subscribe_bars(self.config.bar_type)

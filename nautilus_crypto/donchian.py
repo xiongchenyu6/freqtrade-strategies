@@ -21,6 +21,11 @@ from nautilus_trader.model.enums import OrderSide
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.trading.strategy import Strategy
 
+try:
+    from trade_ledger import TradeLedger
+except ImportError:  # vendored flat in deploy; available there too
+    TradeLedger = None
+
 
 class DonchianBreakoutConfig(StrategyConfig, frozen=True):
     instrument_id: str
@@ -38,6 +43,15 @@ class DonchianBreakout(Strategy):
         self._lo: deque[float] = deque(maxlen=config.exit_lb)
         self.entries = 0
         self.exits = 0
+        self._ledger = TradeLedger() if TradeLedger else None
+
+    def on_position_opened(self, event):
+        if self._ledger:
+            self._ledger.record_open(event)
+
+    def on_position_closed(self, event):
+        if self._ledger:
+            self._ledger.record_close(event)
 
     def on_start(self):
         self.subscribe_bars(self.config.bar_type)

@@ -82,6 +82,26 @@ export interface LiveTrade {
 	synced_at: string;
 }
 
+// NautilusTrader execution-engine positions (api.nautilus_trades). Separate from freqtrade
+// LiveTrade; `environment` is 'testnet' | 'live'.
+export interface NautilusTrade {
+	trader_id: string;
+	strategy: string;
+	instrument: string;
+	venue: string;
+	environment: string;
+	is_short: boolean;
+	open_date: string;
+	close_date: string | null;
+	open_rate: number | null;
+	close_rate: number | null;
+	quantity: number | null;
+	realized_pnl: number | null;
+	profit_pct: number | null;
+	exit_reason: string | null;
+	synced_at: string;
+}
+
 export interface WfResult {
 	id: number;
 	run_date: string;

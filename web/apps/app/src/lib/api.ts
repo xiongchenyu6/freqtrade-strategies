@@ -7,6 +7,7 @@ import type {
 	BacktestTrade,
 	OhlcRow,
 	LiveTrade,
+	NautilusTrade,
 	WfResult,
 	EventDcaTrigger,
 	HyperoptEpoch,
@@ -144,6 +145,16 @@ export const vps = {
 		const params: Params = { order: 'open_date.desc', limit };
 		if (bot) params.bot_name = `eq.${bot}`;
 		return req<LiveTrade[]>(CONFIG.API_BASE, '/live_trades', params, f, vpsAuth(authHeader));
+	},
+
+	// NautilusTrader execution-engine positions (separate from freqtrade live_trades).
+	nautilusTrades: (
+		f: Fetch = fetch,
+		{ environment, limit = 100, authHeader }: { environment?: string; limit?: number } & WithAuth = {}
+	) => {
+		const params: Params = { order: 'open_date.desc', limit };
+		if (environment) params.environment = `eq.${environment}`;
+		return req<NautilusTrade[]>(CONFIG.API_BASE, '/nautilus_trades', params, f, vpsAuth(authHeader));
 	},
 
 	walkForward: (
