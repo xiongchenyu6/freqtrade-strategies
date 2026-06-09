@@ -215,3 +215,80 @@ breakout (≈trend), mean-reversion (catches knives), accumulation (rides BTC), 
 - [ ] short-DTE put-sell on ETH (vs BTC)
 - [ ] US equities (semis) trend — pending IB Mon
 - [ ] DEPLOY CANDIDATE: ETH 1h trend to testnet prod (after a few more validations)
+
+---
+
+## US Equity (HonestTrend, real IB data) — 2026-06-09
+
+EMA-pair grid for `HonestTrendEquity` on **real split/dividend-adjusted IB bars**
+(NVDA/AMD/QQQ, ~2023-06 → 2026-06; 750 daily / 5226 hourly each). $100k CASH account,
+ADX>18, vol>SMA20, −8% exchange-side stop, VIX>30 regime block. Metrics from a daily
+realized-cash equity curve (Sharpe annualized 252d; Calmar = CAGR/|maxDD|). Runner:
+`nautilus_equity/grid_honest_equity_real.py`.
+
+### 1-DAY bars
+| EMA     | asset | fills | ret %  | maxDD% | Sharpe | Calmar |
+|---------|-------|------:|-------:|-------:|-------:|-------:|
+| 20/50   | NVDA  | 16    | +33.98 | 29.31  | 2.59   | 0.35   |
+| 20/50   | AMD   | 15    | +42.62 | 29.44  | 2.84   | 0.43   |
+| 20/50   | QQQ   | 4     |  +2.40 | 27.03  | 1.52   | 0.03   |
+| 30/60   | NVDA  | 6     | +39.47 | 27.97  | 3.77   | 0.48   |
+| 30/60   | AMD   | 4     | +22.58 | 28.42  | 3.52   | 0.25   |
+| 30/60   | QQQ   | 8     |  +4.64 | 26.97  | 1.66   | 0.06   |
+| 50/100  | NVDA  | 4     |  +3.84 | 27.87  | 1.75   | 0.05   |
+| 50/100  | AMD   | 6     | +67.53 | 28.58  | 4.40   | 0.66   |
+| 50/100  | QQQ   | 0     |  +0.00 |  —     | —      | —      |
+| 72/144  | NVDA  | 0     |  +0.00 |  —     | —      | —      |
+| 72/144  | AMD   | 2     |  −0.79 |  9.92  | 0.11   | −0.06  |
+| 72/144  | QQQ   | 4     |  +7.79 | 27.30  | 2.26   | 0.09   |
+
+### 1-HOUR bars
+| EMA     | asset | fills | ret %  | maxDD% | Sharpe | Calmar |
+|---------|-------|------:|-------:|-------:|-------:|-------:|
+| 20/50   | NVDA  | 37    |  +4.71 | 30.04  | 3.02   | 0.05   |
+| 20/50   | AMD   | 76    | +23.27 | 29.96  | 3.66   | 0.25   |
+| 20/50   | QQQ   | 37    |  +1.54 | 18.40  | 2.36   | 0.03   |
+| 30/60   | NVDA  | 50    |  +8.06 | 28.06  | 3.20   | 0.09   |
+| 30/60   | AMD   | 56    | +46.13 | 30.67  | 4.71   | 0.44   |
+| 30/60   | QQQ   | 23    |  +0.50 | 17.75  | 2.16   | 0.01   |
+| 50/100  | NVDA  | 26    | +13.38 | 30.78  | 4.01   | 0.14   |
+| 50/100  | AMD   | 27    | +15.33 | 31.76  | 4.35   | 0.18   |
+| 50/100  | QQQ   | 19    |  +6.67 | 26.74  | 3.60   | 0.08   |
+| 72/144  | NVDA  | 33    | +29.83 | 28.94  | 4.90   | 0.35   |
+| 72/144  | AMD   | 17    |  −3.36 | 31.76  | 2.53   | −0.04  |
+| 72/144  | QQQ   | 16    |  +3.73 | 26.84  | 3.28   | 0.05   |
+
+### Robustness (mean across NVDA/AMD/QQQ)
+| tf     | EMA    | avg ret% | avg fills | avg maxDD% | avg Sharpe | min Sharpe |
+|--------|--------|---------:|----------:|-----------:|-----------:|-----------:|
+| 1-DAY  | 20/50  | +26.33   | 11.7      | 28.59      | 2.32       | 1.52       |
+| 1-DAY  | 30/60  | +22.23   | 6.0       | 27.78      | 2.98       | 1.66       |
+| 1-DAY  | 50/100 | +23.79   | 3.3       | 18.82      | 2.05       | 0.00       |
+| 1-DAY  | 72/144 |  +2.33   | 2.0       | 12.40      | 0.79       | 0.00       |
+| 1-HOUR | 20/50  |  +9.84   | 50.0      | 26.13      | 3.01       | 2.36       |
+| 1-HOUR | 30/60  | +18.23   | 43.0      | 25.50      | 3.36       | 2.16       |
+| 1-HOUR | 50/100 | +11.79   | 24.0      | 29.76      | 3.99       | 3.60       |
+| 1-HOUR | 72/144 | +10.07   | 22.0      | 29.18      | 3.57       | 2.53       |
+
+### Recommendation → **1-HOUR EMA 50/100** (deployed default)
+Chosen for **robustness over peak return**:
+- Every asset is **profitable** (NVDA +13.4%, AMD +15.3%, QQQ +6.7%) — no zero-entry /
+  negative-return asset (50/100 daily skips QQQ entirely; 72/144 zeroes NVDA daily and
+  goes negative on AMD hourly; 20/50 daily barely trades QQQ at +2.4%).
+- **Highest min-Sharpe of any config (3.60)** and highest avg Sharpe among the hourly
+  grid (3.99) — the metric we actually care about (worst-asset risk-adjusted).
+- Moderate turnover (~24 fills/asset over 3y) — trades meaningfully but is **not**
+  over-trading like 20/50-hourly (50 fills) and is statistically far less single-trade
+  -dependent than the 2–6-fill daily configs (a 3-year daily backtest with 4 fills is
+  basically un-validatable → that's the curve-fit trap).
+- On hourly bars 50/100 is a *moderate* (not extreme-fast) crossover → lower curve-fit
+  risk than 20/50, while still firing often enough on hourly to be statistically real.
+
+Caveats: maxDD ~30% (asset volatility — NVDA/AMD are high-beta semis; the −8% per-position
+stop limits per-trade loss, not portfolio DD). Sharpe is computed on a *realized-cash*
+curve (flat between fills), so absolute Sharpe is optimistic; treat the numbers as
+**relative** rankings across configs, which is what drove the choice. Backtest is on 3
+correlated semis/QQQ over a single (largely bull) 3y window — paper-trade before any size.
+
+Runner-up: **1-DAY EMA 30/60** if a low-touch daily cadence is preferred (all 3 assets
+positive, avg Sharpe 2.98) — but only ~6 fills/asset makes it fragile.

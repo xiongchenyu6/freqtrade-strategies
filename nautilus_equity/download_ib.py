@@ -11,7 +11,8 @@ useRTH controls regular-hours-only) — this is what keeps the backtest honest a
 corporate actions (Stage 3 validates with the NVDA 2024 10:1 split).
 
 Run:  nautilus_equity/.venv/bin/python nautilus_equity/download_ib.py
-Env:  IB_HOST (default 127.0.0.1), IB_PORT (default 7497), IB_CLIENT_ID (default 5)
+Env:  IB_HOST (default 127.0.0.1), IB_PORT (default 4002 = Gateway paper; TWS paper is
+      7497), IB_CLIENT_ID (default 5)
 """
 
 from __future__ import annotations
@@ -41,7 +42,7 @@ BAR_SPECS = ["1-DAY-LAST", "1-HOUR-LAST"]
 
 async def download() -> None:
     host = os.environ.get("IB_HOST", "127.0.0.1")
-    port = int(os.environ.get("IB_PORT", "7497"))
+    port = int(os.environ.get("IB_PORT", "4002"))  # Gateway paper; TWS paper = 7497
     client_id = int(os.environ.get("IB_CLIENT_ID", "5"))
 
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=client_id)
@@ -76,7 +77,8 @@ async def download() -> None:
     for inst in instruments:
         print(f"  - {inst.id}")
 
-    await client.disconnect()
+    # HistoricInteractiveBrokersClient exposes no disconnect(); the IB connection
+    # is torn down when the event loop closes on process exit.
 
 
 if __name__ == "__main__":

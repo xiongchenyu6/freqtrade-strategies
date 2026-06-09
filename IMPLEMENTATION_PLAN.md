@@ -39,9 +39,15 @@ Equity trend port (`nautilus_equity/honest_trend_equity.py`) + crypto accumulato
 VIX regime gate (real VIX 2011-2026). 48 tests green. Crypto accumulator validated on real
 Binance data through the 2026-06 dip (smart DCA: -9.56% cost basis, +44 pts ROI vs naive).
 
-## Stage 2 — Equity real data + validation — BLOCKED on IB (paper active ~Mon 6/8)
-`download_ib.py` (NVDA/AMD/QQQ adjusted bars → ParquetDataCatalog); feed real KellyStats;
-validate ADX/indicators vs talib; NVDA 2024 10:1 split data-integrity check.
+## Stage 2 — Equity real data + validation — IB paper account READY 2026-06-09
+Paper account live (user `xiongchenyu6`). Headless Gateway path chosen: **x86_64 sidecar**
+on `oracle-amd-002` (aarch64 oracle-arm-002 can't run the x86 Java Gateway), as a
+`gnzsnz/ib-gateway` podman container, API on wg mesh `172.22.240.97:4002`. Config in
+`dotfiles/.../oracle-amd-002/ib-gateway.nix`; runbook `nautilus_equity/deploy/ib-gateway-headless.md`.
+`download_ib.py` now defaults to port 4002 (Gateway paper).
+TODO: (1) disable 2FA on paper login, add creds to sops, `nixos-rebuild` amd-002; (2) run
+`download_ib.py` for NVDA/AMD/QQQ adjusted bars → ParquetDataCatalog; (3) feed real KellyStats;
+(4) validate ADX/indicators vs talib; (5) NVDA 2024 10:1 split data-integrity check.
 
 ## Stage 3 — Persistence + dashboard unification
 Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position_closed`;
@@ -76,35 +82,52 @@ Cache vs DB. Promote to real only after sustained clean paper operation.
 Optuna study wrapping a Nautilus `BacktestNode` run; objective = Calmar/Sharpe with DD
 penalty (mirror the old HonestHyperOptLoss). Not a blocker for going live.
 
-## Stage 7 — Decommission freqtrade  (PATH B chosen 2026-06-08: wait for mainnet, then delete)
-**End goal:** `rm -rf ~/Documents/github/public/freqtrade` (the core repo + 8.7G .venv).
-**NOT safe yet** — these still depend on it (mapped 2026-06-08). Delete only after EVERY box ticked.
+## Stage 7 — Decommission freqtrade — CORE DONE (PATH A executed 2026-06-08)
+**Done:** freqtrade core repo deleted (~11G freed); daemons repointed to `.venv-bots`;
+`download-data` replaced by `nautilus_crypto/download_binance.py` (ccxt); repo renamed
+`freqtrade-strategies`→`quant`, services `crypto-*`→`quant-*`. Dead freqtrade strategies/
+scripts/news-cluster git-rm'd. Stale freqtrade refs scrubbed from kept live code
+(telegram_alerts health-check + daily-report P&L → `quant.nautilus_trades`; ts-sync dead
+sqlite stage removed).
 
-What still depends on `~/Documents/github/public/freqtrade` (all on the `game` dev machine):
-| dependency | what it is | migration before deletion |
-|---|---|---|
-| `crypto-event-dca.service` (event_dca_bot.py) | live (dry-run) Event DCA bot | → Nautilus accumulator on **mainnet** (oracle-arm-002) takes over |
-| `crypto-reactor.service` (event_reactor.py) | price-spike reactor | fold into Nautilus / retire |
-| `crypto-dca.timer` (dca_executor.py) | weekly DCA | → Nautilus accumulator |
-| `crypto-ts-sync.timer` (sync_local_state) | freqtrade sqlite → quant.trades | obsolete once freqtrade dry-run gone (Nautilus writes quant.nautilus_trades via TradeLedger) |
-| `crypto-alerts.timer` (telegram_alerts.py) | KOL + bot-health + daily report | give own venv OR repoint to Nautilus state |
-| `md_http_server.py` :3001 | market-data HTTP | own venv or retire |
-| `freqtrade download-data` | produces user_data/data/binance/*.feather for Nautilus backtests | replace with standalone ccxt downloader / Nautilus Binance historical |
-| freqtrade CLI scripts (start_bot/start_live/backtest/visualize) | run freqtrade strategies | retire (strategies move to Nautilus) |
+## Stage 8 — True single-stack crypto: port signal layer onto Nautilus, retire daemons
+**Why:** the only remaining parallelism — `quant-event-dca` (dry-run dip/FNG) + `quant-reactor`
+(spike) are the *signal/alert layer* (Telegram + dashboard feed); Nautilus is *execution* (no
+alerting). Decision 2026-06-08: **port alerts into Nautilus, then retire the daemons** (single
+process). Key constraint: signal detection needs REAL (mainnet) public prices even while
+execution stays testnet → the alerter runs on a mainnet **data-only** feed.
 
-Note: the daemons' CODE is freqtrade-independent (0 imports) — they just borrow freqtrade's
-.venv as the Python interpreter (ccxt/websockets/psycopg2). So the blocker is the interpreter
-+ the live function, not code coupling.
+**Goal**: Nautilus emits the spike (PUMP/DUMP) + accumulation-dip (FLASH/FAST) Telegram alerts;
+then stop event-dca/reactor/dca.
+**P1 (code+test, no deploy)** — `telegram_notifier.py` (sink), `signal_detect.py` (pure
+Spike/Dip detectors ported from the daemons), `signal_alerter.py` (Nautilus Actor wiring
+bars→detectors→notifier) + tests.  **Status: COMPLETE 2026-06-08** — 9 pure unit tests pass;
+integration test drives the actor through a real BacktestEngine (synthetic spike+dip path) and
+confirms both Telegram alerts fire via the subscribe→on_bar wiring. Fixed a latent cooldown bug
+(epoch-0 init suppressed the first alert) the original daemons had.
+**P2 (deploy)** — data-only mainnet signal node + nur module; deploy to oracle-arm-002.
+**Status: DEPLOYED 2026-06-08** — `run_signal_alerter.py` (data-only, no exec client, no keys →
+loads 3591 instruments anonymously via public exchangeInfo; first attempts failed on a
+placeholder key that forced an authed fee-tier call). `nautilus-signal` nur module + dotfiles
+`services.nautilus-signal` (BTC/ETH/SOL, 1-min, mainnet). Telegram creds added to host sops
+(`oracle-arm-002/telegram-{bot-token,chat-id}`, same bot/chat as legacy daemons). Service
+`active`, SignalAlerter RUNNING, startup heartbeat sent (no telegram errors). **Remaining: soak
++ confirm a real spike/dip alert lands before P3.**
+**P3 (retire)** — **DONE 2026-06-08**: stopped+disabled `quant-event-dca`/`quant-reactor`/
+`quant-dca.timer`; trimmed ts-sync to the `wf` stage only (event_dca state frozen; historical
+event_dca_triggers rows remain in the DB for the dashboard). Crypto is now single-stack: all
+execution + signal runs on Nautilus@oracle-arm-002 (accumulator + trend + signal). Kept on the
+game box: ts-sync(wf), alerts, deribit, risk-monitor, daily-report (monitoring/reporting only).
+**Cleanup done 2026-06-08**: `/quant` CLAUDE.md written; daily-report Nautilus P&L wired up
+(`quant-alerts` now runs via `start_telegram_alerts.sh` → `sops exec-env secrets.env`, restoring
+the TIMESCALE_URL the rename dropped); local health watchdog disabled (`HEALTH_CHECK_SERVICES=`,
+default now empty) so it stops false-alarming on the retired event-dca/reactor.
+**Still open**: `md_http_server` :3001 (localhost-only, freqtrade-free, no consumers — user to
+decide retire vs keep as a local view); dashboard event_dca_triggers panel is historical-only
+(live execution = /nautilus route).
 
-Deletion checklist (do in order, only when each is green):
-1. ☐ Nautilus crypto accumulator + trend proven on **MAINNET** (post-soak), real money on.
-2. ☐ Stop + remove `crypto-event-dca`, `crypto-reactor`, `crypto-dca.timer` (function now on Nautilus).
-3. ☐ Retire `crypto-ts-sync` (freqtrade sqlite no longer the source; dashboard uses quant.nautilus_trades).
-4. ☐ Repoint `crypto-alerts` + `md_http_server` to their own venv (or retire) — drop freqtrade .venv.
-5. ☐ Replace `download-data` with a freqtrade-free downloader for any backtest data refresh.
-6. ☐ Archive freqtrade strategies/configs/factor-lib/freqaimodels in the freqtrade-strategies repo.
-7. ☐ Update CLAUDE.md / docs to the single Nautilus stack.
-8. ☐ THEN `rm -rf ~/Documents/github/public/freqtrade`.
+**STAGE 8 COMPLETE** — crypto runs on one stack (NautilusTrader); the freqtrade-era parallel
+daemons are gone.
 
 ---
 
@@ -117,3 +140,37 @@ the covariance form f* = Σ⁻¹μ across the pool once Stages 2-3 are stable.
 - `DCA_LIVE_ENABLED=false` until crypto live on Nautilus is proven.
 - Secrets stay sops-encrypted (already verified: secrets.env/secrets.yaml are sops, safe).
 - Never commit plaintext secrets, venvs, or generated data/catalogs.
+
+---
+
+## Stage 9 — Dashboard redesign: honest, crypto + US-equities (2026-06-08)
+**Why:** the homepage is branded "Crypto Quant" and its KPI wall (+954%/Calmar 430/Sharpe 2.46,
+12,341 trades, "8 策略/30 回测") is aggregated over `quant.backtest_runs` — the now-**deleted**
+freqtrade strategies. The "真金白银" claim sits on retired strategies + testnet. No equities, and
+the actual live engine (`/nautilus`) isn't in the nav.
+
+**User decisions (2026-06-08):** (1) equities = show **backtest results, clearly labeled** (not live
+yet); (2) replace misleading numbers with **honest current numbers**; (3) don't delete the analytical
+panels (WF/strategies/archive/factors) — **regenerate them with Nautilus** instead of freqtrade.
+
+**Data architecture:** isolate Nautilus backtest stats in their own table/views (mirrors how
+`009_nautilus_trades` isolated live exec from freqtrade `trades`) — do NOT mutate `backtest_runs`.
+
+- **R1 — Nautilus backtest→stats pipeline (crypto)**: migration `quant.nautilus_backtests`
+  (+ `api.nautilus_backtests` list + `api.nautilus_stats` aggregate views, anon-granted). Harness
+  runs the deployed crypto strategies (Donchian per-asset + portfolio, accumulator) on real Binance
+  data, collects profit/Sharpe/Sortino/maxDD(EquityRecorder)/Calmar/win-rate/trades, loads rows
+  tagged engine='nautilus', asset_class='crypto', kind='backtest'. **Status: DONE 2026-06-08.**
+  `010_nautilus_backtests.sql` applied; `nautilus_crypto/backtest_stats.py` loaded 3 validated rows
+  (Donchian full +160%/Sharpe 3.64, recent-OOS +22.6%/Sharpe 2.20, BTC smart-DCA +376% ROI). Served
+  via `api.nautilus_stats`/`api.nautilus_backtests` (anon; PostgREST schema reloaded). Gotchas:
+  EquityRecorder is 1h-hardcoded (1d accumulator uses its own ROI); accumulator needs a big starting
+  balance or it hits a cash wall and truncates.
+- **R2 — Equity backtests**: run HonestTrend on the semiconductor pool → same schema,
+  asset_class='equity', clearly labeled backtest. Load.
+- **R3 — Frontend rebrand + honest homepage**: BearDawnVerse positioning = crypto + US equities;
+  new hero copy (drop BNB/futures overclaim; honest "live testnet + backtest" framing); promote
+  `/nautilus` (live exec) into nav; KPIs from `api.nautilus_stats`; two-asset structure.
+- **R4 — Regenerate analytical pages with Nautilus**: WF (Nautilus walk-forward), strategies
+  (current Nautilus strategies + their real params/results), archive (Nautilus runs); factors/hyperopt
+  → honest current state (repoint or "建设中" rather than fake freqtrade content).
