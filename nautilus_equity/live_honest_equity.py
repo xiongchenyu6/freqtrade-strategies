@@ -151,6 +151,12 @@ def build_node() -> TradingNode:
                 risk_frac=float(os.environ.get("EQ_RISK_FRAC", "0.10")),
                 stop_loss_pct=float(os.environ.get("EQ_STOP_LOSS_PCT", "0.08")),
                 rth_only=os.environ.get("EQ_RTH_ONLY", "1") != "0",
+                # IB paper account base currency may not be USD (e.g. SGD). The stocks are
+                # USD-quoted, so convert the base-currency equity to USD for sizing. Set
+                # EQ_QUOTE_PER_BASE_FX to USD-per-1-base-unit (SGD base → ~0.74). Default
+                # 1.0 = USD base (no conversion); leaving it unset on an SGD account would
+                # over-size by the USD/SGD factor (~1.35x).
+                quote_per_base_fx=float(os.environ.get("EQ_QUOTE_PER_BASE_FX", "1.0")),
             )
         )
         node.trader.add_strategy(strategy)

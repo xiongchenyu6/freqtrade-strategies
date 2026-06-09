@@ -15,9 +15,17 @@ from nautilus_trader.model.enums import PositionSide
 
 
 class TradeLedger:
-    def __init__(self, environment: str | None = None, logger=None):
+    def __init__(
+        self,
+        environment: str | None = None,
+        logger=None,
+        asset_class: str | None = None,
+    ):
         self._url = os.environ.get("TIMESCALE_URL")
         self._env = environment or os.environ.get("NAUTILUS_ENV", "testnet")
+        # 'crypto' | 'equity' — segregates the two engines in quant.nautilus_trades.
+        # Defaults to crypto so existing crypto callers (Accumulator/Donchian) are unchanged.
+        self._asset_class = asset_class or os.environ.get("NAUTILUS_ASSET_CLASS", "crypto")
         self._log = logger
         self._conn = None
 
@@ -37,8 +45,15 @@ class TradeLedger:
         if self._log:
             self._log.warning(msg)
 
+    @staticmethod
+    def _is_backtest(e) -> bool:
+        # BacktestEngine's default trader_id is BACKTESTER-xxx. Never let a backtest run
+        # (e.g. backtest_stats.py invoked under a sops env that exposes TIMESCALE_URL) pollute
+        # the LIVE execution table — the dashboard /nautilus reads it.
+        return "BACKTEST" in str(getattr(e, "trader_id", "")).upper()
+
     def record_open(self, e) -> None:
-        if not self.enabled:
+        if not self.enabled or self._is_backtest(e):
             return
         try:
             iid = str(e.instrument_id)
@@ -47,21 +62,22 @@ class TradeLedger:
                     """
                     INSERT INTO quant.nautilus_trades
                       (trader_id, position_id, strategy, instrument, venue, environment,
-                       is_short, open_date, open_rate, quantity)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s, to_timestamp(%s/1e9), %s, %s)
+                       asset_class, is_short, open_date, open_rate, quantity)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s, to_timestamp(%s/1e9), %s, %s)
                     ON CONFLICT (trader_id, position_id, open_date) DO UPDATE
                       SET quantity = EXCLUDED.quantity, open_rate = EXCLUDED.open_rate,
                           synced_at = now()
                     """,
                     (str(e.trader_id), str(e.position_id), str(e.strategy_id), iid,
-                     iid.split(".")[-1], self._env, e.side == PositionSide.SHORT,
+                     iid.split(".")[-1], self._env, self._asset_class,
+                     e.side == PositionSide.SHORT,
                      int(e.ts_opened), float(e.avg_px_open), float(e.quantity)),
                 )
         except Exception as ex:  # never break trading on a DB error
             self._warn(f"TradeLedger.record_open failed: {ex!r}")
 
     def record_close(self, e) -> None:
-        if not self.enabled:
+        if not self.enabled or self._is_backtest(e):
             return
         try:
             with self._cursor() as cur:
