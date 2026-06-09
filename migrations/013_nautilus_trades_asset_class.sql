@@ -12,11 +12,14 @@ CREATE INDEX IF NOT EXISTS nautilus_trades_asset_idx
     ON quant.nautilus_trades (asset_class, open_date DESC);
 
 -- Re-create the public API view to expose asset_class so the dashboard can split
--- crypto vs equity live execution (mirrors api.nautilus_backtests).
-CREATE OR REPLACE VIEW api.nautilus_trades AS
-SELECT trader_id, strategy, instrument, venue, environment, asset_class, is_short,
+-- crypto vs equity live execution (mirrors api.nautilus_backtests). DROP+CREATE (not
+-- CREATE OR REPLACE) because asset_class is appended at the END — CREATE OR REPLACE
+-- cannot insert a column mid-list against the existing view.
+DROP VIEW IF EXISTS api.nautilus_trades;
+CREATE VIEW api.nautilus_trades AS
+SELECT trader_id, strategy, instrument, venue, environment, is_short,
        open_date, close_date, open_rate, close_rate, quantity,
-       realized_pnl, profit_pct, exit_reason, synced_at
+       realized_pnl, profit_pct, exit_reason, synced_at, asset_class
 FROM quant.nautilus_trades;
 
 GRANT SELECT ON api.nautilus_trades TO anon, authenticated, service_role;
