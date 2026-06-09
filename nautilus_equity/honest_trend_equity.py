@@ -45,11 +45,22 @@ from nautilus_trader.trading.strategy import Strategy
 # Reuse the Kelly sizer verbatim from the freqtrade strategies dir.
 _HERE = Path(__file__).resolve().parent
 _STRATS = _HERE.parent / "strategies"
-for _p in (str(_HERE), str(_STRATS)):
+_CRYPTO = _HERE.parent / "nautilus_crypto"  # trade_ledger lives here (shared by both engines)
+for _p in (str(_HERE), str(_STRATS), str(_CRYPTO)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 from kelly_sizer import KellyStats, kelly_stake  # noqa: E402
 from regime_gate import RegimeGate  # noqa: E402
+
+# Persist fills / closed positions to quant.nautilus_trades with asset_class='equity'
+# (mirrors the crypto Accumulator/Donchian). A missing module or unset TIMESCALE_URL
+# makes the ledger a no-op (e.g. backtests), so this never affects trading. In the
+# deployed nur app trade_ledger.py is copied flat alongside this file, so the import
+# resolves there too.
+try:
+    from trade_ledger import TradeLedger
+except ImportError:
+    TradeLedger = None
 
 _NY = ZoneInfo("America/New_York")
 
@@ -75,6 +86,14 @@ class HonestTrendEquityConfig(StrategyConfig, frozen=True):
     regime_csv: str | None = None  # FNG→VIX replacement; None = gate disabled
     regime_threshold: float = 80.0
     regime_mode: str = "block_above"
+    # ---- Stage 4: multi-currency live (IB) ----
+    # IB reports the account in ONE base-currency balance (e.g. SGD), but the stock is
+    # quoted in USD. When the account has no balance entry in the instrument's quote
+    # currency, fall back to the base-currency balance and convert with this FX rate,
+    # expressed as QUOTE units per 1 BASE unit (e.g. base SGD, quote USD → ~0.74).
+    # Default 1.0 = no conversion: correct whenever base == quote (all backtests use a
+    # USD base account, so their behaviour is unchanged).
+    quote_per_base_fx: float = 1.0
 
 
 class HonestTrendEquity(Strategy):
@@ -111,6 +130,26 @@ class HonestTrendEquity(Strategy):
         self.pyramids = 0
         self.stops_placed = 0
         self.stop_exits = 0
+
+        # Live persistence to quant.nautilus_trades (no-op in backtests / when
+        # TIMESCALE_URL is unset). asset_class='equity' segregates the IB engine
+        # from the crypto engines in the shared table.
+        self._ledger = TradeLedger(asset_class="equity") if TradeLedger else None
+
+    # ----- persistence (live only; ledger is a no-op otherwise) -----
+    def on_position_opened(self, event):
+        if self._ledger:
+            self._ledger.record_open(event)
+
+    def on_position_changed(self, event):
+        # Pyramids grow the same position — upsert the updated qty / avg price.
+        if self._ledger:
+            self._ledger.record_open(event)
+
+    def on_position_closed(self, event):
+        # Fires for both signal exits and exchange-side stop fills.
+        if self._ledger:
+            self._ledger.record_close(event)
 
     # ----- lifecycle -----
     def on_start(self):
@@ -205,13 +244,24 @@ class HonestTrendEquity(Strategy):
         return 9 * 60 + 30 <= mins < 16 * 60  # 09:30–16:00 ET
 
     def _equity_usd(self, instrument) -> float:
-        # Use the instrument's quote currency so the same strategy works for equities
-        # (USD) and crypto spot (USDT) without hardcoding.
+        # Equity expressed in the instrument's QUOTE currency (USD for these equities,
+        # USDT for crypto spot) — that is the currency `stake_usd / price` divides in.
         account = self.portfolio.account(instrument.venue)
         if account is None:
             return 0.0
-        bal = account.balance_total(instrument.quote_currency)
-        return float(bal) if bal is not None else 0.0
+        quote_ccy = instrument.quote_currency
+        bal = account.balance_total(quote_ccy)
+        if bal is not None:
+            return float(bal)
+        # Multi-currency live (IB): the account holds no balance in the quote currency
+        # (it reports a single base-currency figure, e.g. SGD NetLiquidation). Fall back
+        # to the base balance and convert to the quote currency via the configured FX
+        # rate. Without this, balance_total(USD) is None → equity 0 → the strategy would
+        # silently never enter on an SGD/EUR/etc. base account.
+        base_bal = account.balance_total()  # base-currency total (default arg)
+        if base_bal is None:
+            return 0.0
+        return float(base_bal) * self.config.quote_per_base_fx
 
     def _avg_entry(self) -> float | None:
         return self._cost / self._shares if self._shares > 0 else None

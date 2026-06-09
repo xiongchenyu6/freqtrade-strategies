@@ -54,6 +54,17 @@ Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position
 add `asset_class` ('crypto'|'equity') dimension; dashboard shows both side by side.
 Do this with REAL data only (don't pollute prod DB with synthetic trades).
 
+**Crypto half: DONE** — `trade_ledger.py` writes Accumulator/Donchian round-trips to
+`quant.nautilus_trades` (asset_class defaults 'crypto').
+**Equity half: CODE DONE (not deployed) 2026-06-10** — `HonestTrendEquity` now hooks
+`on_position_opened/changed/closed` → `TradeLedger(asset_class="equity")` (generalized,
+crypto callers unchanged). Migration `013_nautilus_trades_asset_class.sql` adds the column
+(DEFAULT 'crypto' backfill) + re-creates `api.nautilus_trades` exposing it. nur module
+`nautilus-equity-trend` now ships `trade_ledger.py` + an `environmentFile`/`environment`
+option carrying `TIMESCALE_URL` (DB = `db.panda.qzz.io:5432/api?sslmode=require`, reachable
+from oracle-amd-002 over public Internet). REMAINING: run migration 013 on oracle-arm-002,
+add the sops `nautilus-equity.env` template, then rebuild oracle-amd-002.
+
 ## Stage 4 — Crypto live execution on Nautilus — DEPLOYED TO PROD (testnet) 2026-06-07
 Packaged nautilus-trader (aarch64 wheel) + a nautilus-accumulator NixOS service in
 nur-packages; deployed to **oracle-arm-002** via dotfiles + nixos-rebuild switch. The box
