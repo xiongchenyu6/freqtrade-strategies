@@ -39,9 +39,15 @@ Equity trend port (`nautilus_equity/honest_trend_equity.py`) + crypto accumulato
 VIX regime gate (real VIX 2011-2026). 48 tests green. Crypto accumulator validated on real
 Binance data through the 2026-06 dip (smart DCA: -9.56% cost basis, +44 pts ROI vs naive).
 
-## Stage 2 — Equity real data + validation — BLOCKED on IB (paper active ~Mon 6/8)
-`download_ib.py` (NVDA/AMD/QQQ adjusted bars → ParquetDataCatalog); feed real KellyStats;
-validate ADX/indicators vs talib; NVDA 2024 10:1 split data-integrity check.
+## Stage 2 — Equity real data + validation — IB paper account READY 2026-06-09
+Paper account live (user `xiongchenyu6`). Headless Gateway path chosen: **x86_64 sidecar**
+on `oracle-amd-002` (aarch64 oracle-arm-002 can't run the x86 Java Gateway), as a
+`gnzsnz/ib-gateway` podman container, API on wg mesh `172.22.240.97:4002`. Config in
+`dotfiles/.../oracle-amd-002/ib-gateway.nix`; runbook `nautilus_equity/deploy/ib-gateway-headless.md`.
+`download_ib.py` now defaults to port 4002 (Gateway paper).
+TODO: (1) disable 2FA on paper login, add creds to sops, `nixos-rebuild` amd-002; (2) run
+`download_ib.py` for NVDA/AMD/QQQ adjusted bars → ParquetDataCatalog; (3) feed real KellyStats;
+(4) validate ADX/indicators vs talib; (5) NVDA 2024 10:1 split data-integrity check.
 
 ## Stage 3 — Persistence + dashboard unification
 Write Nautilus fills/positions to TimescaleDB via `on_order_filled`/`on_position_closed`;
@@ -134,3 +140,37 @@ the covariance form f* = Σ⁻¹μ across the pool once Stages 2-3 are stable.
 - `DCA_LIVE_ENABLED=false` until crypto live on Nautilus is proven.
 - Secrets stay sops-encrypted (already verified: secrets.env/secrets.yaml are sops, safe).
 - Never commit plaintext secrets, venvs, or generated data/catalogs.
+
+---
+
+## Stage 9 — Dashboard redesign: honest, crypto + US-equities (2026-06-08)
+**Why:** the homepage is branded "Crypto Quant" and its KPI wall (+954%/Calmar 430/Sharpe 2.46,
+12,341 trades, "8 策略/30 回测") is aggregated over `quant.backtest_runs` — the now-**deleted**
+freqtrade strategies. The "真金白银" claim sits on retired strategies + testnet. No equities, and
+the actual live engine (`/nautilus`) isn't in the nav.
+
+**User decisions (2026-06-08):** (1) equities = show **backtest results, clearly labeled** (not live
+yet); (2) replace misleading numbers with **honest current numbers**; (3) don't delete the analytical
+panels (WF/strategies/archive/factors) — **regenerate them with Nautilus** instead of freqtrade.
+
+**Data architecture:** isolate Nautilus backtest stats in their own table/views (mirrors how
+`009_nautilus_trades` isolated live exec from freqtrade `trades`) — do NOT mutate `backtest_runs`.
+
+- **R1 — Nautilus backtest→stats pipeline (crypto)**: migration `quant.nautilus_backtests`
+  (+ `api.nautilus_backtests` list + `api.nautilus_stats` aggregate views, anon-granted). Harness
+  runs the deployed crypto strategies (Donchian per-asset + portfolio, accumulator) on real Binance
+  data, collects profit/Sharpe/Sortino/maxDD(EquityRecorder)/Calmar/win-rate/trades, loads rows
+  tagged engine='nautilus', asset_class='crypto', kind='backtest'. **Status: DONE 2026-06-08.**
+  `010_nautilus_backtests.sql` applied; `nautilus_crypto/backtest_stats.py` loaded 3 validated rows
+  (Donchian full +160%/Sharpe 3.64, recent-OOS +22.6%/Sharpe 2.20, BTC smart-DCA +376% ROI). Served
+  via `api.nautilus_stats`/`api.nautilus_backtests` (anon; PostgREST schema reloaded). Gotchas:
+  EquityRecorder is 1h-hardcoded (1d accumulator uses its own ROI); accumulator needs a big starting
+  balance or it hits a cash wall and truncates.
+- **R2 — Equity backtests**: run HonestTrend on the semiconductor pool → same schema,
+  asset_class='equity', clearly labeled backtest. Load.
+- **R3 — Frontend rebrand + honest homepage**: BearDawnVerse positioning = crypto + US equities;
+  new hero copy (drop BNB/futures overclaim; honest "live testnet + backtest" framing); promote
+  `/nautilus` (live exec) into nav; KPIs from `api.nautilus_stats`; two-asset structure.
+- **R4 — Regenerate analytical pages with Nautilus**: WF (Nautilus walk-forward), strategies
+  (current Nautilus strategies + their real params/results), archive (Nautilus runs); factors/hyperopt
+  → honest current state (repoint or "建设中" rather than fake freqtrade content).

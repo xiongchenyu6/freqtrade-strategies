@@ -27,6 +27,21 @@ for stage status and `STRATEGY_LEADERBOARD.md` for the strategy research log.
 - pytest is NOT installed; tests are pytest-style but run via the venv directly. Pure modules can be
   exercised with a small stdlib harness if needed.
 
+## Commands
+Python (no Makefile/pytest — invoke the venv interpreter directly; `P=nautilus_equity/.venv/bin/python`):
+- Run a Nautilus backtest: `$P nautilus_crypto/run_accumulation.py` (or `run_trend_crypto.py`,
+  `run_portfolio_trend.py`; equity: `$P nautilus_equity/run_honest_equity.py`).
+- Refresh market data: `$P nautilus_crypto/download_binance.py` (ccxt → feather under `user_data/data/`).
+- Run one test module (no pytest collector — drive the `test_*` funcs with a one-liner):
+  `$P -c "import sys; sys.path.insert(0,'nautilus_crypto'); import test_signal_detect as t; [getattr(t,n)() for n in dir(t) if n.startswith('test_')]; print('ok')"`
+  (swap the dir/module to target another file; run a single test by naming just that one function).
+- `tests/test_kelly_sizer.py` imports from `strategies/` via `sys.path`; same harness pattern.
+
+Web dashboard (`cd web/apps/app`, pnpm):
+- `pnpm run dev` — local dev server.   `pnpm run check` — svelte-check typecheck.
+- `pnpm run lint` — prettier --check + eslint.   `pnpm run format` — prettier --write.
+- `pnpm run deploy` — `vite build && wrangler deploy` (NOT `pnpm deploy`, which is a different pnpm builtin).
+
 ## Deploy (oracle-arm-002, NixOS)
 - Live crypto runs as **system services on oracle-arm-002**: `nautilus-accumulator`, `nautilus-trend`,
   `nautilus-signal` (all testnet/data-only). Packaged in `github:xiongchenyu6/nur-packages`
@@ -39,6 +54,12 @@ for stage status and `STRATEGY_LEADERBOARD.md` for the strategy research log.
   (binance-api-key/secret, telegram-bot-token/chat-id, quant-password). Repo secrets in
   `secrets.env`/`secrets.yaml` (sops-encrypted; safe to commit). DB-touching services wrap the
   command in `sops exec-env secrets.env "<single quoted cmd>"` (quoting avoids a flag-eating bug).
+- **Equity IB Gateway sidecar (oracle-amd-002, x86_64):** Gateway is x86-only + unpackaged in
+  nixpkgs, so it runs as a `gnzsnz/ib-gateway` podman container (paper) on the AMD box, API bound
+  to the wg mesh IP `172.22.240.97:4002` (wg0 is trusted; never public). `nautilus_equity` connects
+  over WireGuard (`IB_HOST=172.22.240.97 IB_PORT=4002`). Config:
+  `dotfiles/nixos-configurations/oracle-amd-002/ib-gateway.nix`; runbook + 2FA/sops steps:
+  `nautilus_equity/deploy/ib-gateway-headless.md`. Disable 2FA on the paper login first.
 
 ## Local services (game box, `~/.config/systemd/user/quant-*`, on `.venv-bots`)
 Monitoring/reporting only after the single-stack migration: `quant-ts-sync` (wf sync),
