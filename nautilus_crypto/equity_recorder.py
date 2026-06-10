@@ -18,13 +18,14 @@ from nautilus_trader.model.objects import Currency
 
 
 class EquityRecorder(Actor):
-    def __init__(self, instruments, venue, quote: Currency):
+    def __init__(self, instruments, venue, quote: Currency, bar_spec: str = "1-HOUR-LAST-EXTERNAL"):
         super().__init__()
         self._insts = list(instruments)
         self._venue = venue
         self._quote = quote
+        self._bar_spec = bar_spec  # e.g. "1-HOUR-LAST-EXTERNAL" (donchian) | "1-DAY-LAST-EXTERNAL" (accumulator)
         self._bar_types = [
-            BarType.from_str(f"{i.id}-1-HOUR-LAST-EXTERNAL") for i in self._insts
+            BarType.from_str(f"{i.id}-{bar_spec}") for i in self._insts
         ]
         self._last: dict = {}
         self.curve: list[float] = []
@@ -61,4 +62,4 @@ class EquityRecorder(Actor):
         return mdd
 
     def bar_type_for(self, instrument):
-        return BarType.from_str(f"{instrument.id}-1-HOUR-LAST-EXTERNAL")
+        return BarType.from_str(f"{instrument.id}-{self._bar_spec}")
