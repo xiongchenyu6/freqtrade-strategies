@@ -8,7 +8,10 @@ export default {
 	// --- topbar ---
 	'nav.home': 'Home',
 	'nav.live': 'Live',
+	'nav.nautilus': 'Engine',
+	'nav.semis': 'Semis',
 	'nav.strategies': 'Strategies',
+	'nav.backtest': 'Backtest',
 	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': 'Archive',
@@ -22,7 +25,7 @@ export default {
 	'nav.docs': 'Docs',
 	'topbar.login': 'Log in',
 	'topbar.logout': 'Log out',
-	'topbar.title': 'Crypto Quant',
+	'topbar.title': 'Quant',
 
 	// --- shared ---
 	'common.loading': 'Loading...',
@@ -43,9 +46,9 @@ export default {
 	'common.load': 'Load',
 
 	// --- home ---
-	'home.title': 'Crypto Quant',
+	'home.title': 'Crypto + Equities Quant',
 	'home.subtitle':
-		'BTC/ETH/BNB/SOL quant trading system. Backtest data lives in TimescaleDB; sentiment / DCA events in Supabase. Rendered on demand, served from the global CDN.',
+		'Both legs on one engine — NautilusTrader. Crypto (accumulation + trend) trades live on testnet; the US-equity semiconductor trend strategy is in backtest validation. Strategy code, backtests, and live execution are all public.',
 	'home.kpi.apiStatus': 'API status',
 	'home.kpi.apiOnline': 'ONLINE',
 	'home.kpi.apiDown': 'DOWN',
@@ -57,7 +60,7 @@ export default {
 	'home.kpi.dca': 'DCA records',
 	'home.kpi.dcaSub': 'Supabase scheduled log',
 	'home.kpi.bestProfit': 'Best profit',
-	'home.kpi.bestProfitSub': 'profit_total_pct',
+	'home.kpi.bestProfitSub': 'best backtest return (DCA incl. BTC beta)',
 	'home.kpi.bestCalmar': 'Best Calmar',
 	'home.kpi.bestCalmarSub': 'profit / maxDD',
 	'home.kpi.bestSharpe': 'Best Sharpe',
@@ -246,7 +249,7 @@ export default {
 	// --- trust + affiliate ---
 	'trust.heading': 'Why I built this',
 	'trust.body':
-		"I run my own BTC/ETH/BNB/SOL spot + futures hedge + Smart DCA through these strategies. Code, backtests, and walk-forward validation are all public. Every number you see here is something I'm doing with real money.",
+		'Crypto accumulation (Smart DCA) and trend (Donchian) now run on NautilusTrader, executing live on the Binance testnet; the US-equity semiconductor leg is in backtest validation. Strategy code, backtests, and live execution are all public — live (testnet) and backtest are clearly separated, no overclaiming.',
 	'trust.architecture': 'Architecture',
 	'trust.dca': 'DCA plan',
 	'affiliate.title': 'No exchange account yet?',

@@ -71,6 +71,19 @@ GRANT SELECT, UPDATE          ON quant.backtest_jobs    TO service_role;
 GRANT SELECT                  ON quant.backtest_results TO authenticated;
 GRANT SELECT, INSERT, UPDATE  ON quant.backtest_results TO service_role;
 
+-- The backtest runner (game box) connects as the existing `quant` role — already allowed
+-- remotely in pg_hba and already in sops — so give it scoped FULL access to just these two
+-- tables via explicit policies (not global BYPASSRLS). Hardening TODO: a dedicated
+-- backtest_runner login role + pg_hba entry.
+GRANT SELECT, UPDATE         ON quant.backtest_jobs    TO quant;
+GRANT SELECT, INSERT, UPDATE ON quant.backtest_results TO quant;
+DROP POLICY IF EXISTS backtest_jobs_runner ON quant.backtest_jobs;
+CREATE POLICY backtest_jobs_runner ON quant.backtest_jobs
+  FOR ALL TO quant USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS backtest_results_runner ON quant.backtest_results;
+CREATE POLICY backtest_results_runner ON quant.backtest_results
+  FOR ALL TO quant USING (true) WITH CHECK (true);
+
 -- ---------------------------------------------------------------- api views (PostgREST)
 DROP VIEW IF EXISTS api.backtest_jobs;
 CREATE VIEW api.backtest_jobs WITH (security_invoker = true) AS

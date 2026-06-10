@@ -36,14 +36,38 @@ export interface BacktestResult {
 
 // Predefined strategies + their param domains — keep in lockstep with backtest_runner.py.
 // The UI renders forms from this; the runner re-validates server-side (never trust the client).
+const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
+
 export const STRATEGIES = {
 	honest_trend: {
 		label: 'HonestTrend (US equity)',
 		assets: ['NVDA', 'AMD', 'QQQ'],
 		timeframes: ['1h', '1d'],
 		params: { ema_fast: { min: 5, max: 400, default: 50 }, ema_slow: { min: 5, max: 400, default: 100 } }
+	},
+	// Donchian breakout — crypto trend, real Binance 1h bars. Honest equity-curve maxDD.
+	donchian: {
+		label: 'Donchian breakout (crypto trend)',
+		assets: CRYPTO_ASSETS,
+		timeframes: ['1h'],
+		params: {
+			entry_lb: { min: 12, max: 1000, default: 168 }, // breakout lookback (1h bars)
+			exit_lb: { min: 6, max: 1000, default: 72 }, // trailing-low exit lookback; must be <= entry_lb
+			risk_frac: { min: 0.01, max: 1, default: 0.2, step: 0.01 } // equity fraction deployed per entry
+		}
+	},
+	// Fear-driven smart DCA — crypto accumulation, real Binance 1d bars. Never sells, so
+	// return_pct is ROI on invested capital; max_dd/sharpe/calmar are null (round-trip metrics N/A).
+	accumulator: {
+		label: 'Smart DCA accumulator (crypto)',
+		assets: CRYPTO_ASSETS,
+		timeframes: ['1d'],
+		params: {
+			base_buy_usd: { min: 10, max: 100000, default: 500 }, // USD per scheduled buy
+			interval_bars: { min: 1, max: 90, default: 7 }, // days between buys (1d bars)
+			mode: { choices: ['smart', 'naive'], default: 'smart' } // smart = fear+dip boosted
+		}
 	}
-	// accumulator / donchian: wired once the crypto runner path lands (Phase 1b).
 } as const;
 
 function authHeaders(): HeadersInit {

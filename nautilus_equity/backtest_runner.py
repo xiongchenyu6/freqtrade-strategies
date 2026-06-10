@@ -10,8 +10,9 @@ submit code. One job at a time, FOR UPDATE SKIP LOCKED so multiple runners are s
 Run:  TIMESCALE_URL=postgres://… nautilus_equity/.venv/bin/python nautilus_equity/backtest_runner.py
 Env:  TIMESCALE_URL (required), POLL_SEC (default 5), JOB_TIMEOUT_SEC (default 120)
 
-STATUS: skeleton. honest_trend is wired (reuses grid_honest_equity_real.run_one); accumulator
-and donchian are stubbed. NOT YET DEPLOYED — pending owner sign-off (see PLAYGROUND_PLAN.md).
+STATUS: honest_trend (equity) + accumulator/donchian (crypto) are wired. The crypto paths reuse
+the proven engines in nautilus_crypto/backtest_stats.py (run_accumulator / run_donchian_portfolio,
+honest EquityRecorder drawdown). NOT YET DEPLOYED — pending owner sign-off (see PLAYGROUND_PLAN.md).
 """
 
 from __future__ import annotations
@@ -25,12 +26,19 @@ from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
+# The crypto engines live in ../nautilus_crypto and import their siblings flat.
+sys.path.insert(0, str(_HERE.parent / "nautilus_crypto"))
 
 # --------------------------------------------------------------------------- param validation
 # Predefined strategies + the param domains a user may choose. Anything outside → reject.
 EQUITY_ASSETS = {"NVDA": "NASDAQ", "AMD": "NASDAQ", "QQQ": "NASDAQ"}
 TF_TO_BARS = {"1h": ("1-HOUR-LAST-EXTERNAL", 252 * 7), "1d": ("1-DAY-LAST-EXTERNAL", 252)}
 EMA_MIN, EMA_MAX = 5, 400
+
+# Crypto bases the playground may backtest. Must be a subset of backtest_stats._ASSETS AND have
+# the feathers the path needs (donchian → *-1h, accumulator → *-1d). Keep in lockstep with
+# backtests.ts STRATEGIES.
+CRYPTO_ASSETS = ("BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "LINK")
 
 
 def _validate_honest_trend(params: dict) -> dict:
@@ -46,6 +54,39 @@ def _validate_honest_trend(params: dict) -> dict:
         raise ValueError(f"need {EMA_MIN} <= ema_fast < ema_slow <= {EMA_MAX}")
     return {"asset": asset, "venue": EQUITY_ASSETS[asset], "tf": tf,
             "ema_fast": fast, "ema_slow": slow}
+
+
+def _validate_accumulator(params: dict) -> dict:
+    asset = str(params.get("asset", "")).upper()
+    if asset not in CRYPTO_ASSETS:
+        raise ValueError(f"asset must be one of {list(CRYPTO_ASSETS)}")
+    mode = str(params.get("mode", "smart")).lower()
+    if mode not in ("smart", "naive"):
+        raise ValueError("mode must be 'smart' or 'naive'")
+    base_buy_usd = float(params.get("base_buy_usd", 500.0))
+    if not (10.0 <= base_buy_usd <= 100_000.0):
+        raise ValueError("base_buy_usd must be in [10, 100000]")
+    interval_bars = int(params.get("interval_bars", 7))  # bars between buys (daily bars)
+    if not (1 <= interval_bars <= 90):
+        raise ValueError("interval_bars must be in [1, 90]")
+    return {"asset": asset, "mode": mode, "base_buy_usd": base_buy_usd,
+            "interval_bars": interval_bars}
+
+
+def _validate_donchian(params: dict) -> dict:
+    asset = str(params.get("asset", "")).upper()
+    if asset not in CRYPTO_ASSETS:
+        raise ValueError(f"asset must be one of {list(CRYPTO_ASSETS)}")
+    entry_lb = int(params.get("entry_lb", 168))  # breakout lookback (1h bars)
+    exit_lb = int(params.get("exit_lb", 72))     # trailing-low exit lookback (1h bars)
+    if not (12 <= entry_lb <= 1000):
+        raise ValueError("entry_lb must be in [12, 1000]")
+    if not (6 <= exit_lb <= entry_lb):
+        raise ValueError("exit_lb must be in [6, entry_lb]")
+    risk_frac = float(params.get("risk_frac", 0.20))  # fraction of equity deployed on entry
+    if not (0.01 <= risk_frac <= 1.0):
+        raise ValueError("risk_frac must be in [0.01, 1.0]")
+    return {"asset": asset, "entry_lb": entry_lb, "exit_lb": exit_lb, "risk_frac": risk_frac}
 
 
 # --------------------------------------------------------------------------- strategy dispatch
@@ -78,11 +119,54 @@ def run_honest_trend(params: dict) -> dict:
     }
 
 
+def run_accumulator(params: dict) -> dict:
+    """Fear-driven smart DCA on real Binance daily bars. Never sells, so round-trip metrics
+    (Sharpe/Calmar/maxDD) don't apply — the honest headline is ROI on invested capital, which
+    we surface as `return_pct`. `trades` = number of DCA buys."""
+    p = _validate_accumulator(params)
+    from backtest_stats import run_accumulator as _run  # proven engine (EquityRecorder-free DCA)
+    r = _run(p["asset"], base_buy_usd=p["base_buy_usd"], interval_bars=p["interval_bars"],
+             mode=p["mode"])
+    pr = r.get("params", {})
+    return {
+        "return_pct": r["total_profit_pct"],   # ROI on invested capital
+        "max_dd_pct": None,                     # never-sell DCA: trade-level DD undefined
+        "sharpe": None,
+        "calmar": None,
+        "trades": r["total_trades"],            # = number of buys
+        # strategy-specific (DCA): how much was deployed and what was accumulated.
+        "invested_usd": pr.get("invested_usd"),
+        "coin_qty": pr.get("coin_qty"),
+        "period_start": str(r.get("period_start")) if r.get("period_start") else None,
+        "period_end": str(r.get("period_end")) if r.get("period_end") else None,
+        "config": p,
+    }
+
+
+def run_donchian(params: dict) -> dict:
+    """Single-asset Donchian breakout on real Binance 1h bars. Honest equity-curve maxDD via
+    EquityRecorder; Sharpe/Calmar from the portfolio analyzer + equity curve."""
+    p = _validate_donchian(params)
+    from backtest_stats import run_donchian_portfolio as _run  # proven engine
+    r = _run([p["asset"]], entry_lb=p["entry_lb"], exit_lb=p["exit_lb"],
+             risk_frac=p["risk_frac"])
+    return {
+        "return_pct": r["total_profit_pct"],
+        "max_dd_pct": (None if r["max_drawdown_pct"] is None else abs(r["max_drawdown_pct"])),
+        "sharpe": r["sharpe"],
+        "calmar": r["calmar"],
+        "trades": r["total_trades"],
+        "win_rate_pct": r.get("win_rate_pct"),
+        "period_start": str(r.get("period_start")) if r.get("period_start") else None,
+        "period_end": str(r.get("period_end")) if r.get("period_end") else None,
+        "config": p,
+    }
+
+
 DISPATCH = {
     "honest_trend": run_honest_trend,
-    # TODO(playground Phase 1): wire crypto strategies over the crypto catalogs.
-    "accumulator": lambda p: (_ for _ in ()).throw(NotImplementedError("accumulator: TODO")),
-    "donchian": lambda p: (_ for _ in ()).throw(NotImplementedError("donchian: TODO")),
+    "accumulator": run_accumulator,
+    "donchian": run_donchian,
 }
 
 

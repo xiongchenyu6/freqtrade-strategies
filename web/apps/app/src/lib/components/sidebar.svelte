@@ -6,6 +6,8 @@
 	import {
 		Home,
 		Radio,
+		Cpu,
+		Boxes,
 		LineChart,
 		Layers,
 		Archive,
@@ -15,6 +17,7 @@
 		Sparkles,
 		Network,
 		FileText,
+		FlaskConical,
 		BookOpen
 	} from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
@@ -36,9 +39,12 @@
 	const PRIMARY_NAV = $derived<NavItem[]>([
 		{ href: '/', labelKey: 'nav.home', icon: Home },
 		{ href: '/live', labelKey: 'nav.live' },
+		{ href: '/nautilus', labelKey: 'nav.nautilus', icon: Cpu },
 		{ href: '/signals', labelKey: 'nav.signals', icon: Radio },
 		{ href: '/market', labelKey: 'nav.market', icon: LineChart },
+		{ href: '/semis', labelKey: 'nav.semis', icon: Boxes },
 		{ href: '/strategies', labelKey: 'nav.strategies', icon: Layers },
+		{ href: '/backtest', labelKey: 'nav.backtest', icon: FlaskConical },
 		{ href: '/archive', labelKey: 'nav.archive', icon: Archive }
 	]);
 	const SECONDARY_NAV = $derived<NavItem[]>([
