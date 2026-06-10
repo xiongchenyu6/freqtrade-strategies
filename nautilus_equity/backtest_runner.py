@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import sys
 import time
 import traceback
@@ -151,6 +152,7 @@ def run_accumulator(params: dict) -> dict:
         "period_start": str(r.get("period_start")) if r.get("period_start") else None,
         "period_end": str(r.get("period_end")) if r.get("period_end") else None,
         "config": p,
+        "equity_curve": _downsample(r.get("curve", [])),  # DCA accumulation curve (cash + coin×close)
     }
 
 
@@ -182,6 +184,35 @@ DISPATCH = {
 }
 
 
+# --------------------------------------------------------------------------- job timeout
+class JobTimeout(Exception):
+    """Raised when a single backtest job exceeds JOB_TIMEOUT_SEC."""
+
+
+def _job_timeout_sec() -> int:
+    try:
+        return max(1, int(os.environ.get("JOB_TIMEOUT_SEC", "120")))
+    except ValueError:
+        return 120
+
+
+def _run_with_timeout(fn, params: dict, seconds: int) -> dict:
+    """Run fn(params) under a hard SIGALRM deadline. The runner is single-threaded and runs on
+    the main thread, so SIGALRM is safe here. On expiry, raise JobTimeout (caught by the job
+    error handler); a fast job clears the alarm before it ever fires."""
+
+    def _on_alarm(signum, frame):
+        raise JobTimeout(f"job exceeded JOB_TIMEOUT_SEC={seconds}s")
+
+    prev = signal.signal(signal.SIGALRM, _on_alarm)
+    signal.alarm(seconds)
+    try:
+        return fn(params)
+    finally:
+        signal.alarm(0)  # clear the alarm whether fn returned or raised
+        signal.signal(signal.SIGALRM, prev)  # restore prior handler
+
+
 # --------------------------------------------------------------------------- job loop
 def _claim_job(cur):
     """Atomically grab one queued job and mark it running. Returns (id, strategy, params) | None."""
@@ -198,6 +229,7 @@ def _claim_job(cur):
 
 def _run_loop(conn):
     poll = float(os.environ.get("POLL_SEC", "5"))
+    timeout = _job_timeout_sec()
     while True:
         with conn.cursor() as cur:
             job = _claim_job(cur)
@@ -211,7 +243,7 @@ def _run_loop(conn):
             fn = DISPATCH.get(strategy)
             if fn is None:
                 raise ValueError(f"unknown strategy {strategy!r}")
-            metrics = fn(params)
+            metrics = _run_with_timeout(fn, params, timeout)
             equity_curve = metrics.pop("equity_curve", None)  # charted separately from metrics
             with conn.cursor() as cur:
                 cur.execute(
