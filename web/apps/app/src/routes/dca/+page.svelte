@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import Kpi from '$lib/components/kpi.svelte';
 	import PersonalPlan from '$lib/components/personal-plan.svelte';
+	import DcaLedger from '$lib/components/dca-ledger.svelte';
 	import BinanceConnect from '$lib/components/binance-connect.svelte';
 	import { fmtTime, fmtUSD } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
@@ -381,6 +382,7 @@
 	</div>
 
 	<PersonalPlan ohlcByCoin={data.ohlcByCoin} events={data.triggers} />
+	<DcaLedger />
 	<BinanceConnect />
 
 	<section class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

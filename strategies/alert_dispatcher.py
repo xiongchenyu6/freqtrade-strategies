@@ -223,6 +223,54 @@ def fan_out_equity(conn, state: dict) -> None:
         state["last_eq_synced"] = synced.isoformat()
 
 
+def fan_out_plan_reminders(conn, state: dict) -> None:
+    """Monthly DCA-plan reminder — the discipline-coach nudge. On the 1st of each month
+    (UTC; mirrors dcaSim's schedule = monthly budget on the 1st), remind every
+    Telegram-bound user who saved a dca_plan: their OWN plan amount, split per their
+    OWN mix. Tool framing throughout — we restate their plan, we don't advise.
+    Daily-gated via state['last_plan_reminder_date'] so restarts can't double-send."""
+    today = datetime.now(timezone.utc).date()
+    if state.get("last_plan_reminder_date") == today.isoformat():
+        return
+    if today.day != 1:
+        state["last_plan_reminder_date"] = today.isoformat()
+        return
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT p.user_id, p.dca_plan, l.chat_id
+                     FROM quant.user_preferences p
+                     JOIN quant.telegram_links l ON l.user_id = p.user_id
+                    WHERE l.chat_id IS NOT NULL AND p.dca_plan IS NOT NULL"""
+            )
+            rows = cur.fetchall()
+    except Exception as e:
+        log(f"plan reminder query failed: {e!r}")
+        return
+    sent = 0
+    for user_id, plan, chat_id in rows:
+        try:
+            monthly = float((plan or {}).get("monthly_usdt") or 0)
+            if monthly <= 0:
+                continue
+            mix = (plan or {}).get("mix") or {}
+            parts = [f"{c} ${monthly * float(p) / 100:,.0f}"
+                     for c, p in mix.items() if float(p or 0) > 0]
+            split = "(" + " · ".join(parts) + ")" if parts else ""
+            send(chat_id,
+                 f"📅 <b>今天是你的定投日</b>\n"
+                 f"按你保存的计划:本月投入 ${monthly:,.0f} {split}\n\n"
+                 f"买完回来记一笔,看看你的真实均价:{DASH}/dca\n"
+                 f"连跌的时候最难坚持 —— 也最重要。"
+                 f"{DISCLAIMER}")
+            sent += 1
+        except Exception as e:
+            log(f"plan reminder for {user_id} failed: {e!r}")
+    state["last_plan_reminder_date"] = today.isoformat()
+    if sent:
+        log(f"plan reminders sent: {sent}")
+
+
 def fan_out_user_fires(conn) -> None:
     """Push pending quant.signal_fires (user-defined signals from signal_evaluator.py) to
     each fire's OWNER — per-user routing, unlike the broadcast topics above. Wording is
@@ -276,6 +324,7 @@ def main() -> int:
                 fan_out_dca(conn, state)
                 fan_out_equity(conn, state)
                 fan_out_user_fires(conn)
+                fan_out_plan_reminders(conn, state)
                 last_fan = time.time()
             save_state(state)
         except KeyboardInterrupt:
