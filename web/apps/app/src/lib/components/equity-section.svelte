@@ -15,7 +15,13 @@
 	const en = $derived(lang === 'en');
 
 	const openTrades = $derived(trades.filter((t) => !t.close_date));
+	const closedTrades = $derived(
+		trades.filter((t) => t.close_date).sort((a, b) => (a.close_date! < b.close_date! ? 1 : -1))
+	);
 	const top = $derived(backtests.slice(0, 6));
+	const pct = (v: number | null | undefined) =>
+		v === null || v === undefined ? '—' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(2)}%`;
+	const date = (s: string | null) => (s ? s.slice(0, 10) : '');
 	const num = (v: number | null | undefined, d = 2) =>
 		v === null || v === undefined ? '—' : v.toFixed(d);
 </script>
@@ -66,10 +72,35 @@
 					</div>
 				{/each}
 			</div>
+		{:else if closedTrades.length > 0}
+			<p class="mt-2 text-sm text-foreground">
+				{en
+					? 'Connected, currently flat. Most recent paper round-trips:'
+					: '已连接，当前空仓。最近的模拟盘平仓记录：'}
+			</p>
+			<div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+				{#each closedTrades.slice(0, 6) as t}
+					<div class="rounded-md border border-border px-3 py-2 text-sm">
+						<div class="flex items-center justify-between">
+							<span class="font-medium">{t.instrument}</span>
+							<span
+								class="font-mono text-xs tabular-nums {(t.profit_pct ?? 0) >= 0
+									? 'text-emerald-500'
+									: 'text-red-500'}"
+							>
+								{pct(t.profit_pct)}
+							</span>
+						</div>
+						<div class="mt-1 text-xs text-muted-foreground">
+							{num(t.open_rate)} → {num(t.close_rate)} · {date(t.close_date)}
+						</div>
+					</div>
+				{/each}
+			</div>
 		{:else}
 			<p class="mt-2 text-sm text-foreground">
 				{en
-					? 'Connected, flat — no open position. The 1h EMA-50/100 trend signal hasn’t fired; the engine waits rather than forcing trades.'
+					? 'Connected, flat — no open position yet. The 1h EMA-50/100 trend signal hasn’t fired; the engine waits rather than forcing trades.'
 					: '已连接，空仓 —— 暂无持仓。1 小时 EMA 50/100 趋势信号尚未触发；引擎宁可等待，也不硬凑交易。'}
 			</p>
 		{/if}
