@@ -46,8 +46,10 @@
 	let errMsg = $state('');
 	let digest = $state(false);
 
+	// Number() guard: dca_plan comes from the user_preferences jsonb row — a string
+	// value would string-concat through the reduce and crash mixTotal.toFixed(0).
 	const mixTotal = $derived(
-		COIN_SYMBOLS.reduce((s, c) => s + (plan.mix?.[c] ?? 0), 0)
+		COIN_SYMBOLS.reduce((s, c) => s + Number(plan.mix?.[c] ?? 0), 0)
 	);
 	const mixValid = $derived(Math.abs(mixTotal - 100) < 0.5);
 

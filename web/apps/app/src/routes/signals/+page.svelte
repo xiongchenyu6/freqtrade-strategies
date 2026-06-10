@@ -80,6 +80,13 @@
 
 	const isGated = $derived(data.events.length === 0 && data.runs.length === 0);
 
+	// Backtest runs surviving the current tab/search filter — the run-metric
+	// charts below operate on BacktestRun fields, which only exist on the
+	// 'backtest' branch of the SignalItem union.
+	const mergedRuns = $derived(
+		merged.filter((s): s is Extract<SignalItem, { _type: 'backtest' }> => s._type === 'backtest').map((s) => s.item)
+	);
+
 	// 30-day event activity calendar
 	const eventCalendar = $derived.by(() => {
 		if (data.events.length === 0) return null;
@@ -885,6 +892,7 @@
 		if (valid.length < 4) return null;
 		const map = new Map<string, { sum: number; count: number; best: number }>();
 		for (const r of valid) {
+			if (!r.timeframe) continue;
 			if (!map.has(r.timeframe)) map.set(r.timeframe, { sum: 0, count: 0, best: -Infinity });
 			const e = map.get(r.timeframe)!;
 			e.sum += r.total_profit_pct!;
@@ -949,7 +957,7 @@
 	});
 
 	const runCalmarVsWinRate = $derived.by(() => {
-		const pts = merged.filter(r =>
+		const pts = mergedRuns.filter(r =>
 			r.calmar != null && isFinite(r.calmar) && r.calmar > -50 && r.calmar < 200 &&
 			r.win_rate_pct != null && isFinite(r.win_rate_pct) && r.win_rate_pct >= 0 && r.win_rate_pct <= 100
 		).map(r => ({ calmar: r.calmar!, wr: r.win_rate_pct!, tf: r.timeframe ?? '' }));
@@ -969,7 +977,7 @@
 	});
 
 	const runSortinoVsDrawdown = $derived.by(() => {
-		const pts = merged.filter(r =>
+		const pts = mergedRuns.filter(r =>
 			r.sortino != null && isFinite(r.sortino) && r.sortino > -50 && r.sortino < 200 &&
 			r.max_drawdown_pct != null && isFinite(r.max_drawdown_pct) && r.max_drawdown_pct > 0
 		).map(r => ({ sortino: r.sortino!, dd: r.max_drawdown_pct!, tf: r.timeframe ?? '' }));
@@ -987,7 +995,7 @@
 	});
 
 	const runProfitFactorVsCalmar = $derived.by(() => {
-		const pts = merged.filter(r =>
+		const pts = mergedRuns.filter(r =>
 			r.profit_factor != null && isFinite(r.profit_factor) && r.profit_factor > 0 && r.profit_factor < 30 &&
 			r.calmar != null && isFinite(r.calmar) && r.calmar > -50 && r.calmar < 200
 		).map(r => ({ pf: r.profit_factor!, calmar: r.calmar!, tf: r.timeframe ?? '' }));
@@ -1006,7 +1014,7 @@
 	});
 
 	const runSharpeVsProfit = $derived.by(() => {
-		const pts = merged.filter(r =>
+		const pts = mergedRuns.filter(r =>
 			r.sharpe != null && isFinite(r.sharpe) && Math.abs(r.sharpe) < 50 &&
 			r.total_profit_pct != null && isFinite(r.total_profit_pct)
 		).map(r => ({ sharpe: r.sharpe!, profit: r.total_profit_pct!, tf: r.timeframe ?? '' }));
@@ -1026,7 +1034,7 @@
 
 	const runDrawdownByStrategy = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const r of merged) {
+		for (const r of mergedRuns) {
 			if (!r.strategy || r.max_drawdown_pct == null || !isFinite(r.max_drawdown_pct)) continue;
 			if (!map[r.strategy]) map[r.strategy] = [];
 			map[r.strategy].push(r.max_drawdown_pct);
@@ -1047,7 +1055,7 @@
 	});
 
 	const runWinRateVsDrawdown = $derived.by(() => {
-		const pts = merged.filter(r =>
+		const pts = mergedRuns.filter(r =>
 			r.win_rate_pct != null && isFinite(r.win_rate_pct) &&
 			r.max_drawdown_pct != null && isFinite(r.max_drawdown_pct)
 		).map(r => ({ wr: r.win_rate_pct!, dd: r.max_drawdown_pct!, tf: r.timeframe ?? '' }));
@@ -1065,7 +1073,7 @@
 
 	const runWeeklyCalmarTimeline = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const r of merged) {
+		for (const r of mergedRuns) {
 			if (!r.imported_at || r.calmar == null || !isFinite(r.calmar) || Math.abs(r.calmar) > 200) continue;
 			const week = r.imported_at.slice(0, 10);
 			if (!map[week]) map[week] = [];
@@ -1090,7 +1098,7 @@
 
 	const runWeeklyProfitFactorTimeline = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const r of merged) {
+		for (const r of mergedRuns) {
 			if (!r.imported_at || r.profit_factor == null || !isFinite(r.profit_factor) || r.profit_factor <= 0 || r.profit_factor > 30) continue;
 			const week = r.imported_at.slice(0, 10);
 			if (!map[week]) map[week] = [];
@@ -1116,7 +1124,7 @@
 	const runStrategyTimeframeCalmarMatrix = $derived.by(() => {
 		const TF_ORDER = ['5m', '15m', '1h', '4h', '1d'];
 		const map: Record<string, Record<string, number[]>> = {};
-		for (const r of merged) {
+		for (const r of mergedRuns) {
 			if (!r.strategy || !r.timeframe || r.calmar == null || !isFinite(r.calmar) || Math.abs(r.calmar) > 200) continue;
 			if (!map[r.strategy]) map[r.strategy] = {};
 			if (!map[r.strategy][r.timeframe]) map[r.strategy][r.timeframe] = [];
@@ -1336,7 +1344,7 @@
 		const buckets = bins.map(b => ({ ...b, profits: [] as number[] }));
 		for (const r of runs) {
 			if (r.total_profit_pct == null || !isFinite(r.total_profit_pct)) continue;
-			const pc = r.num_pairs ?? 0;
+			const pc = r.pairs?.length ?? 0;
 			const b = buckets.find(b => pc >= b.min && pc <= b.max);
 			if (b) b.profits.push(r.total_profit_pct);
 		}
@@ -1379,10 +1387,10 @@
 
 	const runWinRateVsProfitFactor = $derived.by(() => {
 		const pts = runs.filter(r =>
-			r.win_rate != null && isFinite(r.win_rate) &&
+			r.win_rate_pct != null && isFinite(r.win_rate_pct) &&
 			r.profit_factor != null && isFinite(r.profit_factor) && r.profit_factor < 20 &&
 			r.total_profit_pct != null && isFinite(r.total_profit_pct)
-		).map(r => ({ wr: r.win_rate! * 100, pf: r.profit_factor!, profit: r.total_profit_pct! }));
+		).map(r => ({ wr: r.win_rate_pct!, pf: r.profit_factor!, profit: r.total_profit_pct! }));
 		if (pts.length < 8) return null;
 		const wrMin = Math.min(...pts.map(p => p.wr)), wrMax = Math.max(...pts.map(p => p.wr), wrMin + 0.1);
 		const pfMin = Math.min(...pts.map(p => p.pf)), pfMax = Math.max(...pts.map(p => p.pf), pfMin + 0.1);
@@ -1409,9 +1417,9 @@
 	const runSharpeByTimeframe = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.timeframe || r.sharpe_ratio == null || !isFinite(r.sharpe_ratio) || Math.abs(r.sharpe_ratio) > 100) continue;
+			if (!r.timeframe || r.sharpe == null || !isFinite(r.sharpe) || Math.abs(r.sharpe) > 100) continue;
 			if (!map.has(r.timeframe)) map.set(r.timeframe, []);
-			map.get(r.timeframe)!.push(r.sharpe_ratio);
+			map.get(r.timeframe)!.push(r.sharpe);
 		}
 		const TF_ORDER = ['5m','15m','30m','1h','2h','4h','8h','1d'];
 		const rows = TF_ORDER
@@ -1488,9 +1496,9 @@
 	const runMaxDrawdownByTimeframe = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const r of data.runs) {
-			if (!r.timeframe || r.max_drawdown == null || !isFinite(r.max_drawdown)) continue;
+			if (!r.timeframe || r.max_drawdown_pct == null || !isFinite(r.max_drawdown_pct)) continue;
 			const arr = map.get(r.timeframe) ?? [];
-			arr.push(Math.abs(r.max_drawdown));
+			arr.push(Math.abs(r.max_drawdown_pct));
 			map.set(r.timeframe, arr);
 		}
 		if (map.size < 2) return null;
@@ -1508,7 +1516,7 @@
 		const buckets = new Map<number, number[]>();
 		for (const r of data.runs) {
 			if (r.total_profit_pct == null || !isFinite(r.total_profit_pct)) continue;
-			const fc = Array.isArray(r.factors) ? r.factors.length : (r.factor_count ?? 0);
+			const fc = Array.isArray(r.factors) ? r.factors.length : 0;
 			if (fc <= 0 || fc > 20) continue;
 			const arr = buckets.get(fc) ?? [];
 			arr.push(r.total_profit_pct);
@@ -1551,9 +1559,9 @@
 	const runTopStrategyBySharpe = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const r of data.runs) {
-			if (!r.strategy || r.sharpe_ratio == null || !isFinite(r.sharpe_ratio) || Math.abs(r.sharpe_ratio) > 200) continue;
+			if (!r.strategy || r.sharpe == null || !isFinite(r.sharpe) || Math.abs(r.sharpe) > 200) continue;
 			const arr = map.get(r.strategy) ?? [];
-			arr.push(r.sharpe_ratio);
+			arr.push(r.sharpe);
 			map.set(r.strategy, arr);
 		}
 		if (map.size < 3) return null;
@@ -1586,10 +1594,10 @@
 
 	const runMonthlyProfitByTF = $derived.by(() => {
 		const tfs = [...new Set(data.runs.filter(r => r.timeframe).map(r => r.timeframe!))].sort();
-		const months = [...new Set(data.runs.filter(r => r.created_at).map(r => r.created_at!.slice(0, 7)))].sort().slice(-8);
+		const months = [...new Set(data.runs.filter(r => r.imported_at).map(r => r.imported_at!.slice(0, 7)))].sort().slice(-8);
 		if (tfs.length < 2 || months.length < 2) return null;
 		const grid = tfs.map(tf => months.map(mo => {
-			const vals = data.runs.filter(r => r.timeframe === tf && r.created_at?.startsWith(mo) && r.profit_pct != null && isFinite(r.profit_pct)).map(r => r.profit_pct!);
+			const vals = data.runs.filter(r => r.timeframe === tf && r.imported_at?.startsWith(mo) && r.total_profit_pct != null && isFinite(r.total_profit_pct)).map(r => r.total_profit_pct!);
 			return vals.length ? vals.reduce((a, v) => a + v, 0) / vals.length : null;
 		}));
 		const allVals = grid.flat().filter((v): v is number => v !== null);
@@ -1603,8 +1611,8 @@
 	const runSortinoMonthlyTrend = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const r of data.runs) {
-			if (!r.created_at || r.sortino == null || !isFinite(r.sortino) || Math.abs(r.sortino) > 200) continue;
-			const mo = r.created_at.slice(0, 7);
+			if (!r.imported_at || r.sortino == null || !isFinite(r.sortino) || Math.abs(r.sortino) > 200) continue;
+			const mo = r.imported_at.slice(0, 7);
 			const arr = map.get(mo) ?? [];
 			arr.push(r.sortino);
 			map.set(mo, arr);
@@ -1630,8 +1638,8 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.run_date || !r.profit_factor) continue;
-			const mo = (r.run_date as string).slice(0, 7);
+			if (!r.imported_at || !r.profit_factor) continue;
+			const mo = (r.imported_at as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
 			arr.push(r.profit_factor as number);
 			map.set(mo, arr);
@@ -1655,8 +1663,8 @@
 	const runWinRateVsSharpeScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.win_rate != null && r.sharpe_ratio != null)
-			.map(r => ({ wr: (r.win_rate as number) * 100, sh: r.sharpe_ratio as number, profit: r.profit_total_pct as number ?? 0 }));
+			.filter(r => r.win_rate_pct != null && r.sharpe != null)
+			.map(r => ({ wr: (r.win_rate_pct as number), sh: r.sharpe as number, profit: r.total_profit_pct as number ?? 0 }));
 		if (pts.length < 6) return null;
 		const shMax = Math.max(...pts.map(p => p.sh), 1);
 		const shMin = Math.min(...pts.map(p => p.sh), 0);
@@ -1671,8 +1679,8 @@
 	const runDrawdownVsProfitScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.max_drawdown_pct != null && r.profit_total_pct != null)
-			.map(r => ({ dd: r.max_drawdown_pct as number, profit: r.profit_total_pct as number, tf: r.timeframe as string ?? '' }));
+			.filter(r => r.max_drawdown_pct != null && r.total_profit_pct != null)
+			.map(r => ({ dd: r.max_drawdown_pct as number, profit: r.total_profit_pct as number, tf: r.timeframe as string ?? '' }));
 		if (pts.length < 6) return null;
 		const ddMax = Math.max(...pts.map(p => p.dd), 0.01);
 		const profMin = Math.min(...pts.map(p => p.profit), 0);
@@ -1688,8 +1696,8 @@
 	const runTradeCountVsProfitScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.total_trades != null && r.profit_total_pct != null && (r.total_trades as number) > 0)
-			.map(r => ({ tc: r.total_trades as number, profit: r.profit_total_pct as number, tf: (r.timeframe as string) ?? '' }));
+			.filter(r => r.total_trades != null && r.total_profit_pct != null && (r.total_trades as number) > 0)
+			.map(r => ({ tc: r.total_trades as number, profit: r.total_profit_pct as number, tf: (r.timeframe as string) ?? '' }));
 		if (pts.length < 6) return null;
 		const tcMax = Math.max(...pts.map(p => p.tc), 1);
 		const profMin = Math.min(...pts.map(p => p.profit), 0);
@@ -1706,11 +1714,11 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<number, number[]>();
 		for (const r of runs) {
-			if (r.paircount == null || r.profit_total_pct == null) continue;
-			const pc = r.paircount as number;
+			if (r.pairs == null || r.total_profit_pct == null) continue;
+			const pc = r.pairs.length;
 			const bucket = Math.round(pc / 5) * 5;
 			const arr = map.get(bucket) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(bucket, arr);
 		}
 		if (map.size < 3) return null;
@@ -1727,10 +1735,10 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.strategy_name || r.sortino_ratio == null) continue;
-			const arr = map.get(r.strategy_name as string) ?? [];
-			arr.push(r.sortino_ratio as number);
-			map.set(r.strategy_name as string, arr);
+			if (!r.strategy || r.sortino == null) continue;
+			const arr = map.get(r.strategy as string) ?? [];
+			arr.push(r.sortino as number);
+			map.set(r.strategy as string, arr);
 		}
 		if (map.size < 2) return null;
 		const rows = [...map.entries()]
@@ -1747,10 +1755,10 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.created_at || r.profit_total_pct == null) continue;
-			const mo = (r.created_at as string).slice(0, 7);
+			if (!r.imported_at || r.total_profit_pct == null) continue;
+			const mo = (r.imported_at as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -1767,8 +1775,8 @@
 		if (!runs || runs.length < 8) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (r.nb_trades == null || r.sortino == null) continue;
-			const bucket = `${Math.floor((r.nb_trades as number) / 5) * 5}+`;
+			if (r.total_trades == null || r.sortino == null) continue;
+			const bucket = `${Math.floor((r.total_trades as number) / 5) * 5}+`;
 			const arr = map.get(bucket) ?? [];
 			arr.push(r.sortino as number);
 			map.set(bucket, arr);
@@ -1788,9 +1796,9 @@
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const buckets: number[][] = Array.from({ length: 7 }, () => []);
 		for (const r of runs) {
-			if (!r.created_at || r.profit_total_pct == null) continue;
-			const dow = new Date(r.created_at as string).getDay();
-			buckets[dow].push(r.profit_total_pct as number);
+			if (!r.imported_at || r.total_profit_pct == null) continue;
+			const dow = new Date(r.imported_at as string).getDay();
+			buckets[dow].push(r.total_profit_pct as number);
 		}
 		const pts = DAYS.map((d, i) => ({
 			d,
@@ -1808,10 +1816,10 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.strategy_name || r.calmar_ratio == null) continue;
-			const arr = map.get(r.strategy_name as string) ?? [];
-			arr.push(r.calmar_ratio as number);
-			map.set(r.strategy_name as string, arr);
+			if (!r.strategy || r.calmar == null) continue;
+			const arr = map.get(r.strategy as string) ?? [];
+			arr.push(r.calmar as number);
+			map.set(r.strategy as string, arr);
 		}
 		if (map.size < 2) return null;
 		const rows = [...map.entries()]
@@ -1828,10 +1836,10 @@
 		if (!runs || runs.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.timeframe || !r.created_at || r.profit_total_pct == null) continue;
-			const key = `${r.timeframe}|${(r.created_at as string).slice(0, 7)}`;
+			if (!r.timeframe || !r.imported_at || r.total_profit_pct == null) continue;
+			const key = `${r.timeframe}|${(r.imported_at as string).slice(0, 7)}`;
 			const arr = map.get(key) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(key, arr);
 		}
 		if (map.size < 4) return null;
@@ -1858,8 +1866,8 @@
 	const runSharpeVsDrawdownRatio = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
 		const pts = runs
-			.filter(r => r.sharpe_ratio != null && r.max_drawdown_pct != null && (r.max_drawdown_pct as number) > 0)
-			.map(r => ({ x: r.sharpe_ratio as number, y: (r.sharpe_ratio as number) / (r.max_drawdown_pct as number), profit: r.profit_total_pct as number ?? 0 }));
+			.filter(r => r.sharpe != null && r.max_drawdown_pct != null && (r.max_drawdown_pct as number) > 0)
+			.map(r => ({ x: r.sharpe as number, y: (r.sharpe as number) / (r.max_drawdown_pct as number), profit: r.total_profit_pct as number ?? 0 }));
 		if (pts.length < 8) return null;
 		const xMin = Math.min(...pts.map(p => p.x));
 		const xMax = Math.max(...pts.map(p => p.x), 0.01);
@@ -1878,10 +1886,10 @@
 		if (!runs || runs.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.strategy_name || r.win_rate == null) continue;
-			const arr = map.get(r.strategy_name as string) ?? [];
-			arr.push((r.win_rate as number) * 100);
-			map.set(r.strategy_name as string, arr);
+			if (!r.strategy || r.win_rate_pct == null) continue;
+			const arr = map.get(r.strategy as string) ?? [];
+			arr.push((r.win_rate_pct as number));
+			map.set(r.strategy as string, arr);
 		}
 		if (map.size < 3) return null;
 		const rows = [...map.entries()]
@@ -1896,8 +1904,8 @@
 	const runProfitVsTradeCountScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.profit_total_pct != null && r.trade_count != null)
-			.map(r => ({ p: r.profit_total_pct as number, tc: r.trade_count as number }));
+			.filter(r => r.total_profit_pct != null && r.total_trades != null)
+			.map(r => ({ p: r.total_profit_pct as number, tc: r.total_trades as number }));
 		if (pts.length < 6) return null;
 		const minP = Math.min(...pts.map(p => p.p)), maxP = Math.max(...pts.map(p => p.p), minP + 0.1);
 		const minTC = Math.min(...pts.map(p => p.tc)), maxTC = Math.max(...pts.map(p => p.tc), minTC + 1);
@@ -1910,7 +1918,7 @@
 
 	const runSortinoCDF = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
-		const vals = runs.filter(r => r.sortino_ratio != null).map(r => r.sortino_ratio as number).sort((a, b) => a - b);
+		const vals = runs.filter(r => r.sortino != null).map(r => r.sortino as number).sort((a, b) => a - b);
 		if (vals.length < 8) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
 		if (maxV === minV) return null;
@@ -1927,10 +1935,10 @@
 		if (!runs || runs.length < 5) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.created_at || r.profit_total_pct == null) continue;
-			const mo = (r.created_at as string).slice(0, 7);
+			if (!r.imported_at || r.total_profit_pct == null) continue;
+			const mo = (r.imported_at as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -1945,8 +1953,8 @@
 	const runCalmarVsWinRateScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.calmar_ratio != null && r.win_rate != null)
-			.map(r => ({ calmar: r.calmar_ratio as number, wr: (r.win_rate as number) * 100 }));
+			.filter(r => r.calmar != null && r.win_rate_pct != null)
+			.map(r => ({ calmar: r.calmar as number, wr: (r.win_rate_pct as number) }));
 		if (pts.length < 6) return null;
 		const minC = Math.min(...pts.map(p => p.calmar)), maxC = Math.max(...pts.map(p => p.calmar), minC + 0.1);
 		const minWR = Math.min(...pts.map(p => p.wr)), maxWR = Math.max(...pts.map(p => p.wr), minWR + 1);
@@ -1961,10 +1969,10 @@
 		if (!runs || runs.length < 8) return null;
 		const buckets = new Map<string, number[]>([['<0', []], ['0-1', []], ['1-2', []], ['>2', []]]);
 		for (const r of runs) {
-			if (r.sortino_ratio == null || r.profit_total_pct == null) continue;
-			const s = r.sortino_ratio as number;
+			if (r.sortino == null || r.total_profit_pct == null) continue;
+			const s = r.sortino as number;
 			const key = s < 0 ? '<0' : s < 1 ? '0-1' : s < 2 ? '1-2' : '>2';
-			buckets.get(key)!.push(r.profit_total_pct as number);
+			buckets.get(key)!.push(r.total_profit_pct as number);
 		}
 		const ORDER = ['<0', '0-1', '1-2', '>2'];
 		const rows = ORDER.filter(k => (buckets.get(k)?.length ?? 0) >= 2).map(k => {
@@ -1982,11 +1990,11 @@
 		if (!runs || runs.length < 5) return null;
 		const map = new Map<string, { wins: number; total: number }>();
 		for (const r of runs) {
-			if (!r.strategy || r.win_rate == null) continue;
+			if (!r.strategy || r.win_rate_pct == null) continue;
 			const name = r.strategy as string;
 			const s = map.get(name) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((r.win_rate as number) > 0.5) s.wins++;
+			if ((r.win_rate_pct as number) > 50) s.wins++;
 			map.set(name, s);
 		}
 		if (map.size < 2) return null;
@@ -2003,8 +2011,8 @@
 	const runSharpeVsWinRateScatter = $derived.by(() => {
 		if (!runs || runs.length < 8) return null;
 		const pts = runs
-			.filter(r => r.sharpe_ratio != null && r.win_rate != null)
-			.map(r => ({ sharpe: r.sharpe_ratio as number, wr: (r.win_rate as number) * 100 }));
+			.filter(r => r.sharpe != null && r.win_rate_pct != null)
+			.map(r => ({ sharpe: r.sharpe as number, wr: (r.win_rate_pct as number) }));
 		if (pts.length < 6) return null;
 		const minS = Math.min(...pts.map(p => p.sharpe)), maxS = Math.max(...pts.map(p => p.sharpe), minS + 0.1);
 		const minWR = Math.min(...pts.map(p => p.wr)), maxWR = Math.max(...pts.map(p => p.wr), minWR + 1);
@@ -2020,9 +2028,9 @@
 		if (!runs || runs.length < 5) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.timeframe || r.profit_total_pct == null) continue;
+			if (!r.timeframe || r.total_profit_pct == null) continue;
 			const arr = map.get(r.timeframe as string) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(r.timeframe as string, arr);
 		}
 		if (map.size < 2) return null;
@@ -2039,8 +2047,8 @@
 	const runCalmarCDF = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
 		const vals = runs
-			.filter(r => r.calmar_ratio != null)
-			.map(r => r.calmar_ratio as number)
+			.filter(r => r.calmar != null)
+			.map(r => r.calmar as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 10) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -2058,9 +2066,9 @@
 		if (!runs || runs.length < 5) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			if (!r.timeframe || r.win_rate == null) continue;
+			if (!r.timeframe || r.win_rate_pct == null) continue;
 			const arr = map.get(r.timeframe as string) ?? [];
-			arr.push((r.win_rate as number) * 100);
+			arr.push((r.win_rate_pct as number));
 			map.set(r.timeframe as string, arr);
 		}
 		if (map.size < 2) return null;
@@ -2096,8 +2104,8 @@
 	const runWinRateSortinoCDF = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
 		const vals = runs
-			.filter(r => r.sortino_ratio != null)
-			.map(r => r.sortino_ratio as number)
+			.filter(r => r.sortino != null)
+			.map(r => r.sortino as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 10) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -2115,11 +2123,13 @@
 		if (!runs || runs.length < 10) return null;
 		const byBase = new Map<string, number[]>();
 		for (const r of runs) {
-			if (r.pair == null || r.profit_ratio == null) continue;
-			const base = (r.pair as string).split('/')[0] ?? 'OTHER';
-			const arr = byBase.get(base) ?? [];
-			arr.push((r.profit_ratio as number) * 100);
-			byBase.set(base, arr);
+			if (r.pairs == null || r.total_profit_pct == null) continue;
+			for (const pair of r.pairs) {
+				const base = pair.split('/')[0] ?? 'OTHER';
+				const arr = byBase.get(base) ?? [];
+				arr.push(r.total_profit_pct);
+				byBase.set(base, arr);
+			}
 		}
 		if (byBase.size < 3) return null;
 		const bars = [...byBase.entries()]
@@ -2136,9 +2146,12 @@
 
 	const runHoldTimeHistogram = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
+		// avg hold time is not part of the BacktestRun row; only present on
+		// legacy payloads, hence the optional cast.
 		const hrs = runs
-			.filter(r => r.avg_duration_minutes != null)
-			.map(r => (r.avg_duration_minutes as number) / 60);
+			.map((r) => (r as { avg_duration_minutes?: number | null }).avg_duration_minutes)
+			.filter((v): v is number => v != null)
+			.map((v) => v / 60);
 		if (hrs.length < 8) return null;
 		const maxH = Math.min(Math.max(...hrs), 168);
 		const bins = 10;
@@ -2159,10 +2172,10 @@
 		if (!runs || runs.length < 10) return null;
 		const byStrat = new Map<string, number[]>();
 		for (const r of runs) {
-			if (r.strategy == null || r.calmar_ratio == null) continue;
+			if (r.strategy == null || r.calmar == null) continue;
 			const s = (r.strategy as string).slice(0, 14);
 			const arr = byStrat.get(s) ?? [];
-			arr.push(r.calmar_ratio as number);
+			arr.push(r.calmar as number);
 			byStrat.set(s, arr);
 		}
 		if (byStrat.size < 2) return null;
@@ -2181,10 +2194,10 @@
 	const runSharpeWinRateScatter2 = $derived.by(() => {
 		if (!runs || runs.length < 10) return null;
 		const pts = runs
-			.filter(r => r.sharpe_ratio != null && r.win_rate != null)
+			.filter(r => r.sharpe != null && r.win_rate_pct != null)
 			.map(r => ({
-				x: (r.win_rate as number) * 100,
-				y: r.sharpe_ratio as number,
+				x: (r.win_rate_pct as number),
+				y: r.sharpe as number,
 				pf: r.profit_factor as number ?? 1
 			}))
 			.filter(p => p.x > 0 && p.x <= 100 && Math.abs(p.y) < 20);
@@ -2198,10 +2211,10 @@
 		if (!runs || runs.length < 10) return null;
 		const byStrat = new Map<string, number[]>();
 		for (const r of runs) {
-			if (r.strategy == null || r.max_drawdown == null) continue;
+			if (r.strategy == null || r.max_drawdown_pct == null) continue;
 			const s = (r.strategy as string).slice(0, 14);
 			const arr = byStrat.get(s) ?? [];
-			arr.push((r.max_drawdown as number) * 100);
+			arr.push((r.max_drawdown_pct as number));
 			byStrat.set(s, arr);
 		}
 		if (byStrat.size < 2) return null;
@@ -2221,8 +2234,8 @@
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const byDow = new Map<number, number[]>();
 		for (const r of runs) {
-			if (!r.start_date || r.profit_factor == null) continue;
-			const d = new Date(r.start_date as string).getUTCDay();
+			if (!r.started_at || r.profit_factor == null) continue;
+			const d = new Date(r.started_at as string).getUTCDay();
 			const arr = byDow.get(d) ?? [];
 			arr.push(r.profit_factor as number);
 			byDow.set(d, arr);

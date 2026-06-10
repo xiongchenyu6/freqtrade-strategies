@@ -149,12 +149,18 @@ export const STRATEGIES: Record<string, StrategyEntry> = {
 		zh: {
 			name: 'LiveProveIt',
 			pitch: '内部"概念验证"策略 — 极简逻辑，用来验证某个想法或调试管线。',
-			philosophy: '不是给真金白银用的策略。LiveProveIt 是测试基础设施 (数据流 / 信号同步 / 实盘信令) 是否正常的最小可行用例。指标好坏不代表方法好坏。'
+			philosophy: '不是给真金白银用的策略。LiveProveIt 是测试基础设施 (数据流 / 信号同步 / 实盘信令) 是否正常的最小可行用例。指标好坏不代表方法好坏。',
+			factors: ['infra-test'],
+			bestFor: '管线验证 / 调试 — 确认数据流与信令链路端到端可用。',
+			worstFor: '任何真实资金场景 — 它不是为盈利设计的。'
 		},
 		en: {
 			name: 'LiveProveIt',
 			pitch: 'Internal "proof-of-concept" strategy — minimum viable logic to validate ideas or debug the pipeline.',
-			philosophy: 'Not meant for real capital. LiveProveIt exercises the infrastructure (data flow / signal sync / live signaling) end-to-end. Its metrics are about pipeline health, not method quality.'
+			philosophy: 'Not meant for real capital. LiveProveIt exercises the infrastructure (data flow / signal sync / live signaling) end-to-end. Its metrics are about pipeline health, not method quality.',
+			factors: ['infra-test'],
+			bestFor: 'Pipeline validation / debugging — proving the data flow and signaling chain end-to-end.',
+			worstFor: 'Any real-capital scenario — it is not designed to make money.'
 		}
 	}
 };

@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ fetch, params, locals, cookies }) =
 	const { name } = params;
 	const jwt = cookies.get('qt_jwt');
 	const auth = jwt ? `Bearer ${jwt}` : undefined;
-	const [runs, wf, kellyStatus] = await Promise.all([
+	const [runsRaw, wfRaw, kellyStatus] = await Promise.all([
 		vps
 			.backtestRuns(fetch, { strategy: name, limit: 200, authHeader: auth })
 			.catch(() => [] as BacktestRun[]),
@@ -18,6 +18,9 @@ export const load: PageServerLoad = async ({ fetch, params, locals, cookies }) =
 			.catch(() => [] as WfResult[]),
 		loadKellyStatus(fetch)
 	]);
+	// Coerce to arrays — a malformed 200 body would otherwise crash the sort/reduce below.
+	const runs = Array.isArray(runsRaw) ? runsRaw : [];
+	const wf = Array.isArray(wfRaw) ? wfRaw : [];
 	const kelly = kellyStatus?.strategies.find((e) => e.name === name) ?? null;
 	const meta = getStrategyMeta(name);
 	if (!meta && runs.length === 0) throw error(404, `Unknown strategy: ${name}`);

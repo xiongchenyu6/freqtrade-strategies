@@ -30,8 +30,8 @@ interface Holding {
 
 // ---------- AES-GCM wrap/unwrap ----------
 
-function b64decode(s: string): Uint8Array {
-	return Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+function b64decode(s: string): Uint8Array<ArrayBuffer> {
+	return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
 }
 function b64encode(u: Uint8Array): string {
 	let s = '';

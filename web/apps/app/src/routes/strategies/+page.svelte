@@ -128,7 +128,7 @@
 			!pts.some(q => q.x <= p.x && q.y >= p.y && (q.x < p.x || q.y > p.y))
 		).sort((a, b) => a.x - b.x);
 		const paretoLine = pareto.map(p => `${toX(p.x).toFixed(1)},${toY(p.y).toFixed(1)}`).join(' ');
-		return { pts: pts.map(p => ({ ...p, cx: toX(p.x), cy: toY(p.y), color: modeColor[p.mode] ?? '#94a3b8' })), paretoLine, W, H, PL, PB, PT, xMax, yMin, yMax };
+		return { pts: pts.map(p => ({ ...p, cx: toX(p.x), cy: toY(p.y), color: modeColor[p.mode] ?? '#94a3b8' })), paretoLine, W, H, PL, PB, PT, PR, xMax, yMin, yMax };
 	});
 
 	// Profit distribution by status: avg & best profit per status group
@@ -343,7 +343,7 @@
 			name: s.name, runs: s.runs, calmar: s.best_calmar!,
 			color: s.best_calmar! > 0 ? 'var(--ch-profit)' : 'var(--ch-loss)',
 		}));
-		return { dots, W, H, PL, PB, PT, xMin, xMax, yMin, yMax, zeroY, corr };
+		return { dots, W, H, PL, PB, PT, PR, xMin, xMax, yMin, yMax, zeroY, corr };
 	});
 
 	// Factor count distribution: how many factors does each strategy use? (distinct from factorUsageBar popularity, runsPerStrategyHistogram run count)
@@ -835,7 +835,7 @@
 	const strategyWinRateVsSortino = $derived.by(() => {
 		const pts = data.strategies
 			.filter(s => s.best_win_rate != null && isFinite(s.best_win_rate!) && s.best_sortino != null && isFinite(s.best_sortino!))
-			.map(s => ({ name: s.name, wr: s.best_win_rate! * 100, sortino: s.best_sortino!, calmar: s.best_calmar ?? 0 }));
+			.map(s => ({ name: s.name, wr: s.best_win_rate!, sortino: s.best_sortino!, calmar: s.best_calmar ?? 0 }));
 		if (pts.length < 4) return null;
 		const W = 520, H = 100, PAD = 12;
 		const mnW = Math.min(...pts.map(p => p.wr)), mxW = Math.max(...pts.map(p => p.wr), mnW + 1);
@@ -982,8 +982,8 @@
 		const tfs = ['1m','3m','5m','15m','30m','1h','2h','4h','6h','12h','1d'];
 		const map = new Map<string, Map<string, number>>();
 		for (const s of data.strategies) {
-			if (!s.name || !s.best_timeframe) continue;
-			const tf = s.best_timeframe;
+			if (!s.name || !s.timeframe) continue;
+			const tf = s.timeframe;
 			const decade = (s.name ?? "").slice(0, 4);
 			if (!map.has(decade)) map.set(decade, new Map());
 			const inner = map.get(decade)!;
@@ -1001,8 +1001,8 @@
 
 	const strategyRunCountVsBestProfit = $derived.by(() => {
 		const pts = data.strategies
-			.filter(s => s.run_count != null && s.run_count >= 2 && s.best_profit != null && isFinite(s.best_profit))
-			.map(s => ({ runs: s.run_count!, profit: s.best_profit!, name: (s.name ?? '').slice(0, 10) }));
+			.filter(s => s.runs != null && s.runs >= 2 && s.best_profit_pct != null && isFinite(s.best_profit_pct))
+			.map(s => ({ runs: s.runs!, profit: s.best_profit_pct!, name: (s.name ?? '').slice(0, 10) }));
 		if (pts.length < 5) return null;
 		const rMax = Math.max(...pts.map(p => p.runs), 1);
 		const pMin = Math.min(...pts.map(p => p.profit)), pMax = Math.max(...pts.map(p => p.profit), pMin + 0.01);
@@ -1039,10 +1039,10 @@
 	const strategyModeWinRateComparison = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const s of data.strategies) {
-			if (!s.trading_mode || s.best_win_rate == null || !isFinite(s.best_win_rate)) continue;
-			const mode = s.trading_mode;
+			if (!s.mode || s.best_win_rate == null || !isFinite(s.best_win_rate)) continue;
+			const mode = s.mode;
 			if (!map.has(mode)) map.set(mode, []);
-			map.get(mode)!.push(s.best_win_rate * 100);
+			map.get(mode)!.push(s.best_win_rate);
 		}
 		const rows = [...map.entries()]
 			.filter(([, vals]) => vals.length >= 2)
@@ -1060,8 +1060,8 @@
 
 	const strategyBestProfitHistogram = $derived.by(() => {
 		const vals = data.strategies
-			.filter(s => s.best_profit != null && isFinite(s.best_profit))
-			.map(s => s.best_profit!);
+			.filter(s => s.best_profit_pct != null && isFinite(s.best_profit_pct))
+			.map(s => s.best_profit_pct!);
 		if (vals.length < 6) return null;
 		const mn = Math.min(...vals), mx = Math.max(...vals);
 		const BINS = 10, step = Math.max(0.01, (mx - mn) / BINS);
@@ -1078,10 +1078,10 @@
 	const strategyRunCountTimeline = $derived.by(() => {
 		const map = new Map<string, Map<string, number>>();
 		for (const s of data.strategies) {
-			if (!s.strategy || !s.last_run_date) continue;
-			const mo = s.last_run_date.slice(0, 7);
+			if (!s.name || !s.last_imported) continue;
+			const mo = s.last_imported.slice(0, 7);
 			if (!map.has(mo)) map.set(mo, new Map());
-			map.get(mo)!.set(s.strategy, (map.get(mo)!.get(s.strategy) ?? 0) + 1);
+			map.get(mo)!.set(s.name, (map.get(mo)!.get(s.name) ?? 0) + 1);
 		}
 		const months = [...map.keys()].sort();
 		if (months.length < 3) return null;
@@ -1123,8 +1123,8 @@
 		const pts = data.strategies.filter(s =>
 			s.best_sharpe != null && isFinite(s.best_sharpe) && Math.abs(s.best_sharpe) < 50 &&
 			s.best_win_rate != null && isFinite(s.best_win_rate) &&
-			s.best_profit != null && isFinite(s.best_profit)
-		).map(s => ({ name: s.name?.slice(0, 10) ?? '', sharpe: s.best_sharpe!, wr: s.best_win_rate! * 100, profit: s.best_profit! }));
+			s.best_profit_pct != null && isFinite(s.best_profit_pct)
+		).map(s => ({ name: s.name?.slice(0, 10) ?? '', sharpe: s.best_sharpe!, wr: s.best_win_rate!, profit: s.best_profit_pct! }));
 		if (pts.length < 5) return null;
 		const sMin = Math.min(...pts.map(p => p.sharpe)), sMax = Math.max(...pts.map(p => p.sharpe), sMin + 0.1);
 		const wMin = Math.min(...pts.map(p => p.wr)), wMax = Math.max(...pts.map(p => p.wr), wMin + 0.1);
@@ -1734,11 +1734,11 @@
 	const strategyAvgProfitVsDrawdownScatter = $derived.by(() => {
 		if (!strategies || strategies.length < 5) return null;
 		const pts = strategies
-			.filter(s => s.avg_profit != null && s.avg_drawdown != null)
+			.filter(s => s.best_profit_pct != null && s.worst_dd_pct != null)
 			.map(s => ({
-				x: (s.avg_drawdown as number) * 100,
-				y: (s.avg_profit as number) * 100,
-				name: (s.strategy as string ?? '').slice(0, 8)
+				x: (s.worst_dd_pct as number),
+				y: (s.best_profit_pct as number),
+				name: (s.name as string ?? '').slice(0, 8)
 			}))
 			.filter(p => p.x > 0 && p.x < 100);
 		if (pts.length < 4) return null;
@@ -1753,7 +1753,7 @@
 		const byTF = new Map<string, number>();
 		for (const s of strategies) {
 			if (s.timeframe == null) continue;
-			byTF.set(s.timeframe as string, (byTF.get(s.timeframe as string) ?? 0) + (s.run_count as number ?? 1));
+			byTF.set(s.timeframe as string, (byTF.get(s.timeframe as string) ?? 0) + (s.runs as number ?? 1));
 		}
 		if (byTF.size < 2) return null;
 		const bars = [...byTF.entries()]
@@ -1769,10 +1769,10 @@
 		if (!strategies || strategies.length < 5) return null;
 		const byMonth = new Map<string, number[]>();
 		for (const s of strategies) {
-			if (!s.created_at || s.calmar_ratio == null) continue;
-			const mo = (s.created_at as string).slice(0, 7);
+			if (!s.last_imported || s.best_calmar == null) continue;
+			const mo = (s.last_imported as string).slice(0, 7);
 			const arr = byMonth.get(mo) ?? [];
-			arr.push(s.calmar_ratio as number);
+			arr.push(s.best_calmar as number);
 			byMonth.set(mo, arr);
 		}
 		if (byMonth.size < 3) return null;
@@ -1791,8 +1791,8 @@
 	const strategyProfitHistogram = $derived.by(() => {
 		if (!strategies || strategies.length < 8) return null;
 		const vals = strategies
-			.filter(s => s.avg_profit != null)
-			.map(s => (s.avg_profit as number) * 100)
+			.filter(s => s.best_profit_pct != null)
+			.map(s => (s.best_profit_pct as number))
 			.sort((a, b) => a - b);
 		if (vals.length < 6) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -1813,10 +1813,10 @@
 	const strategyTopCalmarLeaderboard = $derived.by(() => {
 		if (!strategies || strategies.length < 4) return null;
 		const rows = [...strategies]
-			.filter(s => s.calmar_ratio != null)
-			.sort((a, b) => (b.calmar_ratio as number) - (a.calmar_ratio as number))
+			.filter(s => s.best_calmar != null)
+			.sort((a, b) => (b.best_calmar as number) - (a.best_calmar as number))
 			.slice(0, 10)
-			.map(s => ({ name: (s.strategy as string ?? '').slice(0, 16), calmar: s.calmar_ratio as number }));
+			.map(s => ({ name: (s.name as string ?? '').slice(0, 16), calmar: s.best_calmar as number }));
 		if (rows.length < 3) return null;
 		const maxAbs = Math.max(...rows.map(r => Math.abs(r.calmar)), 0.01);
 		const W = 300, H = rows.length * 18 + 10, PAD = 8, midX = W / 2;
@@ -1828,9 +1828,9 @@
 		if (!strategies || strategies.length < 5) return null;
 		const byTF = new Map<string, number[]>();
 		for (const s of strategies) {
-			if (!s.timeframe || s.avg_sharpe == null) continue;
+			if (!s.timeframe || s.best_sharpe == null) continue;
 			const arr = byTF.get(s.timeframe as string) ?? [];
-			arr.push(s.avg_sharpe as number);
+			arr.push(s.best_sharpe as number);
 			byTF.set(s.timeframe as string, arr);
 		}
 		const bars = [...byTF.entries()]
@@ -1847,8 +1847,8 @@
 	const strategyWinRateVsSortinoScatter = $derived.by(() => {
 		if (!strategies || strategies.length < 8) return null;
 		const pts = strategies
-			.filter(s => s.avg_win_rate != null && s.avg_sortino != null)
-			.map(s => ({ x: (s.avg_win_rate as number) * 100, y: s.avg_sortino as number, name: (s.name as string) }));
+			.filter(s => s.best_win_rate != null && s.best_sortino != null)
+			.map(s => ({ x: (s.best_win_rate as number), y: s.best_sortino as number, name: (s.name as string) }));
 		if (pts.length < 6) return null;
 		const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
 		const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -1861,8 +1861,8 @@
 	const strategyDrawdownHistogram = $derived.by(() => {
 		if (!strategies || strategies.length < 8) return null;
 		const vals = strategies
-			.filter(s => s.avg_drawdown != null && (s.avg_drawdown as number) >= 0)
-			.map(s => (s.avg_drawdown as number) * 100)
+			.filter(s => s.worst_dd_pct != null && (s.worst_dd_pct as number) >= 0)
+			.map(s => (s.worst_dd_pct as number))
 			.sort((a, b) => a - b);
 		if (vals.length < 6) return null;
 		const minV = vals[0], maxV = Math.min(vals[vals.length - 1], 100);
@@ -2486,7 +2486,7 @@
 					<line x1={rdc.PL} x2={rdc.W - rdc.PR} y1={rdc.zeroY} y2={rdc.zeroY} stroke="var(--ch-rule)" stroke-width="1" stroke-dasharray="3 3"/>
 				{/if}
 				{#each rdc.dots as d}
-					<circle cx={d.cx} cy={d.cy} r="4" style="fill:{d.color}" opacity="0.75" title="{d.name} · {d.runs} runs · Calmar {d.calmar.toFixed(2)}"/>
+					<circle cx={d.cx} cy={d.cy} r="4" style="fill:{d.color}" opacity="0.75"><title>{d.name} · {d.runs} runs · Calmar {d.calmar.toFixed(2)}</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground">
@@ -2726,7 +2726,7 @@
 				{/if}
 				<line x1={scw.PAD} y1={scw.y05} x2={scw.W - scw.PAD} y2={scw.y05} stroke="var(--ch-axis-faint)" stroke-width="0.6" stroke-dasharray="3,2"/>
 				{#each scw.dots as d}
-					<circle cx={d.cx} cy={d.cy} r="3" fill={d.color} title="{d.name}: Calmar {d.calmar.toFixed(2)}, WR {(d.wr*100).toFixed(0)}%"/>
+					<circle cx={d.cx} cy={d.cy} r="3" fill={d.color}><title>{d.name}: Calmar {d.calmar.toFixed(2)}, WR {(d.wr*100).toFixed(0)}%</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground">
@@ -2820,7 +2820,7 @@
 			<svg viewBox="0 0 {strategyProfitVsSortino.W} {strategyProfitVsSortino.H}" class="w-full">
 				<line x1="0" y1={strategyProfitVsSortino.zeroY} x2={strategyProfitVsSortino.W} y2={strategyProfitVsSortino.zeroY} stroke="var(--ch-axis-faint)" stroke-width="1" stroke-dasharray="4,3"/>
 				{#each strategyProfitVsSortino.dots as d}
-					<circle cx={d.cx} cy={d.cy} r="4" fill={d.color} title={d.name}/>
+					<circle cx={d.cx} cy={d.cy} r="4" fill={d.color}><title>{d.name}</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-2 flex gap-4 text-[9px] text-muted-foreground">
@@ -2840,7 +2840,7 @@
 					<line x1="0" y1={strategyDrawdownVsCalmar.zeroY} x2={strategyDrawdownVsCalmar.W} y2={strategyDrawdownVsCalmar.zeroY} stroke="var(--ch-axis-faint)" stroke-width="1" stroke-dasharray="4,3"/>
 				{/if}
 				{#each strategyDrawdownVsCalmar.dots as d}
-					<circle cx={d.cx} cy={d.cy} r="4" fill={d.color} title={d.name}/>
+					<circle cx={d.cx} cy={d.cy} r="4" fill={d.color}><title>{d.name}</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-2 flex gap-4 text-[9px] text-muted-foreground">

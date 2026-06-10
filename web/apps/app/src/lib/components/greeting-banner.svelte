@@ -17,7 +17,7 @@
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const name = $derived(
-		($session?.user.email ?? '').split('@')[0] || ($session?.user.sub ?? '').slice(0, 6)
+		($session?.user?.email ?? '').split('@')[0] || ($session?.user?.sub ?? '').slice(0, 6)
 	);
 
 	let loaded = $state(false);

@@ -837,7 +837,7 @@
 			tip: `Run #${r.id} · Sharpe ${r.sharpe!.toFixed(2)} · Calmar ${r.calmar!.toFixed(2)} · ${r.total_profit_pct! >= 0 ? '+' : ''}${r.total_profit_pct!.toFixed(1)}%`,
 			isBest: r.id === runs[0]?.id,
 		}));
-		return { dots, W, H, PL, PB, PT, xMin, xMax, yMin, yMax };
+		return { dots, W, H, PL, PB, PT, PR, xMin, xMax, yMin, yMax };
 	});
 
 	// Monthly return heatmap: cumulative profit% per calendar month
@@ -1794,7 +1794,7 @@
 	const tradeStakeSizeDistribution = $derived.by(() => {
 		const vals = trades
 			.filter(t => t.stake_amount != null && isFinite(t.stake_amount) && t.stake_amount > 0)
-			.map(t => t.stake_amount);
+			.map(t => t.stake_amount!);
 		if (vals.length < 5) return null;
 		const mn = Math.min(...vals), mx = Math.max(...vals);
 		if (mx <= mn) return null;
@@ -2223,7 +2223,7 @@
 			if (!t.open_date) continue;
 			const h = new Date(t.open_date).getUTCHours();
 			const e = map.get(h) ?? { sum: 0, count: 0 };
-			e.sum += (t.profit_ratio ?? 0) * 100;
+			e.sum += (t.profit_pct ?? 0);
 			e.count++;
 			map.set(h, e);
 		}
@@ -2268,7 +2268,7 @@
 			if (!t.close_date) continue;
 			const mo = (t.close_date as string).slice(0, 7);
 			const e = map.get(mo) ?? { wins: 0, losses: 0 };
-			if ((t.profit_ratio ?? 0) >= 0) e.wins++; else e.losses++;
+			if ((t.profit_pct ?? 0) >= 0) e.wins++; else e.losses++;
 			map.set(mo, e);
 		}
 		if (map.size < 3) return null;
@@ -2286,9 +2286,9 @@
 		if (!trades || trades.length < 8) return null;
 		const map = new Map<string, { sum: number; count: number }>();
 		for (const t of trades) {
-			if (!t.pair || t.profit_ratio == null) continue;
+			if (!t.pair || t.profit_pct == null) continue;
 			const e = map.get(t.pair) ?? { sum: 0, count: 0 };
-			e.sum += (t.profit_ratio as number) * 100;
+			e.sum += (t.profit_pct as number);
 			e.count++;
 			map.set(t.pair, e);
 		}
@@ -2321,8 +2321,8 @@
 	const tradeAvgProfitByStake = $derived.by(() => {
 		if (!trades || trades.length < 10) return null;
 		const stakes = trades
-			.filter(t => t.stake_amount != null && t.profit_ratio != null)
-			.map(t => ({ stake: t.stake_amount as number, profit: (t.profit_ratio as number) * 100 }));
+			.filter(t => t.stake_amount != null && t.profit_pct != null)
+			.map(t => ({ stake: t.stake_amount as number, profit: (t.profit_pct as number) }));
 		if (stakes.length < 8) return null;
 		const maxStake = Math.max(...stakes.map(s => s.stake), 0.01);
 		const bucketCount = 8;
@@ -2350,10 +2350,10 @@
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const map = new Map<number, number[]>();
 		for (const t of trades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const dow = new Date(t.open_date as string).getUTCDay();
 			const arr = map.get(dow) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number));
 			map.set(dow, arr);
 		}
 		const rows = DOW.map((label, i) => {
@@ -2370,14 +2370,14 @@
 	const tradeRollingWinRate = $derived.by(() => {
 		if (!trades || trades.length < 20) return null;
 		const sorted = [...trades]
-			.filter(t => t.open_date && t.profit_ratio != null)
+			.filter(t => t.open_date && t.profit_pct != null)
 			.sort((a, b) => (a.open_date as string).localeCompare(b.open_date as string));
 		if (sorted.length < 20) return null;
 		const window = 20;
 		const pts: { i: number; wr: number }[] = [];
 		for (let i = window - 1; i < sorted.length; i++) {
 			const slice = sorted.slice(i - window + 1, i + 1);
-			const wins = slice.filter(t => (t.profit_ratio as number) > 0).length;
+			const wins = slice.filter(t => (t.profit_pct as number) > 0).length;
 			pts.push({ i, wr: (wins / window) * 100 });
 		}
 		const W = 340, H = 68, PAD = 10;
@@ -2393,8 +2393,8 @@
 	const tradeProfitCDF = $derived.by(() => {
 		if (!trades || trades.length < 15) return null;
 		const profits = trades
-			.filter(t => t.profit_ratio != null)
-			.map(t => (t.profit_ratio as number) * 100)
+			.filter(t => t.profit_pct != null)
+			.map(t => (t.profit_pct as number))
 			.sort((a, b) => a - b);
 		if (profits.length < 15) return null;
 		const minP = profits[0], maxP = profits[profits.length - 1];
@@ -2414,10 +2414,10 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.open_date || t.trade_duration == null) continue;
+			if (!t.open_date || t.trade_duration_min == null) continue;
 			const mo = (t.open_date as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push((t.trade_duration as number) / 60);
+			arr.push((t.trade_duration_min as number) / 60);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -2433,9 +2433,9 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.pair || t.trade_duration == null) continue;
+			if (!t.pair || t.trade_duration_min == null) continue;
 			const arr = map.get(t.pair as string) ?? [];
-			arr.push((t.trade_duration as number) / 3600);
+			arr.push((t.trade_duration_min as number) / 3600);
 			map.set(t.pair as string, arr);
 		}
 		if (map.size < 3) return null;
@@ -2479,7 +2479,7 @@
 			const tag = ((t.enter_tag as string) || 'default').slice(0, 14);
 			const s = map.get(tag) ?? { wins: 0, total: 0 };
 			s.total += 1;
-			if ((t.profit_ratio as number) > 0) s.wins += 1;
+			if ((t.profit_pct as number) > 0) s.wins += 1;
 			map.set(tag, s);
 		}
 		if (map.size < 2) return null;
@@ -2518,10 +2518,10 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, { wins: number; losses: number }>();
 		for (const t of trades) {
-			if (!t.close_date || t.profit_ratio == null) continue;
+			if (!t.close_date || t.profit_pct == null) continue;
 			const mo = (t.close_date as string).slice(0, 7);
 			const s = map.get(mo) ?? { wins: 0, losses: 0 };
-			if ((t.profit_ratio as number) > 0) s.wins++; else s.losses++;
+			if ((t.profit_pct as number) > 0) s.wins++; else s.losses++;
 			map.set(mo, s);
 		}
 		if (map.size < 3) return null;
@@ -2536,11 +2536,11 @@
 		if (!runs || runs.length < 5) return null;
 		const map = new Map<string, number[]>();
 		for (const r of runs) {
-			const pc = Array.isArray(r.pairs) ? r.pairs.length : (r.pair_count as number | undefined);
-			if (pc == null || r.profit_total_pct == null) continue;
+			const pc = Array.isArray(r.pairs) ? r.pairs.length : undefined;
+			if (pc == null || r.total_profit_pct == null) continue;
 			const bucket = pc <= 5 ? '1-5' : pc <= 15 ? '6-15' : pc <= 30 ? '16-30' : '30+';
 			const arr = map.get(bucket) ?? [];
-			arr.push(r.profit_total_pct as number);
+			arr.push(r.total_profit_pct as number);
 			map.set(bucket, arr);
 		}
 		if (map.size < 2) return null;
@@ -2587,7 +2587,7 @@
 			const reason = (t.exit_reason as string | undefined) ?? 'unknown';
 			const s = byReason.get(reason) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((t.profit_ratio as number | undefined ?? 0) > 0) s.wins++;
+			if ((t.profit_pct as number | undefined ?? 0) > 0) s.wins++;
 			byReason.set(reason, s);
 		}
 		const rows = [...byReason.entries()]
@@ -2605,11 +2605,11 @@
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const map = new Map<string, { wins: number; total: number }>();
 		for (const t of trades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const dow = DAYS[new Date(t.open_date as string).getDay()];
 			const s = map.get(dow) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((t.profit_ratio as number) > 0) s.wins++;
+			if ((t.profit_pct as number) > 0) s.wins++;
 			map.set(dow, s);
 		}
 		const rows = DAYS.filter(d => map.has(d)).map(d => {
@@ -2626,11 +2626,11 @@
 		if (!trades || trades.length < 10) return null;
 		const byWeek = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.close_date || t.profit_ratio == null) continue;
+			if (!t.close_date || t.profit_pct == null) continue;
 			const d = new Date(t.close_date as string);
 			const week = `${d.getFullYear()}-W${String(Math.ceil((d.getDate() - d.getDay() + 6) / 7)).padStart(2, '0')}`;
 			const arr = byWeek.get(week) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number));
 			byWeek.set(week, arr);
 		}
 		if (byWeek.size < 4) return null;
@@ -2646,8 +2646,8 @@
 	const tradeStakeProfitScatter = $derived.by(() => {
 		if (!trades || trades.length < 10) return null;
 		const pts = trades
-			.filter(t => t.stake_amount != null && t.profit_ratio != null)
-			.map(t => ({ stake: t.stake_amount as number, profit: (t.profit_ratio as number) * 100 }));
+			.filter(t => t.stake_amount != null && t.profit_pct != null)
+			.map(t => ({ stake: t.stake_amount as number, profit: (t.profit_pct as number) }));
 		if (pts.length < 10) return null;
 		const maxStake = Math.max(...pts.map(p => p.stake), 0.01);
 		const maxP = Math.max(...pts.map(p => Math.abs(p.profit)), 0.01);
@@ -2679,7 +2679,7 @@
 			const tag = (t.exit_reason as string | null) ?? 'unknown';
 			const rec = map.get(tag) ?? { wins: 0, total: 0 };
 			rec.total++;
-			if ((t.profit_ratio as number ?? 0) > 0) rec.wins++;
+			if ((t.profit_pct as number ?? 0) > 0) rec.wins++;
 			map.set(tag, rec);
 		}
 		const rows = [...map.entries()]
@@ -2720,9 +2720,9 @@
 		if (!trades || trades.length < 10) return null;
 		const byPair = new Map<string, number[]>();
 		for (const t of trades) {
-			if (t.pair == null || t.profit_ratio == null) continue;
+			if (t.pair == null || t.profit_pct == null) continue;
 			const arr = byPair.get(t.pair as string) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number));
 			byPair.set(t.pair as string, arr);
 		}
 		if (byPair.size < 4) return null;
@@ -2747,7 +2747,7 @@
 			const hr = new Date(t.close_date as string).getUTCHours();
 			const prev = byHour.get(hr) ?? { wins: 0, total: 0 };
 			prev.total++;
-			if ((t.profit_ratio as number ?? 0) > 0) prev.wins++;
+			if ((t.profit_pct as number ?? 0) > 0) prev.wins++;
 			byHour.set(hr, prev);
 		}
 		const bars = [...byHour.entries()]
@@ -2766,11 +2766,11 @@
 		const matrix = Array.from({ length: 7 }, () => Array(24).fill(0));
 		const counts = Array.from({ length: 7 }, () => Array(24).fill(0));
 		for (const t of trades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const dt = new Date(t.open_date as string);
 			const dow = dt.getUTCDay();
 			const hr = dt.getUTCHours();
-			matrix[dow][hr] += (t.profit_ratio as number) * 100;
+			matrix[dow][hr] += (t.profit_pct as number);
 			counts[dow][hr]++;
 		}
 		const cells: { dow: number; hr: number; avg: number }[] = [];
@@ -2794,11 +2794,11 @@
 		if (!trades || trades.length < 10) return null;
 		const sides = new Map<string, { wins: number; total: number; sumProfit: number }>();
 		for (const t of trades) {
-			const side = (t.trade_direction as string ?? 'long');
+			const side = t.is_short ? "short" : "long";
 			const prev = sides.get(side) ?? { wins: 0, total: 0, sumProfit: 0 };
 			prev.total++;
-			prev.sumProfit += (t.profit_ratio as number ?? 0) * 100;
-			if ((t.profit_ratio as number ?? 0) > 0) prev.wins++;
+			prev.sumProfit += (t.profit_pct as number ?? 0);
+			if ((t.profit_pct as number ?? 0) > 0) prev.wins++;
 			sides.set(side, prev);
 		}
 		if (sides.size < 1) return null;
@@ -2822,7 +2822,7 @@
 		const windowSize = Math.max(5, Math.floor(sorted.length / 15));
 		const pts = sorted.map((_, i) => {
 			const slice = sorted.slice(Math.max(0, i - windowSize), i + 1);
-			const wins = slice.filter(t => (t.profit_ratio as number ?? 0) > 0).length;
+			const wins = slice.filter(t => (t.profit_pct as number ?? 0) > 0).length;
 			return { i, wr: (wins / slice.length) * 100 };
 		});
 		const W = 300, H = 65, PAD = 10;

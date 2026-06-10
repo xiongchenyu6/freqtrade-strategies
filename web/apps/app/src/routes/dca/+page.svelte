@@ -75,11 +75,11 @@
 	// DCA projection chart
 	let projMonthly = $state(500);
 	let projBtcPrice = $state<number | null>(null);
-	const SCENARIOS = [
+	const SCENARIOS = $derived([
 		{ label: lang === 'en' ? 'Bear (0% CAGR)' : '熊市 (0%)', cagr: 0,   color: 'var(--ch-loss-strong)' },
 		{ label: lang === 'en' ? 'Base (40% CAGR)' : '基础 (40%)', cagr: 0.4, color: 'var(--ch-warn)' },
 		{ label: lang === 'en' ? 'Bull (100% CAGR)' : '牛市 (100%)', cagr: 1.0, color: 'var(--ch-profit-strong)' },
-	] as const;
+	] as const);
 	const projectionData = $derived.by(() => {
 		const btc = projBtcPrice ?? 60000;
 		const months = 60; // 5 years
@@ -769,7 +769,7 @@
 		);
 		if (pts.length < 8) return null;
 		const xs = pts.map(e => e.severity as number);
-		const ys = pts.map(e => e.amount_usdt);
+		const ys = pts.map(e => e.amount_usdt as number);
 		const xMin = Math.min(...xs), xMax = Math.max(...xs);
 		const yMin = Math.min(...ys), yMax = Math.max(...ys);
 		if (xMax - xMin < 0.01 || yMax - yMin < 0.01) return null;
@@ -779,10 +779,10 @@
 		const KIND_COLORS: Record<string, string> = { FLASH: 'var(--ch-loss)', FAST: 'var(--ch-warn)', SUSTAIN: 'var(--ch-violet)', CAPITUL: 'var(--ch-violet-strong)' };
 		const dots = pts.map(e => ({
 			cx: toX(e.severity as number),
-			cy: toY(e.amount_usdt),
+			cy: toY(e.amount_usdt as number),
 			color: KIND_COLORS[e.kind ?? ''] ?? 'var(--ch-axis)',
 			sev: e.severity as number,
-			amt: e.amount_usdt,
+			amt: e.amount_usdt as number,
 			kind: e.kind
 		}));
 		return { dots, W, H, PAD, xMin, xMax, yMin, yMax };
@@ -925,12 +925,12 @@
 		for (const k of kinds) cumByKind[k] = 0;
 		const points: { ts: string; totals: Record<string, number> }[] = [];
 		for (const t of sorted) {
-			if (cumByKind[t.kind] !== undefined) cumByKind[t.kind] += t.amount_usdt;
+			if (cumByKind[t.kind] !== undefined) cumByKind[t.kind] += t.amount_usdt ?? 0;
 			points.push({ ts: t.ts, totals: { ...cumByKind } });
 		}
 		const W = 560, H = 100, PAD = 8;
 		const maxTotal = Math.max(...points.map(p => kinds.reduce((s, k) => s + (p.totals[k] ?? 0), 0)), 1);
-		const KIND_COL: Record<string, string> = { event: 'var(--ch-loss)', weekly: 'var(--ch-profit)', manual: 'var(--ch-violet)', dip: 'var(--ch-warn)', fear: 'var(--ch-teal)' };
+		const KIND_COL: Record<string, string> = { FLASH: 'var(--ch-loss)', FAST: 'var(--ch-warn)', SUSTAIN: 'var(--ch-violet)', CAPITUL: 'var(--ch-violet-strong)' };
 		const toX = (i: number) => PAD + (i / Math.max(1, points.length - 1)) * (W - PAD * 2);
 		const toY = (v: number) => H - PAD - (v / maxTotal) * (H - PAD * 2);
 		const lines = kinds.map(k => ({
@@ -962,11 +962,12 @@
 	});
 
 	const dcaSeverityTrendTimeline = $derived.by(() => {
-		const SEV_SCORE: Record<string, number> = { mild: 1, moderate: 2, severe: 3, extreme: 4 };
+		// severity is a signed numeric score in the live data (see dcaSeverityAmountSummary) —
+		// plot the raw score directly instead of mapping nonexistent string levels.
 		const pts = [...filteredTriggers]
-			.filter(t => t.severity && SEV_SCORE[t.severity] != null)
 			.sort((a, b) => a.ts.localeCompare(b.ts))
-			.map(t => SEV_SCORE[t.severity]);
+			.map(t => t.severity)
+			.filter((s): s is number => s != null && isFinite(s));
 		if (pts.length < 5) return null;
 		const window = 5;
 		const smoothed = pts.slice(window - 1).map((_, i) => {
@@ -1148,7 +1149,7 @@
 			.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
 		if (sorted.length < 3) return null;
 		let cum = 0;
-		const pts = sorted.map(t => { cum += t.amount_usdt; return cum; });
+		const pts = sorted.map(t => { cum += t.amount_usdt ?? 0; return cum; });
 		const W = 560, H = 70, PAD = 8;
 		const mn = 0, mx = pts[pts.length - 1];
 		if (mx <= 0) return null;
@@ -1230,7 +1231,7 @@
 	const dcaFngAmountDotPlot = $derived.by(() => {
 		const pts = triggers
 			.filter(t => t.fng != null && t.amount_usdt != null && t.amount_usdt > 0)
-			.map(t => ({ fng: t.fng as number, amount: t.amount_usdt, kind: t.kind }));
+			.map(t => ({ fng: t.fng as number, amount: t.amount_usdt as number, kind: t.kind }));
 		if (pts.length < 4) return null;
 		const W = 380, H = 110, PAD = 20;
 		const maxAmt = Math.max(...pts.map(p => p.amount), 1);
@@ -1315,44 +1316,40 @@
 	});
 
 	const dcaAssetAllocationByKind = $derived.by(() => {
-		const kinds = ['SCHEDULED', 'EVENT'];
-		const map = new Map<string, Map<string, number>>();
+		// Event DCA is BTC-only — there is no per-asset field, so group spend by trigger kind.
+		const map = new Map<string, number>();
 		for (const t of triggers) {
-			if (!t.asset || !t.kind || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
-			if (!map.has(t.kind)) map.set(t.kind, new Map());
-			const inner = map.get(t.kind)!;
-			inner.set(t.asset, (inner.get(t.asset) ?? 0) + t.amount_usdt);
+			if (!t.kind || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
+			map.set(t.kind, (map.get(t.kind) ?? 0) + t.amount_usdt);
 		}
-		const usedKinds = kinds.filter(k => map.has(k));
-		if (usedKinds.length === 0) return null;
-		const allAssets = [...new Set([...map.values()].flatMap(m => [...m.keys()]))].sort();
-		if (allAssets.length < 2) return null;
-		const rows = allAssets.map(asset => {
-			const byKind = usedKinds.map(k => ({ kind: k, amt: map.get(k)?.get(asset) ?? 0 }));
-			const total = byKind.reduce((s, e) => s + e.amt, 0);
-			return { asset: asset.slice(0, 6), byKind, total };
+		const usedKinds = [...map.keys()].sort();
+		if (usedKinds.length < 2) return null;
+		const rows = usedKinds.map(kind => {
+			const amt = map.get(kind) ?? 0;
+			return { asset: kind.slice(0, 6), byKind: [{ kind, amt }], total: amt };
 		}).filter(r => r.total > 0).sort((a, b) => b.total - a.total).slice(0, 8);
 		if (rows.length < 2) return null;
 		const maxTotal = Math.max(...rows.map(r => r.total), 0.01);
-		const colors: Record<string, string> = { SCHEDULED: 'var(--ch-violet)', EVENT: 'var(--ch-loss)' };
+		const colors: Record<string, string> = { FLASH: 'var(--ch-loss)', FAST: 'var(--ch-warn)', SUSTAIN: 'var(--ch-violet)', CAPITUL: 'var(--ch-violet-strong)' };
 		return { rows, usedKinds, maxTotal, colors };
 	});
 
 	const dcaMonthlyAssetSpend = $derived.by(() => {
+		// BTC-only: stack the monthly spend by trigger kind instead of nonexistent asset.
 		const assetTotals = new Map<string, number>();
 		for (const t of triggers) {
-			if (!t.asset || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
-			assetTotals.set(t.asset, (assetTotals.get(t.asset) ?? 0) + t.amount_usdt);
+			if (!t.kind || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
+			assetTotals.set(t.kind, (assetTotals.get(t.kind) ?? 0) + t.amount_usdt);
 		}
 		const topAssets = [...assetTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([a]) => a);
 		if (topAssets.length < 2) return null;
 		const monthMap = new Map<string, Map<string, number>>();
 		for (const t of triggers) {
-			if (!t.triggered_at || !t.asset || t.amount_usdt == null || !topAssets.includes(t.asset)) continue;
-			const mo = t.triggered_at.slice(0, 7);
+			if (!t.ts || !t.kind || t.amount_usdt == null || !topAssets.includes(t.kind)) continue;
+			const mo = t.ts.slice(0, 7);
 			if (!monthMap.has(mo)) monthMap.set(mo, new Map());
 			const inner = monthMap.get(mo)!;
-			inner.set(t.asset, (inner.get(t.asset) ?? 0) + t.amount_usdt);
+			inner.set(t.kind, (inner.get(t.kind) ?? 0) + t.amount_usdt);
 		}
 		const months = [...monthMap.keys()].sort().slice(-9);
 		if (months.length < 2) return null;
@@ -1373,8 +1370,8 @@
 		const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const counts = Array(7).fill(0) as number[];
 		for (const t of triggers) {
-			if (!t.triggered_at) continue;
-			const dow = new Date(t.triggered_at).getUTCDay();
+			if (!t.ts) continue;
+			const dow = new Date(t.ts).getUTCDay();
 			counts[dow]++;
 		}
 		if (counts.every(c => c === 0)) return null;
@@ -1385,22 +1382,23 @@
 	});
 
 	const dcaCumSpendByAsset = $derived.by(() => {
+		// BTC-only: cumulative spend lines per trigger kind instead of nonexistent asset.
 		const assetTotals = new Map<string, number>();
 		for (const t of triggers) {
-			if (!t.asset || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
-			assetTotals.set(t.asset, (assetTotals.get(t.asset) ?? 0) + t.amount_usdt);
+			if (!t.kind || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
+			assetTotals.set(t.kind, (assetTotals.get(t.kind) ?? 0) + t.amount_usdt);
 		}
 		const topAssets = [...assetTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([a]) => a);
 		if (topAssets.length < 2) return null;
 		const sorted = [...triggers]
-			.filter(t => t.triggered_at && t.asset && topAssets.includes(t.asset) && t.amount_usdt != null && isFinite(t.amount_usdt))
-			.sort((a, b) => a.triggered_at!.localeCompare(b.triggered_at!));
+			.filter(t => t.ts && t.kind && topAssets.includes(t.kind) && t.amount_usdt != null && isFinite(t.amount_usdt))
+			.sort((a, b) => a.ts.localeCompare(b.ts));
 		if (sorted.length < 5) return null;
 		const cumMap = new Map<string, number>(topAssets.map(a => [a, 0]));
 		const events: { i: number; asset: string; cum: number }[] = [];
 		sorted.forEach((t, i) => {
-			cumMap.set(t.asset!, (cumMap.get(t.asset!) ?? 0) + t.amount_usdt!);
-			events.push({ i, asset: t.asset!, cum: cumMap.get(t.asset!)! });
+			cumMap.set(t.kind, (cumMap.get(t.kind) ?? 0) + (t.amount_usdt ?? 0));
+			events.push({ i, asset: t.kind, cum: cumMap.get(t.kind)! });
 		});
 		const maxCum = Math.max(...[...cumMap.values()], 0.01);
 		const aColors = ['var(--ch-violet-strong)', 'var(--ch-profit-strong)', 'var(--ch-warn)', 'var(--ch-warn)'];
@@ -1418,8 +1416,8 @@
 	const dcaAvgAmountByKindTrend = $derived.by(() => {
 		const kindMonths = new Map<string, Map<string, number[]>>();
 		for (const t of triggers) {
-			if (!t.kind || !t.triggered_at || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
-			const mo = t.triggered_at.slice(0, 7);
+			if (!t.kind || !t.ts || t.amount_usdt == null || !isFinite(t.amount_usdt)) continue;
+			const mo = t.ts.slice(0, 7);
 			if (!kindMonths.has(t.kind)) kindMonths.set(t.kind, new Map());
 			if (!kindMonths.get(t.kind)!.has(mo)) kindMonths.get(t.kind)!.set(mo, []);
 			kindMonths.get(t.kind)!.get(mo)!.push(t.amount_usdt);
@@ -1447,8 +1445,8 @@
 	const dcaTriggerHourDistribution = $derived.by(() => {
 		const buckets = Array.from({ length: 24 }, (_, h) => ({ h, count: 0 }));
 		for (const t of triggers) {
-			if (!t.triggered_at) continue;
-			const h = new Date(t.triggered_at).getUTCHours();
+			if (!t.ts) continue;
+			const h = new Date(t.ts).getUTCHours();
 			if (h >= 0 && h < 24) buckets[h].count++;
 		}
 		const active = buckets.filter(b => b.count > 0);
@@ -1461,10 +1459,10 @@
 	const dcaAvgFngByMonth = $derived.by(() => {
 		const map = new Map<string, { sum: number; count: number }>();
 		for (const e of data.triggers) {
-			if (!e.triggered_at || e.fng_value == null || !isFinite(e.fng_value)) continue;
-			const mo = e.triggered_at.slice(0, 7);
+			if (!e.ts || e.fng == null || !isFinite(e.fng)) continue;
+			const mo = e.ts.slice(0, 7);
 			const cur = map.get(mo) ?? { sum: 0, count: 0 };
-			cur.sum += e.fng_value;
+			cur.sum += e.fng;
 			cur.count++;
 			map.set(mo, cur);
 		}
@@ -1508,8 +1506,8 @@
 	const dcaMonthlyTriggerCount = $derived.by(() => {
 		const map = new Map<string, number>();
 		for (const e of data.triggers) {
-			if (!e.triggered_at) continue;
-			const mo = e.triggered_at.slice(0, 7);
+			if (!e.ts) continue;
+			const mo = e.ts.slice(0, 7);
 			map.set(mo, (map.get(mo) ?? 0) + 1);
 		}
 		if (map.size < 3) return null;
@@ -1526,10 +1524,11 @@
 	});
 
 	const dcaAssetBuyFrequency = $derived.by(() => {
+		// BTC-only: count triggers per kind instead of nonexistent asset.
 		const map = new Map<string, number>();
 		for (const e of data.triggers) {
-			if (!e.asset) continue;
-			map.set(e.asset, (map.get(e.asset) ?? 0) + 1);
+			if (!e.kind) continue;
+			map.set(e.kind, (map.get(e.kind) ?? 0) + 1);
 		}
 		if (map.size < 2) return null;
 		const rows = [...map.entries()].map(([asset, count]) => ({ asset: asset.slice(0, 10), count }))
@@ -1543,10 +1542,10 @@
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const map = new Map<number, number[]>();
 		for (const e of data.triggers) {
-			if (!e.triggered_at || e.amount == null || !isFinite(e.amount) || e.amount <= 0) continue;
-			const dow = new Date(e.triggered_at).getDay();
+			if (!e.ts || e.amount_usdt == null || !isFinite(e.amount_usdt) || e.amount_usdt <= 0) continue;
+			const dow = new Date(e.ts).getDay();
 			const arr = map.get(dow) ?? [];
-			arr.push(e.amount);
+			arr.push(e.amount_usdt);
 			map.set(dow, arr);
 		}
 		if (map.size < 3) return null;
@@ -1567,11 +1566,11 @@
 
 	const dcaCumSpendTimeline = $derived.by(() => {
 		const sorted = data.triggers
-			.filter(e => e.triggered_at && e.amount != null && isFinite(e.amount) && e.amount > 0)
-			.sort((a, b) => a.triggered_at!.localeCompare(b.triggered_at!));
+			.filter(e => e.ts && e.amount_usdt != null && isFinite(e.amount_usdt) && e.amount_usdt > 0)
+			.sort((a, b) => a.ts.localeCompare(b.ts));
 		if (sorted.length < 5) return null;
 		let cum = 0;
-		const pts = sorted.map((e, i) => { cum += e.amount!; return { i, cum, date: e.triggered_at!.slice(0, 10) }; });
+		const pts = sorted.map((e, i) => { cum += e.amount_usdt ?? 0; return { i, cum, date: e.ts.slice(0, 10) }; });
 		const maxCum = pts[pts.length - 1].cum;
 		const W = 360, H = 68, PAD = 10;
 		const toX = (i: number) => PAD + (i / Math.max(pts.length - 1, 1)) * (W - PAD * 2);
@@ -1584,10 +1583,10 @@
 	const dcaMonthlyAvgAmount = $derived.by(() => {
 		const map = new Map<string, number[]>();
 		for (const e of data.triggers) {
-			if (!e.triggered_at || e.amount == null || !isFinite(e.amount) || e.amount <= 0) continue;
-			const mo = e.triggered_at.slice(0, 7);
+			if (!e.ts || e.amount_usdt == null || !isFinite(e.amount_usdt) || e.amount_usdt <= 0) continue;
+			const mo = e.ts.slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push(e.amount);
+			arr.push(e.amount_usdt);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -1608,10 +1607,11 @@
 	});
 
 	const dcaTotalSpendByAsset = $derived.by(() => {
+		// BTC-only: total spend per trigger kind instead of nonexistent asset.
 		const map = new Map<string, number>();
 		for (const e of data.triggers) {
-			if (!e.asset || e.amount == null || !isFinite(e.amount) || e.amount <= 0) continue;
-			map.set(e.asset, (map.get(e.asset) ?? 0) + e.amount);
+			if (!e.kind || e.amount_usdt == null || !isFinite(e.amount_usdt) || e.amount_usdt <= 0) continue;
+			map.set(e.kind, (map.get(e.kind) ?? 0) + e.amount_usdt);
 		}
 		if (map.size < 2) return null;
 		const rows = [...map.entries()]
@@ -2097,10 +2097,10 @@
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const byDow = new Map<number, number[]>();
 		for (const o of orders) {
-			if (!o.created_at || o.amount == null) continue;
-			const d = new Date(o.created_at as string).getUTCDay();
+			if (!o.timestamp || o.amount_usdt == null) continue;
+			const d = new Date(o.timestamp).getUTCDay();
 			const arr = byDow.get(d) ?? [];
-			arr.push(o.amount as number);
+			arr.push(o.amount_usdt);
 			byDow.set(d, arr);
 		}
 		const bars = [0, 1, 2, 3, 4, 5, 6]
@@ -2116,12 +2116,12 @@
 	const dcaInterOrderGapCDF = $derived.by(() => {
 		if (!orders || orders.length < 10) return null;
 		const sorted = [...orders]
-			.filter(o => o.created_at != null)
-			.sort((a, b) => new Date(a.created_at as string).getTime() - new Date(b.created_at as string).getTime());
+			.filter(o => o.timestamp != null)
+			.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 		if (sorted.length < 10) return null;
 		const gaps: number[] = [];
 		for (let i = 1; i < sorted.length; i++) {
-			const diff = (new Date(sorted[i].created_at as string).getTime() - new Date(sorted[i - 1].created_at as string).getTime()) / 86400000;
+			const diff = (new Date(sorted[i].timestamp).getTime() - new Date(sorted[i - 1].timestamp).getTime()) / 86400000;
 			if (diff > 0 && diff < 90) gaps.push(diff);
 		}
 		if (gaps.length < 8) return null;
@@ -2136,16 +2136,16 @@
 	});
 
 	const dcaAssetConcentration = $derived.by(() => {
+		// dca_log is BTC-only (no pair column) — measure concentration across DCA modes instead.
 		if (!orders || orders.length < 8) return null;
 		const byAsset = new Map<string, number>();
 		let total = 0;
 		for (const o of orders) {
-			if (!o.pair || o.amount == null || (o.amount as number) <= 0) continue;
-			const asset = (o.pair as string).split('/')[0];
-			byAsset.set(asset, (byAsset.get(asset) ?? 0) + (o.amount as number));
-			total += o.amount as number;
+			if (!o.mode || o.amount_usdt == null || o.amount_usdt <= 0) continue;
+			byAsset.set(o.mode, (byAsset.get(o.mode) ?? 0) + o.amount_usdt);
+			total += o.amount_usdt;
 		}
-		if (byAsset.size < 3 || total === 0) return null;
+		if (byAsset.size < 2 || total === 0) return null;
 		const shares = [...byAsset.entries()].map(([a, v]) => ({ asset: a, share: v / total })).sort((a, b) => b.share - a.share).slice(0, 10);
 		const hhi = shares.reduce((s, p) => s + p.share * p.share, 0);
 		const W = 280, H = 65, PAD = 8;
@@ -2156,8 +2156,8 @@
 	const dcaAmountDistribution = $derived.by(() => {
 		if (!orders || orders.length < 8) return null;
 		const amounts = orders
-			.filter(o => o.amount != null && (o.amount as number) > 0)
-			.map(o => o.amount as number)
+			.filter(o => o.amount_usdt != null && o.amount_usdt > 0)
+			.map(o => o.amount_usdt)
 			.sort((a, b) => a - b);
 		if (amounts.length < 6) return null;
 		const p95 = amounts[Math.floor(amounts.length * 0.95)];
@@ -3159,7 +3159,7 @@
 			<p class="mb-2 text-[11px] text-muted-foreground">Scatter of amount deployed (USDT) vs event severity score · coloured by trigger kind · higher severity → more deployed?</p>
 			<svg viewBox="0 0 {tas.W} {tas.H}" class="w-full" style="height:90px">
 				{#each tas.dots as d}
-					<circle cx={d.cx} cy={d.cy} r="2.5" fill={d.color} title="{d.kind ?? ''} sev={d.sev.toFixed(1)} amt={d.amt.toFixed(0)} USDT"/>
+					<circle cx={d.cx} cy={d.cy} r="2.5" fill={d.color}><title>{d.kind ?? ''} sev={d.sev.toFixed(1)} amt={d.amt.toFixed(0)} USDT</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground">
@@ -3322,7 +3322,7 @@
 	{#if dcaSeverityTrendTimeline}
 		<section class="rounded-xl border border-border bg-card p-4">
 			<h2 class="mb-1 text-sm font-semibold">Trigger Severity Trend (5-Trigger Rolling Avg) <ChartInfo metric="fearGreed" {lang} /></h2>
-			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed severity score over time (mild=1, moderate=2, severe=3, extreme=4) · rising = conditions worsening · falling = recovery · latest {dcaSeverityTrendTimeline.latest.toFixed(2)}</p>
+			<p class="mb-2 text-[10px] text-muted-foreground">Smoothed event severity score over time (signed score from the event detector) · latest {dcaSeverityTrendTimeline.latest.toFixed(2)}</p>
 			<svg viewBox="0 0 {dcaSeverityTrendTimeline.W} {dcaSeverityTrendTimeline.H}" class="w-full">
 				<line x1="0" y1={dcaSeverityTrendTimeline.avgY} x2={dcaSeverityTrendTimeline.W} y2={dcaSeverityTrendTimeline.avgY} stroke="var(--ch-warn-light)" stroke-width="1" stroke-dasharray="4,3"/>
 				<polyline points={dcaSeverityTrendTimeline.polyline} fill="none" stroke="var(--ch-loss)" stroke-width="2"/>
@@ -3627,7 +3627,7 @@
 
 	{#if dcaAssetAllocationByKind}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">USDT Deployed by Asset × Kind</h3>
+			<h3 class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">USDT Deployed by Trigger Kind (BTC-only)</h3>
 			<div class="space-y-1.5">
 				{#each dcaAssetAllocationByKind.rows as row}
 					<div class="flex items-center gap-2">
@@ -3646,13 +3646,13 @@
 				{#each dcaAssetAllocationByKind.usedKinds as k}
 					<span style="color:{dcaAssetAllocationByKind.colors[k]}">■ {k}</span>
 				{/each}
-				<span>· total USDT deployed per asset sorted by volume</span>
+				<span>· total USDT deployed per trigger kind sorted by volume</span>
 			</div>
 		</section>
 	{/if}
 	{#if dcaMonthlyAssetSpend}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monthly USDT Spend by Asset (top {dcaMonthlyAssetSpend.topAssets.length})</h3>
+			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monthly USDT Spend by Trigger Kind (top {dcaMonthlyAssetSpend.topAssets.length})</h3>
 			<svg viewBox="0 0 {dcaMonthlyAssetSpend.W} {dcaMonthlyAssetSpend.H}" class="w-full" style="height:72px">
 				{#each dcaMonthlyAssetSpend.rows as row, i}
 					{@const x = dcaMonthlyAssetSpend.PAD + i * (dcaMonthlyAssetSpend.barW + 2)}
@@ -3672,7 +3672,7 @@
 				{#each dcaMonthlyAssetSpend.topAssets as a, i}
 					<span style="color:{dcaMonthlyAssetSpend.aColors[i]}">■ {a}</span>
 				{/each}
-				<span>· stacked USDT spend per month · reveals asset allocation shift over time</span>
+				<span>· stacked USDT spend per month · reveals trigger-kind mix shift over time</span>
 			</div>
 		</section>
 	{/if}
@@ -3696,7 +3696,7 @@
 	{/if}
 	{#if dcaCumSpendByAsset}
 		<section class="mb-6 rounded-xl border border-border bg-card p-5">
-			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cumulative USDT Spend by Asset</h3>
+			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cumulative USDT Spend by Trigger Kind</h3>
 			<svg viewBox="0 0 {dcaCumSpendByAsset.W} {dcaCumSpendByAsset.H}" class="w-full" style="height:85px">
 				{#each dcaCumSpendByAsset.lines as line}
 					{#if line.poly}
@@ -3711,7 +3711,7 @@
 					<span style="color:{line.color}">■ {line.asset} ${line.final}</span>
 				{/each}
 			</div>
-			<p class="mt-1 text-[9px] text-muted-foreground">Running cumulative USDT deployed per asset across all DCA triggers · steeper slope = faster capital deployment · total shown per asset</p>
+			<p class="mt-1 text-[9px] text-muted-foreground">Running cumulative USDT deployed per trigger kind across all DCA triggers · steeper slope = faster capital deployment · total shown per kind</p>
 		</section>
 	{/if}
 	{#if dcaAvgAmountByKindTrend}
@@ -3821,7 +3821,7 @@
 	{/if}
 	{#if dcaAssetBuyFrequency}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">DCA Trigger Count by Asset</h3>
+			<h3 class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">DCA Trigger Count by Kind</h3>
 			<svg viewBox="0 0 {dcaAssetBuyFrequency.W} {dcaAssetBuyFrequency.H}" class="w-full" style="height:{dcaAssetBuyFrequency.H}px">
 				{#each dcaAssetBuyFrequency.rows as row, i}
 					{@const y = i * 16 + 2}
@@ -3833,7 +3833,7 @@
 					<text x={dcaAssetBuyFrequency.W - 2} y={y + 10} text-anchor="end" font-size="6" fill="var(--ch-axis-muted)">{pct}%</text>
 				{/each}
 			</svg>
-			<p class="mt-1 text-[9px] text-muted-foreground">Number of DCA buy triggers per asset · bar length = trigger frequency · % of total triggers · reveals which assets receive most DCA attention</p>
+			<p class="mt-1 text-[9px] text-muted-foreground">Number of DCA buy triggers per kind · bar length = trigger frequency · % of total triggers · reveals which event kinds fire most often</p>
 		</section>
 	{/if}
 	{#if dcaAmountByDow}
@@ -3881,7 +3881,7 @@
 	{/if}
 	{#if dcaTotalSpendByAsset}
 		<section class="rounded-xl border border-border bg-card p-4">
-			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total DCA Spend by Asset</h3>
+			<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total DCA Spend by Trigger Kind</h3>
 			<svg viewBox="0 0 {dcaTotalSpendByAsset.W} {dcaTotalSpendByAsset.H}" class="w-full" style="height:{dcaTotalSpendByAsset.H}px">
 				{#each dcaTotalSpendByAsset.rows as row, i}
 					{@const y = i * 16 + 2}
@@ -3891,7 +3891,7 @@
 					<text x={dcaTotalSpendByAsset.PAD + 60 + bw + 3} y={y + 10} font-size="7" fill="var(--ch-teal)">{row.total.toFixed(0)}</text>
 				{/each}
 			</svg>
-			<p class="mt-1 text-[9px] text-muted-foreground">Total DCA buy amount (USDT) per asset across all events · sky-blue bars · reveals capital allocation across assets and which positions have received the most investment</p>
+			<p class="mt-1 text-[9px] text-muted-foreground">Total DCA buy amount (USDT) per trigger kind across all events · sky-blue bars · reveals which event kinds deploy the most capital</p>
 		</section>
 	{/if}
 	{#if dcaOrderCountByMonth}
@@ -4330,7 +4330,7 @@
 	{/if}
 	{#if dcaAssetConcentration}
 		<section class="rounded-lg border border-border bg-card p-3">
-			<h3 class="mb-1 text-xs font-semibold text-muted-foreground">Asset Spend Concentration (HHI {dcaAssetConcentration.hhi.toFixed(3)})</h3>
+			<h3 class="mb-1 text-xs font-semibold text-muted-foreground">Mode Spend Concentration (HHI {dcaAssetConcentration.hhi.toFixed(3)})</h3>
 			<svg viewBox={`0 0 ${dcaAssetConcentration.W} ${dcaAssetConcentration.H}`} width="100%" style="height:65px">
 				{#each dcaAssetConcentration.shares as s, i}
 					{@const bh = Math.max(1, s.share * (dcaAssetConcentration.H - dcaAssetConcentration.PAD * 2))}
@@ -4342,7 +4342,7 @@
 					<text x={x + dcaAssetConcentration.bw / 2} y={y - 2} text-anchor="middle" font-size="5" fill={color}>{(s.share * 100).toFixed(0)}%</text>
 				{/each}
 			</svg>
-			<p class="mt-1 text-[9px] text-muted-foreground">Asset share of total DCA spend · HHI concentration index · red=dominant(&gt;30%) · purple=minor · low HHI = diversified DCA · high HHI = single-asset concentration risk</p>
+			<p class="mt-1 text-[9px] text-muted-foreground">DCA-mode share of total spend · HHI concentration index · red=dominant(&gt;30%) · purple=minor · low HHI = spend spread across modes · high HHI = single-mode concentration</p>
 		</section>
 	{/if}
 </main>

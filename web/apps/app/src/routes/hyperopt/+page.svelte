@@ -20,6 +20,13 @@
 	);
 	const hasData = $derived(strategies.length > 0);
 
+	// Metrics referenced by a few optional charts that are NOT part of the
+	// api.hyperopt_epochs row (only present on legacy raw-hyperopt payloads).
+	// Read via this cast so those charts degrade to "no data" instead of
+	// failing the type-check.
+	type EpochLegacy = { profit_factor?: number | null; timeframe?: string | null };
+	const legacyEpoch = (e: HyperoptEpoch): EpochLegacy => e as HyperoptEpoch & EpochLegacy;
+
 	// ---- loss curve SVG ----
 	// Clip outliers: ignore loss > 500 for the y-scale
 	const CLIP_LOSS = 500;
@@ -320,10 +327,10 @@
 
 	// Trade count vs profit scatter: does running more trades per epoch yield better profit?
 	const tradeCountVsProfit = $derived.by(() => {
-		const pts = epochs.filter(e => e.total_trades != null && e.total_trades > 0 && e.profit_pct != null);
+		const pts = epochs.filter(e => e.total_trades != null && e.total_trades > 0 && e.profit_total != null);
 		if (pts.length < 8) return null;
 		const xs = pts.map(e => e.total_trades!);
-		const ys = pts.map(e => e.profit_pct!);
+		const ys = pts.map(e => e.profit_total! * 100);
 		const xMin = Math.min(...xs), xMax = Math.max(...xs);
 		const yMin = Math.min(...ys), yMax = Math.max(...ys, 0.001);
 		const W = 520, H = 110, PAD = 20;
@@ -332,8 +339,8 @@
 		const zeroY = toY(0);
 		const dots = pts.map(e => ({
 			x: toX(e.total_trades!),
-			y: toY(e.profit_pct!),
-			profit: e.profit_pct!,
+			y: toY(e.profit_total! * 100),
+			profit: e.profit_total! * 100,
 			trades: e.total_trades!,
 			isBest: e.is_best ?? false,
 		}));
@@ -1323,7 +1330,7 @@
 
 	const epochProfitRunLength = $derived.by(() => {
 		if (epochs.length < 10) return null;
-		const sorted = [...epochs].sort((a, b) => (a.results_metrics?.loss ?? 0) - (b.results_metrics?.loss ?? 0));
+		const sorted = [...epochs].sort((a, b) => (a.loss ?? 0) - (b.loss ?? 0));
 		const W = 400, H = 75, PAD = 10;
 		const profits = sorted.map(e => e.profit_total ?? 0).filter(v => isFinite(v));
 		if (profits.length < 5) return null;
@@ -1340,8 +1347,8 @@
 
 	const epochDrawdownHistogram = $derived.by(() => {
 		const vals = epochs
-			.filter(e => e.results_metrics?.max_drawdown_abs != null && isFinite(e.results_metrics.max_drawdown_abs))
-			.map(e => e.results_metrics!.max_drawdown_abs! * 100);
+			.filter(e => e.max_drawdown != null && isFinite(e.max_drawdown))
+			.map(e => e.max_drawdown! * 100);
 		if (vals.length < 6) return null;
 		const mn = 0, mx = Math.min(Math.max(...vals), 100);
 		const bins = 12, step = Math.max(0.1, (mx - mn) / bins);
@@ -1357,13 +1364,13 @@
 
 	const epochProfitRollingVolatility = $derived.by(() => {
 		const sorted = [...epochs]
-			.filter(e => e.results_metrics?.profit_total_abs != null && isFinite(e.results_metrics.profit_total_abs))
-			.sort((a, b) => (a.current_epoch ?? 0) - (b.current_epoch ?? 0));
+			.filter(e => e.profit_total != null && isFinite(e.profit_total))
+			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 10) return null;
 		const WIN = 10;
 		const pts: { i: number; std: number }[] = [];
 		for (let i = WIN - 1; i < sorted.length; i++) {
-			const window = sorted.slice(i - WIN + 1, i + 1).map(e => e.results_metrics!.profit_total_abs!);
+			const window = sorted.slice(i - WIN + 1, i + 1).map(e => e.profit_total!);
 			const mean = window.reduce((a, b) => a + b, 0) / WIN;
 			const variance = window.reduce((s, v) => s + (v - mean) ** 2, 0) / WIN;
 			pts.push({ i, std: Math.sqrt(variance) });
@@ -1379,13 +1386,13 @@
 
 	const epochBestNMeanTrend = $derived.by(() => {
 		const sorted = [...epochs]
-			.filter(e => e.results_metrics?.profit_total != null && isFinite(e.results_metrics.profit_total))
-			.sort((a, b) => (a.current_epoch ?? 0) - (b.current_epoch ?? 0));
+			.filter(e => e.profit_total != null && isFinite(e.profit_total))
+			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 15) return null;
 		const N = Math.min(10, Math.floor(sorted.length / 5));
 		const pts: { i: number; mean: number }[] = [];
 		for (let i = N - 1; i < sorted.length; i++) {
-			const window = sorted.slice(0, i + 1).map(e => e.results_metrics!.profit_total!);
+			const window = sorted.slice(0, i + 1).map(e => e.profit_total!);
 			const topN = [...window].sort((a, b) => b - a).slice(0, N);
 			pts.push({ i, mean: topN.reduce((a, b) => a + b, 0) / topN.length });
 		}
@@ -1401,12 +1408,12 @@
 
 	const epochSharpeTimeline = $derived.by(() => {
 		const sorted = [...epochs]
-			.filter(e => e.results_metrics?.sharpe != null && isFinite(e.results_metrics.sharpe) && Math.abs(e.results_metrics.sharpe) < 100)
-			.sort((a, b) => (a.current_epoch ?? 0) - (b.current_epoch ?? 0));
+			.filter(e => e.sharpe != null && isFinite(e.sharpe) && Math.abs(e.sharpe) < 100)
+			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 8) return null;
 		let bestSharpe = -Infinity;
 		const pts = sorted.map((e, i) => {
-			const s = e.results_metrics!.sharpe!;
+			const s = e.sharpe!;
 			if (s > bestSharpe) bestSharpe = s;
 			return { i, best: bestSharpe, cur: s };
 		});
@@ -1422,8 +1429,8 @@
 
 	const epochCalmarBuckets = $derived.by(() => {
 		const vals = epochs
-			.filter(e => e.results_metrics?.calmar != null && isFinite(e.results_metrics.calmar) && Math.abs(e.results_metrics.calmar) < 200)
-			.map(e => e.results_metrics!.calmar!);
+			.filter(e => e.calmar != null && isFinite(e.calmar) && Math.abs(e.calmar) < 200)
+			.map(e => e.calmar!);
 		if (vals.length < 10) return null;
 		const mn = Math.min(...vals), mx = Math.max(...vals);
 		const BIN = 10, step = (mx - mn) / BIN || 1;
@@ -1439,9 +1446,9 @@
 
 	const epochProfitVsTradeCount = $derived.by(() => {
 		const pts = epochs.filter(e =>
-			e.results_metrics?.profit_total_abs != null && isFinite(e.results_metrics.profit_total_abs) &&
-			e.results_metrics?.trades != null && isFinite(e.results_metrics.trades) && e.results_metrics.trades > 0
-		).map(e => ({ profit: e.results_metrics!.profit_total_abs!, trades: e.results_metrics!.trades!, best: e.is_best ?? false }));
+			e.profit_total != null && isFinite(e.profit_total) &&
+			e.total_trades != null && isFinite(e.total_trades) && e.total_trades > 0
+		).map(e => ({ profit: e.profit_total!, trades: e.total_trades!, best: e.is_best ?? false }));
 		if (pts.length < 8) return null;
 		const pMin = Math.min(...pts.map(p => p.profit)), pMax = Math.max(...pts.map(p => p.profit), pMin + 0.1);
 		const tMin = Math.min(...pts.map(p => p.trades)), tMax = Math.max(...pts.map(p => p.trades), tMin + 1);
@@ -1455,12 +1462,12 @@
 
 	const epochSortinoBestTimeline = $derived.by(() => {
 		const sorted = [...epochs]
-			.filter(e => e.results_metrics?.sortino != null && isFinite(e.results_metrics.sortino) && Math.abs(e.results_metrics.sortino) < 200)
-			.sort((a, b) => (a.current_epoch ?? 0) - (b.current_epoch ?? 0));
+			.filter(e => e.sortino != null && isFinite(e.sortino) && Math.abs(e.sortino) < 200)
+			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 8) return null;
 		let best = -Infinity;
 		const pts = sorted.map((e, i) => {
-			const s = e.results_metrics!.sortino!;
+			const s = e.sortino!;
 			if (s > best) best = s;
 			return { i, best, cur: s };
 		});
@@ -1475,29 +1482,29 @@
 	});
 
 	const epochTradeCountTimeline = $derived.by(() => {
-		const sorted = [...epochs].filter(e => e.trades != null && isFinite(e.trades) && e.trades >= 0)
+		const sorted = [...epochs].filter(e => e.total_trades != null && isFinite(e.total_trades) && e.total_trades >= 0)
 			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 8) return null;
-		const counts = sorted.map(e => e.trades!);
+		const counts = sorted.map(e => e.total_trades!);
 		const mn = 0, mx = Math.max(...counts, 1);
 		const W = 380, H = 68, PAD = 8;
 		const toX = (i: number) => PAD + (i / Math.max(sorted.length - 1, 1)) * (W - PAD * 2);
 		const toY = (v: number) => PAD + (1 - (v - mn) / (mx - mn)) * (H - PAD * 2);
 		let bestCount = -Infinity, bestIdx = -1;
 		for (let i = 0; i < sorted.length; i++) {
-			if ((sorted[i].profit ?? -Infinity) > (sorted[bestIdx]?.profit ?? -Infinity)) bestIdx = i;
+			if ((sorted[i].profit_total ?? -Infinity) > (sorted[bestIdx]?.profit_total ?? -Infinity)) bestIdx = i;
 		}
 		const dots = sorted.map((e, i) => ({
-			cx: toX(i), cy: toY(e.trades!),
+			cx: toX(i), cy: toY(e.total_trades!),
 			isBest: i === bestIdx,
 			color: i === bestIdx ? 'var(--ch-violet-strong)' : 'var(--ch-axis-muted)',
 		}));
 		const poly = dots.map(d => `${d.cx.toFixed(1)},${d.cy.toFixed(1)}`).join(' ');
-		return { dots, poly, W, H, PAD, mn, mx, bestCount: sorted[bestIdx]?.trades ?? 0, total: sorted.length };
+		return { dots, poly, W, H, PAD, mn, mx, bestCount: sorted[bestIdx]?.total_trades ?? 0, total: sorted.length };
 	});
 
 	const epochWinRateTimeline = $derived.by(() => {
-		const sorted = [...epochs].filter(e => e.win_rate != null && isFinite(e.win_rate))
+		const sorted = [...epochs].filter(e => e.winrate != null && isFinite(e.winrate))
 			.sort((a, b) => (a.epoch ?? 0) - (b.epoch ?? 0));
 		if (sorted.length < 8) return null;
 		const W = 380, H = 68, PAD = 8;
@@ -1505,7 +1512,7 @@
 		const toY = (v: number) => PAD + (1 - v) * (H - PAD * 2);
 		let best = -Infinity;
 		const pts = sorted.map((e, i) => {
-			const wr = e.win_rate!;
+			const wr = e.winrate!;
 			if (wr > best) best = wr;
 			return { i, cur: wr, best };
 		});
@@ -1520,7 +1527,7 @@
 		const pts = epochs.filter(e =>
 			e.sharpe != null && isFinite(e.sharpe) && Math.abs(e.sharpe) < 100 &&
 			e.max_drawdown != null && isFinite(e.max_drawdown) && e.max_drawdown >= 0
-		).map(e => ({ sharpe: e.sharpe!, dd: e.max_drawdown!, profit: e.profit_pct ?? 0 }));
+		).map(e => ({ sharpe: e.sharpe!, dd: e.max_drawdown!, profit: (e.profit_total ?? 0) * 100 }));
 		if (pts.length < 5) return null;
 		const sMin = Math.min(...pts.map(p => p.sharpe)), sMax = Math.max(...pts.map(p => p.sharpe), sMin + 0.1);
 		const ddMax = Math.max(...pts.map(p => p.dd), 0.1);
@@ -1536,7 +1543,7 @@
 	});
 
 	const epochProfitHistogram = $derived.by(() => {
-		const vals = epochs.filter(e => e.profit_pct != null && isFinite(e.profit_pct)).map(e => e.profit_pct!);
+		const vals = epochs.filter(e => e.profit_total != null && isFinite(e.profit_total)).map(e => e.profit_total! * 100);
 		if (vals.length < 8) return null;
 		const mn = Math.min(...vals), mx = Math.max(...vals);
 		const bins = 14;
@@ -1560,11 +1567,11 @@
 
 	const epochBestExplorationCurve = $derived.by(() => {
 		const sorted = epochs
-			.filter(e => e.epoch != null && e.profit_pct != null && isFinite(e.profit_pct))
+			.filter(e => e.epoch != null && e.profit_total != null && isFinite(e.profit_total))
 			.sort((a, b) => a.epoch! - b.epoch!);
 		if (sorted.length < 5) return null;
 		let best = -Infinity;
-		const cumBest = sorted.map(e => { best = Math.max(best, e.profit_pct!); return { ep: e.epoch!, best }; });
+		const cumBest = sorted.map(e => { best = Math.max(best, e.profit_total! * 100); return { ep: e.epoch!, best }; });
 		const minBest = Math.min(...cumBest.map(p => p.best));
 		const maxBest = Math.max(...cumBest.map(p => p.best));
 		const range = maxBest - minBest || 1;
@@ -1587,14 +1594,14 @@
 
 	const epochDrawdownByBucket = $derived.by(() => {
 		const sorted = epochs
-			.filter(e => e.epoch != null && e.max_drawdown_pct != null && isFinite(e.max_drawdown_pct) && e.max_drawdown_pct >= 0)
+			.filter(e => e.epoch != null && e.max_drawdown != null && isFinite(e.max_drawdown) && e.max_drawdown >= 0)
 			.sort((a, b) => a.epoch! - b.epoch!);
 		if (sorted.length < 8) return null;
 		const bucketSize = Math.ceil(sorted.length / 12);
 		const buckets = [];
 		for (let i = 0; i < sorted.length; i += bucketSize) {
 			const chunk = sorted.slice(i, i + bucketSize);
-			const avg = chunk.reduce((a, e) => a + e.max_drawdown_pct!, 0) / chunk.length;
+			const avg = chunk.reduce((a, e) => a + e.max_drawdown!, 0) / chunk.length;
 			const label = chunk[0].epoch!;
 			buckets.push({ label, avg });
 		}
@@ -1611,11 +1618,11 @@
 	const epochWinRateVsProfit = $derived.by(() => {
 		if (!epochs || epochs.length < 8) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.winrate != null && e.results_metrics?.profit_factor != null)
+			.filter(e => e.winrate != null && legacyEpoch(e).profit_factor != null)
 			.map(e => ({
-				wr: (e.results_metrics.winrate ?? 0) * 100,
-				pf: e.results_metrics.profit_factor ?? 0,
-				profit: e.results_metrics.profit_mean ?? 0
+				wr: (e.winrate ?? 0) * 100,
+				pf: legacyEpoch(e).profit_factor ?? 0,
+				profit: e.profit_total ?? 0
 			}));
 		if (pts.length < 6) return null;
 		const wrMax = Math.max(...pts.map(p => p.wr), 100);
@@ -1632,7 +1639,7 @@
 		const size = Math.ceil(epochs.length / bins);
 		const buckets = Array.from({ length: bins }, (_, i) => {
 			const slice = epochs.slice(i * size, (i + 1) * size);
-			const vals = slice.map(e => e.results_metrics?.calmar_ratio ?? 0).filter(v => v !== 0);
+			const vals = slice.map(e => e.calmar ?? 0).filter(v => v !== 0);
 			return { label: String(i * size + 1), avg: vals.length ? vals.reduce((a, v) => a + v, 0) / vals.length : 0 };
 		}).filter(b => b.avg !== 0);
 		if (buckets.length < 4) return null;
@@ -1648,7 +1655,7 @@
 		if (!epochs || epochs.length < 8) return null;
 		let best = -Infinity;
 		const pts = epochs.map((e, i) => {
-			const p = e.results_metrics?.profit_mean ?? e.results_metrics?.profit_total ?? 0;
+			const p = e.profit_total ?? e.profit_total ?? 0;
 			if (p > best) best = p;
 			return { i, best };
 		});
@@ -1669,11 +1676,11 @@
 	const epochSharpeVsDrawdownNew = $derived.by(() => {
 		if (!epochs || epochs.length < 8) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.sharpe != null && e.results_metrics?.max_drawdown_pct != null)
+			.filter(e => e.sharpe != null && e.max_drawdown != null)
 			.map(e => ({
-				sh: e.results_metrics.sharpe as number,
-				dd: e.results_metrics.max_drawdown_pct as number,
-				profit: e.results_metrics.profit_mean ?? 0,
+				sh: e.sharpe as number,
+				dd: e.max_drawdown as number,
+				profit: e.profit_total ?? 0,
 			}));
 		if (pts.length < 6) return null;
 		const ddMax = Math.max(...pts.map(p => p.dd), 0.01);
@@ -1689,8 +1696,8 @@
 	const epochWinRateHistogram = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const wrs = epochs
-			.filter(e => e.results_metrics?.winning_trades != null && e.results_metrics?.total_trades != null && (e.results_metrics.total_trades as number) > 0)
-			.map(e => ((e.results_metrics.winning_trades as number) / (e.results_metrics.total_trades as number)) * 100);
+			.filter(e => e.winrate != null && e.total_trades != null && (e.total_trades as number) > 0)
+			.map(e => (e.winrate as number) * 100);
 		if (wrs.length < 8) return null;
 		const bins = 14;
 		const counts = new Array(bins).fill(0);
@@ -1707,11 +1714,11 @@
 	const epochSortinoVsWinRate = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.sortino != null && e.results_metrics?.winning_trades != null && e.results_metrics?.total_trades != null && (e.results_metrics.total_trades as number) > 0)
+			.filter(e => e.sortino != null && e.winrate != null && e.total_trades != null && (e.total_trades as number) > 0)
 			.map(e => ({
-				wr: ((e.results_metrics.winning_trades as number) / (e.results_metrics.total_trades as number)) * 100,
-				so: e.results_metrics.sortino as number,
-				profit: e.results_metrics.profit_mean ?? 0
+				wr: (e.winrate as number) * 100,
+				so: e.sortino as number,
+				profit: e.profit_total ?? 0
 			}));
 		if (pts.length < 6) return null;
 		const wrMax = Math.max(...pts.map(p => p.wr), 100);
@@ -1727,11 +1734,11 @@
 	const epochCalmarSortinoScatter = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.calmar != null && e.results_metrics?.sortino != null)
+			.filter(e => e.calmar != null && e.sortino != null)
 			.map(e => ({
-				ca: e.results_metrics.calmar as number,
-				so: e.results_metrics.sortino as number,
-				profit: e.results_metrics.profit_mean ?? 0
+				ca: e.calmar as number,
+				so: e.sortino as number,
+				profit: e.profit_total ?? 0
 			}));
 		if (pts.length < 6) return null;
 		const caMax = Math.max(...pts.map(p => p.ca), 0.01);
@@ -1748,11 +1755,11 @@
 		if (!epochs || epochs.length < 10) return null;
 		const map = new Map<number, number[]>();
 		for (const e of epochs) {
-			if (e.results_metrics?.max_drawdown_pct == null || e.results_metrics?.profit_mean == null) continue;
-			const dd = e.results_metrics.max_drawdown_pct as number;
+			if (e.max_drawdown == null || e.profit_total == null) continue;
+			const dd = e.max_drawdown as number;
 			const bucket = dd <= 5 ? 5 : dd <= 10 ? 10 : dd <= 20 ? 20 : dd <= 30 ? 30 : 50;
 			const arr = map.get(bucket) ?? [];
-			arr.push(e.results_metrics.profit_mean as number);
+			arr.push(e.profit_total as number);
 			map.set(bucket, arr);
 		}
 		if (map.size < 3) return null;
@@ -1768,8 +1775,8 @@
 	const epochSortinoDistribution = $derived.by(() => {
 		if (!epochs || epochs.length < 15) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.sortino != null)
-			.map(e => e.results_metrics!.sortino as number);
+			.filter(e => e.sortino != null)
+			.map(e => e.sortino as number);
 		if (vals.length < 15) return null;
 		vals.sort((a, b) => a - b);
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -1790,10 +1797,10 @@
 	const epochProfitCumulative = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const sorted = [...epochs]
-			.filter(e => e.results_metrics?.profit_mean != null)
-			.sort((a, b) => (a.results_metrics!.profit_mean as number) - (b.results_metrics!.profit_mean as number));
+			.filter(e => e.profit_total != null)
+			.sort((a, b) => (a.profit_total as number) - (b.profit_total as number));
 		if (sorted.length < 10) return null;
-		const profits = sorted.map(e => e.results_metrics!.profit_mean as number);
+		const profits = sorted.map(e => e.profit_total as number);
 		const minP = profits[0], maxP = profits[profits.length - 1];
 		const range = maxP - minP || 0.01;
 		const W = 300, H = 80, PAD = 10;
@@ -1808,8 +1815,8 @@
 	const epochDrawdownCDF = $derived.by(() => {
 		if (!epochs || epochs.length < 15) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.max_drawdown_pct != null)
-			.map(e => e.results_metrics!.max_drawdown_pct as number)
+			.filter(e => e.max_drawdown != null)
+			.map(e => e.max_drawdown as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 15) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -1828,8 +1835,8 @@
 		if (!epochs || epochs.length < 10) return null;
 		const map = new Map<number, number[]>();
 		for (const e of epochs) {
-			const dd = e.results_metrics?.max_drawdown_pct;
-			const tc = e.results_metrics?.trade_count;
+			const dd = e.max_drawdown;
+			const tc = e.total_trades;
 			if (dd == null || tc == null) continue;
 			const bucket = (dd as number) <= 5 ? 5 : (dd as number) <= 10 ? 10 : (dd as number) <= 20 ? 20 : (dd as number) <= 30 ? 30 : 50;
 			const arr = map.get(bucket) ?? [];
@@ -1849,8 +1856,8 @@
 		if (!epochs || epochs.length < 10) return null;
 		const map = new Map<number, number[]>();
 		for (const e of epochs) {
-			const dd = e.results_metrics?.max_drawdown_pct;
-			const wr = e.results_metrics?.winrate;
+			const dd = e.max_drawdown;
+			const wr = e.winrate;
 			if (dd == null || wr == null) continue;
 			const bucket = (dd as number) <= 5 ? 5 : (dd as number) <= 10 ? 10 : (dd as number) <= 20 ? 20 : (dd as number) <= 30 ? 30 : 50;
 			const arr = map.get(bucket) ?? [];
@@ -1886,8 +1893,8 @@
 
 	const epochSharpeHistogram = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
-		const vals = epochs.filter(e => e.results_metrics?.sharpe_ratio != null)
-			.map(e => e.results_metrics!.sharpe_ratio as number);
+		const vals = epochs.filter(e => e.sharpe != null)
+			.map(e => e.sharpe as number);
 		if (vals.length < 5) return null;
 		const minV = Math.min(...vals), maxV = Math.max(...vals, minV + 0.1);
 		const BINS = 12;
@@ -1905,7 +1912,7 @@
 		let best = -Infinity;
 		const pts: { epoch: number; best: number }[] = [];
 		for (const e of sorted) {
-			const c = e.results_metrics?.calmar_ratio;
+			const c = e.calmar;
 			if (c == null) continue;
 			if ((c as number) > best) best = c as number;
 			pts.push({ epoch: e.epoch as number, best });
@@ -1923,10 +1930,10 @@
 	const epochProfitVsSortino = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.profit_factor != null && e.results_metrics?.sortino_ratio != null)
+			.filter(e => legacyEpoch(e).profit_factor != null && e.sortino != null)
 			.map(e => ({
-				profit: e.results_metrics.profit_factor as number,
-				sortino: e.results_metrics.sortino_ratio as number
+				profit: legacyEpoch(e).profit_factor as number,
+				sortino: e.sortino as number
 			}));
 		if (pts.length < 8) return null;
 		const minP = Math.min(...pts.map(p => p.profit)), maxP = Math.max(...pts.map(p => p.profit));
@@ -1946,7 +1953,7 @@
 		const labels = ['Q1', 'Q2', 'Q3', 'Q4'];
 		const rows = labels.map((label, qi) => {
 			const slice = sorted.slice(qi * qSize, (qi + 1) * qSize);
-			const wins = slice.filter(e => (e.results_metrics?.win_ratio as number | undefined ?? 0) > 0.5).length;
+			const wins = slice.filter(e => (e.winrate ?? 0) > 0.5).length;
 			const wr = wins / Math.max(slice.length, 1) * 100;
 			return { label, wr };
 		});
@@ -1959,8 +1966,8 @@
 		if (!epochs || epochs.length < 5) return null;
 		const map = new Map<string, number>();
 		for (const e of epochs) {
-			const tf = (e.results_metrics?.timeframe ?? e.config?.timeframe) as string | undefined;
-			const s = e.results_metrics?.sharpe_ratio as number | undefined;
+			const tf = legacyEpoch(e).timeframe ?? undefined;
+			const s = e.sharpe as number | undefined;
 			if (!tf || s == null) continue;
 			const prev = map.get(tf) ?? -Infinity;
 			if (s > prev) map.set(tf, s);
@@ -1977,8 +1984,8 @@
 		if (!epochs || epochs.length < 8) return null;
 		const map = new Map<string, number[]>();
 		for (const e of epochs) {
-			const strat = (e.results_metrics?.strategy ?? e.config?.strategy) as string | undefined;
-			const dd = e.results_metrics?.max_drawdown_abs ?? e.results_metrics?.max_drawdown;
+			const strat = e.strategy as string | undefined;
+			const dd = e.max_drawdown ?? e.max_drawdown;
 			if (!strat || dd == null) continue;
 			const arr = map.get(strat) ?? [];
 			arr.push(Math.abs(dd as number) * 100);
@@ -2004,12 +2011,12 @@
 		];
 		const rows = buckets.map(b => {
 			const vals = epochs
-				.filter(e => e.results_metrics?.winrate != null && e.results_metrics?.calmar_ratio != null)
+				.filter(e => e.winrate != null && e.calmar != null)
 				.filter(e => {
-					const wr = (e.results_metrics?.winrate as number) * 100;
+					const wr = (e.winrate as number) * 100;
 					return wr >= b.min && wr < b.max;
 				})
-				.map(e => e.results_metrics?.calmar_ratio as number);
+				.map(e => e.calmar as number);
 			const avg = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
 			return { label: b.label, avg, n: vals.length };
 		}).filter(r => r.n > 0);
@@ -2023,8 +2030,8 @@
 	const epochTradeCountCDF = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.total_trades != null)
-			.map(e => e.results_metrics?.total_trades as number)
+			.filter(e => e.total_trades != null)
+			.map(e => e.total_trades as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 10) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
@@ -2041,8 +2048,8 @@
 	const epochProfitByDrawdownQuartile = $derived.by(() => {
 		if (!epochs || epochs.length < 12) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.max_drawdown_abs != null)
-			.map(e => e.results_metrics?.max_drawdown_abs as number)
+			.filter(e => e.max_drawdown != null)
+			.map(e => e.max_drawdown as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 12) return null;
 		const q25 = vals[Math.floor(vals.length * 0.25)];
@@ -2056,11 +2063,11 @@
 		];
 		const rows = buckets.map(b => {
 			const eList = epochs.filter(e => {
-				const dd = e.results_metrics?.max_drawdown_abs as number | null;
-				const pf = e.results_metrics?.profit_factor as number | null;
+				const dd = e.max_drawdown as number | null;
+				const pf = legacyEpoch(e).profit_factor as number | null;
 				return dd != null && pf != null && dd >= b.min && dd < b.max;
 			});
-			const avg = eList.length ? eList.reduce((s, e) => s + (e.results_metrics?.profit_factor as number), 0) / eList.length : 0;
+			const avg = eList.length ? eList.reduce((s, e) => s + (legacyEpoch(e).profit_factor as number), 0) / eList.length : 0;
 			return { label: b.label, avg, n: eList.length };
 		}).filter(r => r.n > 0);
 		if (rows.length < 2) return null;
@@ -2073,11 +2080,11 @@
 	const epochSharpeVsCalmarScatter2 = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const pts = epochs
-			.filter(e => e.results_metrics?.sharpe_ratio != null && e.results_metrics?.calmar_ratio != null)
+			.filter(e => e.sharpe != null && e.calmar != null)
 			.map(e => ({
-				x: e.results_metrics?.sharpe_ratio as number,
-				y: e.results_metrics?.calmar_ratio as number,
-				wr: (e.results_metrics?.winrate as number ?? 0) * 100
+				x: e.sharpe as number,
+				y: e.calmar as number,
+				wr: (e.winrate as number ?? 0) * 100
 			}));
 		if (pts.length < 10) return null;
 		const maxX = Math.max(...pts.map(p => Math.abs(p.x)), 0.01);
@@ -2089,8 +2096,8 @@
 	const epochWinRateTrend = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const winRates = epochs
-			.filter(e => e.results_metrics?.winrate != null)
-			.map((e, i) => ({ idx: i, wr: (e.results_metrics?.winrate as number) * 100 }));
+			.filter(e => e.winrate != null)
+			.map((e, i) => ({ idx: i, wr: (e.winrate as number) * 100 }));
 		if (winRates.length < 10) return null;
 		const window = Math.max(3, Math.floor(winRates.length / 10));
 		const smoothed = winRates.map((p, i) => {
@@ -2110,17 +2117,17 @@
 	const epochSortinoBySharpeQuartile = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const valid = epochs.filter(
-			e => e.results_metrics?.sharpe_ratio != null && e.results_metrics?.sortino_ratio != null
+			e => e.sharpe != null && e.sortino != null
 		);
 		if (valid.length < 8) return null;
-		const sharpes = valid.map(e => e.results_metrics?.sharpe_ratio as number).sort((a, b) => a - b);
+		const sharpes = valid.map(e => e.sharpe as number).sort((a, b) => a - b);
 		const q1 = sharpes[Math.floor(sharpes.length * 0.25)];
 		const q2 = sharpes[Math.floor(sharpes.length * 0.5)];
 		const q3 = sharpes[Math.floor(sharpes.length * 0.75)];
 		const buckets: Record<string, number[]> = { Q1: [], Q2: [], Q3: [], Q4: [] };
 		for (const e of valid) {
-			const sh = e.results_metrics?.sharpe_ratio as number;
-			const so = e.results_metrics?.sortino_ratio as number;
+			const sh = e.sharpe as number;
+			const so = e.sortino as number;
 			const bucket = sh < q1 ? 'Q1' : sh < q2 ? 'Q2' : sh < q3 ? 'Q3' : 'Q4';
 			buckets[bucket].push(so);
 		}
@@ -2138,8 +2145,8 @@
 	const epochProfitFactorCDF = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.profit_factor != null && (e.results_metrics?.profit_factor as number) > 0 && (e.results_metrics?.profit_factor as number) < 20)
-			.map(e => e.results_metrics?.profit_factor as number)
+			.filter(e => legacyEpoch(e).profit_factor != null && (legacyEpoch(e).profit_factor as number) > 0 && (legacyEpoch(e).profit_factor as number) < 20)
+			.map(e => legacyEpoch(e).profit_factor as number)
 			.sort((a, b) => a - b);
 		if (vals.length < 8) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1], rng = maxV - minV || 1;
@@ -2155,8 +2162,8 @@
 		if (!epochs || epochs.length < 10) return null;
 		const buckets: Record<string, number[]> = { '<40%': [], '40-50%': [], '50-60%': [], '>60%': [] };
 		for (const e of epochs) {
-			const wr = (e.results_metrics?.winrate as number ?? 0) * 100;
-			const tc = e.results_metrics?.trade_count as number ?? 0;
+			const wr = (e.winrate as number ?? 0) * 100;
+			const tc = e.total_trades as number ?? 0;
 			if (tc <= 0) continue;
 			const k = wr < 40 ? '<40%' : wr < 50 ? '40-50%' : wr < 60 ? '50-60%' : '>60%';
 			buckets[k].push(tc);
@@ -2176,8 +2183,8 @@
 	const epochMaxDrawdownCDF = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const vals = epochs
-			.filter(e => e.results_metrics?.max_drawdown != null && (e.results_metrics?.max_drawdown as number) >= 0)
-			.map(e => (e.results_metrics?.max_drawdown as number) * 100)
+			.filter(e => e.max_drawdown != null && (e.max_drawdown as number) >= 0)
+			.map(e => (e.max_drawdown as number) * 100)
 			.sort((a, b) => a - b);
 		if (vals.length < 8) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1], rng = maxV - minV || 1;
@@ -2192,8 +2199,8 @@
 	const epochRollingCalmar = $derived.by(() => {
 		if (!epochs || epochs.length < 15) return null;
 		const valid = epochs
-			.filter(e => e.results_metrics?.calmar_ratio != null)
-			.map((e, idx) => ({ idx, val: e.results_metrics?.calmar_ratio as number }));
+			.filter(e => e.calmar != null)
+			.map((e, idx) => ({ idx, val: e.calmar as number }));
 		if (valid.length < 15) return null;
 		const win = 10;
 		const smoothed = valid.slice(win - 1).map((_, i) => {
@@ -2212,8 +2219,8 @@
 	const epochProfitCDFByLoss = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
 		const allPF = epochs
-			.filter(e => e.results_metrics?.profit_factor != null)
-			.map(e => e.results_metrics?.profit_factor as number)
+			.filter(e => legacyEpoch(e).profit_factor != null)
+			.map(e => legacyEpoch(e).profit_factor as number)
 			.sort((a, b) => a - b);
 		if (allPF.length < 8) return null;
 		const clipped = allPF.filter(v => v <= 5);
@@ -2229,15 +2236,15 @@
 
 	const epochSharpeByTradeCountBucket = $derived.by(() => {
 		if (!epochs || epochs.length < 10) return null;
-		const valid = epochs.filter(e => e.results_metrics?.sharpe_ratio != null && e.results_metrics?.trade_count != null);
+		const valid = epochs.filter(e => e.sharpe != null && e.total_trades != null);
 		if (valid.length < 8) return null;
-		const tcs = valid.map(e => e.results_metrics?.trade_count as number).sort((a, b) => a - b);
+		const tcs = valid.map(e => e.total_trades as number).sort((a, b) => a - b);
 		const q1 = tcs[Math.floor(tcs.length * 0.33)];
 		const q2 = tcs[Math.floor(tcs.length * 0.67)];
 		const buckets: Record<string, number[]> = { Low: [], Mid: [], High: [] };
 		for (const e of valid) {
-			const tc = e.results_metrics?.trade_count as number;
-			const sh = e.results_metrics?.sharpe_ratio as number;
+			const tc = e.total_trades as number;
+			const sh = e.sharpe as number;
 			const k = tc <= q1 ? 'Low' : tc <= q2 ? 'Mid' : 'High';
 			buckets[k].push(sh);
 		}
@@ -3377,7 +3384,7 @@
 					<line x1={ech.PAD} y1={ech.zero_y} x2={ech.W - ech.PAD} y2={ech.zero_y} stroke="var(--ch-axis-faint)" stroke-width="0.6" stroke-dasharray="3,2"/>
 				{/if}
 				{#each ech.dots as d}
-					<circle cx={d.cx} cy={d.cy} r={d.best ? 3.5 : 2} fill={d.best ? 'var(--ch-warn)' : d.positive ? 'var(--ch-profit-light)' : 'var(--ch-loss-light)'} title="Calmar {d.calmar.toFixed(2)}, {d.hours.toFixed(0)}h holding"/>
+					<circle cx={d.cx} cy={d.cy} r={d.best ? 3.5 : 2} fill={d.best ? 'var(--ch-warn)' : d.positive ? 'var(--ch-profit-light)' : 'var(--ch-loss-light)'}><title>Calmar {d.calmar.toFixed(2)}, {d.hours.toFixed(0)}h holding</title></circle>
 				{/each}
 			</svg>
 			<div class="mt-1 flex justify-between font-mono text-[9px] text-muted-foreground">
