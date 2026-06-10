@@ -171,6 +171,7 @@ def run_donchian(params: dict) -> dict:
         "period_start": str(r.get("period_start")) if r.get("period_start") else None,
         "period_end": str(r.get("period_end")) if r.get("period_end") else None,
         "config": p,
+        "equity_curve": _downsample(r.get("curve", [])),
     }
 
 

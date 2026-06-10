@@ -147,6 +147,7 @@ def run_donchian_portfolio(bases, *, entry_lb=168, exit_lb=72, risk_frac=0.0667,
     eng.add_actor(rec)
     eng.run()
     stats = _extract_stats(eng, rec)
+    stats["curve"] = list(rec.curve)  # honest per-bar equity series (for playground charting)
     eng.dispose()
     stats["params"] = {"entry_lb": entry_lb, "exit_lb": exit_lb, "risk_frac": risk_frac}
     stats["instruments"] = [f"{b}USDT.BINANCE" for b in bases]
