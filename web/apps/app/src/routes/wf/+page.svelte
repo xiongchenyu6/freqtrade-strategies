@@ -75,6 +75,40 @@
 		return Math.round((pos / ok.length) * 100);
 	}
 
+	// Plain bilingual names for the 8 walk-forward regime windows (raw keys stay in tooltips)
+	const REGIME_LABELS: Record<string, { zh: string; en: string }> = {
+		'2018_CRASH': { zh: '2018 崩盘年', en: '2018 crash year' },
+		'2019_ACCUMULATION': { zh: '2019 积累期', en: '2019 accumulation' },
+		'2020_COVID': { zh: '2020 疫情震荡', en: '2020 COVID shock' },
+		'2021_BULL_TOP': { zh: '2021 牛市顶', en: '2021 bull top' },
+		'2022_LUNA_FTX': { zh: '2022 爆雷年（LUNA/FTX）', en: '2022 blow-up year (LUNA/FTX)' },
+		'2023_RECOVERY': { zh: '2023 复苏', en: '2023 recovery' },
+		'2024_ETF_BULL': { zh: '2024 ETF 牛市', en: '2024 ETF bull' },
+		'2025_PRESENT': { zh: '2025 至今', en: '2025 – now' }
+	};
+	function regimeLabel(w: string): string {
+		const key = w.replace(/^W\d+_/, '');
+		const m = REGIME_LABELS[key];
+		return m ? (lang === 'en' ? m.en : m.zh) : key;
+	}
+
+	// One-line takeaway: the strategy that stayed profitable in the most regimes
+	const headline = $derived.by(() => {
+		const rows = byStrategy
+			.map(({ strategy, windows }) => {
+				const ok = Object.values(windows).filter((r) => r.status === 'ok');
+				return { strategy, windows, score: stabilityScore(windows), okCount: ok.length };
+			})
+			.filter((r) => r.okCount >= 2)
+			.sort((a, b) => b.score - a.score || b.okCount - a.okCount);
+		if (rows.length === 0) return null;
+		const top = rows[0];
+		const w2022 = allWindows.find((w) => w.replace(/^W\d+_/, '').startsWith('2022'));
+		const r2022 = w2022 ? top.windows[w2022] : undefined;
+		const survived2022 = r2022?.status === 'ok' && (r2022.tot_profit_pct ?? 0) > 0;
+		return { strategy: top.strategy, score: top.score, okCount: top.okCount, survived2022 };
+	});
+
 	// Cell background color based on profit magnitude
 	function cellBg(v: number | null | undefined): string {
 		if (v == null) return '';
@@ -2108,8 +2142,24 @@
 <svelte:head><title>{t(lang, 'wf.title')} · Crypto Quant</title></svelte:head>
 
 <main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
-	<h1 class="text-2xl font-semibold tracking-tight">{t(lang, 'wf.title')}</h1>
-	<p class="mt-1 max-w-3xl text-sm text-muted-foreground">{t(lang, 'wf.subtitle')}</p>
+	<h1 class="text-2xl font-semibold tracking-tight">{lang === 'en' ? 'Does it survive different markets?' : '换个市场环境，还能赚钱吗？'}</h1>
+	<p class="mt-1 max-w-3xl text-sm text-muted-foreground">
+		{lang === 'en'
+			? 'We cut 2018–2026 into 8 completely different market phases and test every strategy in each phase separately — so nothing can hide behind one lucky bull run. Green = made money in that phase, red = lost money. No strategy is all green — distrust any backtest that is.'
+			: '我们把 2018–2026 切成 8 个完全不同的市场阶段，每个策略在每个阶段单独测一遍 —— 策略没法靠一轮幸运牛市藏拙。绿色=那个阶段赚钱，红色=亏钱。没有策略全绿 —— 全绿的回测都该怀疑。'}
+	</p>
+	<p class="mt-1 text-[11px] text-muted-foreground/70">(Walk-Forward 8-Regime)</p>
+
+	{#if headline}
+		<div class="mt-4 max-w-3xl rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
+			<span class="font-semibold">{lang === 'en' ? 'One-line takeaway:' : '一句话结论：'}</span>
+			{#if lang === 'en'}
+				{headline.strategy} stayed profitable in {headline.score}% of {headline.okCount} market phases{headline.survived2022 ? ' — including the 2022 blow-up year (LUNA/FTX)' : ''}. That — not total return — is the best test of "was it just luck?".
+			{:else}
+				{headline.strategy} 在 {headline.okCount} 个市场阶段中 {headline.score}% 盈利{headline.survived2022 ? ' —— 包括 2022 爆雷年（LUNA/FTX）' : ''}。这是判断「会不会只是运气好」的最重要指标。
+			{/if}
+		</div>
+	{/if}
 
 	{#if byStrategy.length === 0}
 		<div class="mt-8 rounded-lg border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
@@ -2118,29 +2168,34 @@
 			{lang === 'en' ? 'locally to push walk_forward_history/*.json.' : '推送 walk_forward_history/*.json。'}
 		</div>
 	{:else}
-		<div class="mt-6 overflow-x-auto rounded-lg border bg-card">
+		<p class="mt-6 text-xs text-muted-foreground">
+			{lang === 'en'
+				? 'How to read: one row per strategy, one column per market phase. Green cell = made money in that phase, red = lost.'
+				: '怎么读：一行一个策略，一列一个市场阶段。格子绿=那个阶段赚钱，红=亏钱。'}
+		</p>
+		<div class="mt-2 overflow-x-auto rounded-lg border bg-card">
 			<table class="w-full text-xs">
 				<thead class="bg-secondary text-[11px] uppercase text-muted-foreground">
 					<tr>
 						<th class="sticky left-0 bg-secondary px-4 py-2.5 text-left">
 							<button type="button" onclick={() => { wfSort === 'name' ? (wfSortAsc = !wfSortAsc) : (wfSort = 'name', wfSortAsc = true); }} class="hover:text-foreground transition-colors">
-								Strategy {wfSort === 'name' ? (wfSortAsc ? '↑' : '↓') : ''}
+								{lang === 'en' ? 'Strategy' : '策略'} {wfSort === 'name' ? (wfSortAsc ? '↑' : '↓') : ''}
 							</button>
 						</th>
 						{#each allWindows as w}
-							<th class="px-2 py-2.5 text-center font-mono text-[10px]">{w.replace(/^W\d+_/, '')}</th>
+							<th class="px-2 py-2.5 text-center text-[10px]" title={w}>{regimeLabel(w)}</th>
 						{/each}
 						<th class="px-3 py-2.5 text-center">
 							<button type="button" onclick={() => { wfSort === 'sum' ? (wfSortAsc = !wfSortAsc) : (wfSort = 'sum', wfSortAsc = false); }} class="hover:text-foreground transition-colors">
-								Sum {wfSort === 'sum' ? (wfSortAsc ? '↑' : '↓') : ''}
+								{lang === 'en' ? 'Sum' : '总和'} {wfSort === 'sum' ? (wfSortAsc ? '↑' : '↓') : ''}
 							</button>
 						</th>
 						<th class="px-3 py-2.5 text-center">
 							<button type="button" onclick={() => { wfSort === 'stability' ? (wfSortAsc = !wfSortAsc) : (wfSort = 'stability', wfSortAsc = false); }} class="hover:text-foreground transition-colors">
-								Stability {wfSort === 'stability' ? (wfSortAsc ? '↑' : '↓') : ''}
+								{lang === 'en' ? 'Stability' : '稳定度'} {wfSort === 'stability' ? (wfSortAsc ? '↑' : '↓') : ''}
 							</button>
 						</th>
-						<th class="px-3 py-2.5 text-center text-muted-foreground">Trend</th>
+						<th class="px-3 py-2.5 text-center text-muted-foreground">{lang === 'en' ? 'Trend' : '走势'}</th>
 					</tr>
 				</thead>
 				<tbody class="font-mono">
@@ -2182,7 +2237,7 @@
 										class:text-yellow-400={score >= 50 && score < 70}
 										class:text-red-400={score < 50}
 									>{score}%</span>
-									<span class="text-[9px] text-muted-foreground">win</span>
+									<span class="text-[9px] text-muted-foreground">{lang === 'en' ? 'win' : '盈利'}</span>
 								</span>
 							</td>
 							<td class="px-3 py-2 text-center">
@@ -2201,7 +2256,7 @@
 				</tbody>
 				<tfoot class="border-t-2 border-border bg-secondary/60 font-mono text-[10px]">
 					<tr>
-						<td class="sticky left-0 bg-secondary/80 px-4 py-2 text-xs font-semibold text-muted-foreground">Avg all</td>
+						<td class="sticky left-0 bg-secondary/80 px-4 py-2 text-xs font-semibold text-muted-foreground">{lang === 'en' ? 'Avg all' : '全部平均'}</td>
 						{#each allWindows as w}
 							{@const a = windowAgg[w]}
 							{@const avg = a?.avg}
@@ -2222,7 +2277,7 @@
 						<td class="px-3 py-2 text-center text-muted-foreground text-[9px]">—</td>
 					</tr>
 					<tr class="border-t border-border/50">
-						<td class="sticky left-0 bg-secondary/80 px-4 py-2 text-xs font-semibold text-amber-400">Champion</td>
+						<td class="sticky left-0 bg-secondary/80 px-4 py-2 text-xs font-semibold text-amber-400">{lang === 'en' ? 'Champion' : '每阶段冠军'}</td>
 						{#each allWindows as w}
 							{@const c = championByWindow[w]}
 							<td class="px-2 py-1.5 text-center" title="{c ? c.strategy + ': +' + c.profit.toFixed(2) + '%' : '—'}">
@@ -2241,34 +2296,9 @@
 			</table>
 		</div>
 
-		{#if windowWaterfall}
-			{@const ww = windowWaterfall}
-			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Window Waterfall — {ww.strategy} <span class="ml-1 font-normal text-muted-foreground text-xs">(top stability strategy · sequential out-of-sample windows)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
-				<div class="flex items-end gap-1">
-					{#each ww.bars as bar, i}
-						{@const h = bar.profit != null ? Math.round((Math.abs(bar.profit) / ww.maxAbs) * 72) : 0}
-						<div class="flex flex-1 flex-col items-center gap-1">
-							<div class="w-full rounded-sm transition-colors"
-								style="height:{Math.max(2, h)}px; background:{bar.profit == null ? 'var(--ch-axis-faint)' : bar.profit >= 0 ? 'var(--ch-profit)' : 'var(--ch-loss)'}"
-								title="{bar.window}: {bar.profit != null ? (bar.profit >= 0 ? '+' : '') + bar.profit.toFixed(1) + '%' : 'failed'}"
-							></div>
-							<span class="font-mono text-[8px] text-muted-foreground truncate w-full text-center">{bar.window.slice(-2)}</span>
-						</div>
-					{/each}
-				</div>
-				<div class="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
-					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-green-500/60"></span>Positive</span>
-					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-red-500/60"></span>Negative</span>
-					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-muted/20"></span>Failed</span>
-					<span class="ml-auto font-mono">cumulative: {ww.cumulative[ww.cumulative.length - 1] >= 0 ? '+' : ''}{ww.cumulative[ww.cumulative.length - 1]?.toFixed(1)}%</span>
-				</div>
-			</section>
-		{/if}
-
 		{#if stabilityLeaderboard}
 			<section class="mt-8 rounded-lg border bg-card p-5">
-				<h2 class="mb-4 text-sm font-semibold">Strategy Stability Leaderboard <span class="ml-1 font-normal text-muted-foreground text-xs">(% of positive out-of-sample windows)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
+				<h2 class="mb-4 text-sm font-semibold">{lang === 'en' ? 'Who survives the most market environments?' : '谁在最多市场环境下都能活下来？'} <span class="ml-1 font-normal text-muted-foreground text-xs">({lang === 'en' ? '% of profitable windows — matters more than total return' : '盈利窗口占比 —— 比总收益更重要'})</span> <ChartInfo metric="leaderboard" {lang} /></h2>
 				<div class="space-y-2">
 					{#each stabilityLeaderboard as row, i}
 						<div class="flex items-center gap-2 text-xs">
@@ -2289,7 +2319,61 @@
 						</div>
 					{/each}
 				</div>
-				<p class="mt-2 text-[10px] text-muted-foreground">% = out-of-sample windows with positive return · sum = cumulative profit across all windows · w = window count</p>
+				<p class="mt-2 text-[10px] text-muted-foreground">
+					{lang === 'en'
+						? '% = out-of-sample windows with positive return · sum = cumulative profit across all windows · w = window count'
+						: '% = 盈利窗口占比（样本外）· 右侧 = 全部窗口累计收益 · w = 窗口数'}
+				</p>
+			</section>
+		{/if}
+
+		<section class="mt-8 grid gap-3 md:grid-cols-4">
+			<div class="rounded-lg border bg-card p-4">
+				<div class="text-[11px] uppercase text-muted-foreground" title="2018_CRASH">{lang === 'en' ? '2018 crash year' : '2018 崩盘年'}</div>
+				<div class="mt-2 text-xs">{lang === 'en' ? 'BTC −76%. The hardest window for trend-following.' : 'BTC −76%。趋势跟随最难的窗口。'}</div>
+			</div>
+			<div class="rounded-lg border bg-card p-4">
+				<div class="text-[11px] uppercase text-muted-foreground" title="2020_COVID">{lang === 'en' ? '2020 COVID shock' : '2020 疫情震荡'}</div>
+				<div class="mt-2 text-xs">{lang === 'en' ? 'March 50% flash crash + sharp V-recovery.' : '3 月闪崩 50% + V 型大反弹。'}</div>
+			</div>
+			<div class="rounded-lg border bg-card p-4">
+				<div class="text-[11px] uppercase text-muted-foreground" title="2022_LUNA_FTX">{lang === 'en' ? '2022 blow-up year (LUNA/FTX)' : '2022 爆雷年（LUNA/FTX）'}</div>
+				<div class="mt-2 text-xs">
+					{#if lang === 'en'}Double-crash window. <b>Spot-long hell; futures L+S shines here.</b>{:else}双崩盘窗口。<b>spot long 地狱，futures L+S 在这发威</b>。{/if}
+				</div>
+			</div>
+			<div class="rounded-lg border bg-card p-4">
+				<div class="text-[11px] uppercase text-muted-foreground" title="2025_PRESENT">{lang === 'en' ? '2025 – now' : '2025 至今'}</div>
+				<div class="mt-2 text-xs">{lang === 'en' ? 'Live out-of-sample window.' : '实盘 out-of-sample 窗口。'}</div>
+			</div>
+		</section>
+	{/if}
+
+	<details class="mt-8 rounded-xl border border-border bg-card">
+		<summary class="cursor-pointer p-4 text-sm font-semibold text-muted-foreground">📊 高级分析（给量化爱好者）/ Advanced analytics</summary>
+		<div class="p-4 pt-0 space-y-8">
+		{#if windowWaterfall}
+			{@const ww = windowWaterfall}
+			<section class="mt-8 rounded-lg border bg-card p-5">
+				<h2 class="mb-4 text-sm font-semibold">Window Waterfall — {ww.strategy} <span class="ml-1 font-normal text-muted-foreground text-xs">(top stability strategy · sequential out-of-sample windows)</span> <ChartInfo metric="leaderboard" {lang} /></h2>
+				<div class="flex items-end gap-1">
+					{#each ww.bars as bar, i}
+						{@const h = bar.profit != null ? Math.round((Math.abs(bar.profit) / ww.maxAbs) * 72) : 0}
+						<div class="flex flex-1 flex-col items-center gap-1">
+							<div class="w-full rounded-sm transition-colors"
+								style="height:{Math.max(2, h)}px; background:{bar.profit == null ? 'var(--ch-axis-faint)' : bar.profit >= 0 ? 'var(--ch-profit)' : 'var(--ch-loss)'}"
+								title="{bar.window}: {bar.profit != null ? (bar.profit >= 0 ? '+' : '') + bar.profit.toFixed(1) + '%' : 'failed'}"
+							></div>
+							<span class="text-[8px] text-muted-foreground truncate w-full text-center" title={bar.window}>{regimeLabel(bar.window)}</span>
+						</div>
+					{/each}
+				</div>
+				<div class="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
+					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-green-500/60"></span>Positive</span>
+					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-red-500/60"></span>Negative</span>
+					<span class="flex items-center gap-1"><span class="inline-block h-2 w-2 rounded-sm bg-muted/20"></span>Failed</span>
+					<span class="ml-auto font-mono">cumulative: {ww.cumulative[ww.cumulative.length - 1] >= 0 ? '+' : ''}{ww.cumulative[ww.cumulative.length - 1]?.toFixed(1)}%</span>
+				</div>
 			</section>
 		{/if}
 
@@ -2305,7 +2389,7 @@
 							<div class="w-full rounded-t-sm"
 								style="height:{Math.max(2, Math.round(wr * 72))}px; background:{wr >= 0.6 ? 'var(--ch-profit)' : wr >= 0.4 ? 'var(--ch-warn-light)' : 'var(--ch-loss-light)'}">
 							</div>
-							<span class="font-mono text-[8px] text-muted-foreground leading-tight text-center">{w.replace(/^W\d+\s*/, '')}</span>
+							<span class="text-[8px] text-muted-foreground leading-tight text-center" title={w}>{regimeLabel(w)}</span>
 						</div>
 					{/each}
 				</div>
@@ -2330,7 +2414,7 @@
 							<div class="w-full rounded-t-sm"
 								style="height:{Math.max(2, Math.round((n / maxN) * 56))}px; background:{n === maxN ? 'var(--ch-violet)' : n >= maxN * 0.7 ? 'var(--ch-violet-light)' : 'var(--ch-violet-light)'}">
 							</div>
-							<span class="font-mono text-[7px] text-muted-foreground text-center leading-tight">{w.replace(/^W\d+\s*/, '')}</span>
+							<span class="text-[7px] text-muted-foreground text-center leading-tight" title={w}>{regimeLabel(w)}</span>
 						</div>
 					{/each}
 				</div>
@@ -2407,28 +2491,6 @@
 				<p class="mt-2 text-[10px] text-muted-foreground">Green ≥ 60% · amber 40-60% · red &lt; 40% · only strategies with ≥ 2 windows shown</p>
 			</section>
 		{/if}
-
-		<section class="mt-8 grid gap-3 md:grid-cols-4">
-			<div class="rounded-lg border bg-card p-4">
-				<div class="text-[11px] uppercase text-muted-foreground">{lang === 'en' ? 'W1 2018 bear' : 'W1 2018 熊市'}</div>
-				<div class="mt-2 text-xs">{lang === 'en' ? 'BTC −76%. The hardest window for trend-following.' : 'BTC −76%。趋势跟随最难的窗口。'}</div>
-			</div>
-			<div class="rounded-lg border bg-card p-4">
-				<div class="text-[11px] uppercase text-muted-foreground">W3 2020 COVID</div>
-				<div class="mt-2 text-xs">{lang === 'en' ? 'March 50% flash crash + sharp V-recovery.' : '3 月闪崩 50% + V 型大反弹。'}</div>
-			</div>
-			<div class="rounded-lg border bg-card p-4">
-				<div class="text-[11px] uppercase text-muted-foreground">W5 2022 LUNA + FTX</div>
-				<div class="mt-2 text-xs">
-					{#if lang === 'en'}Double-crash window. <b>Spot-long hell; futures L+S shines here.</b>{:else}双崩盘窗口。<b>spot long 地狱，futures L+S 在这发威</b>。{/if}
-				</div>
-			</div>
-			<div class="rounded-lg border bg-card p-4">
-				<div class="text-[11px] uppercase text-muted-foreground">{lang === 'en' ? 'W8 2025-now' : 'W8 2025-至今'}</div>
-				<div class="mt-2 text-xs">{lang === 'en' ? 'Live out-of-sample window.' : '实盘 out-of-sample 窗口。'}</div>
-			</div>
-		</section>
-	{/if}
 
 	{#if windowBestWorstContrast}
 		<section class="mt-6 rounded-lg border bg-card p-5">
@@ -4238,4 +4300,6 @@
 			<p class="mt-1 text-[9px] text-muted-foreground">Avg Sortino ratio by WF window start day · green≥1 · teal≥0 · red&lt;0 · day-of-week may reveal regime-sensitive entry quality in walk-forward tests</p>
 		</section>
 	{/if}
+		</div>
+	</details>
 </main>
