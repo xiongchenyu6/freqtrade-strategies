@@ -56,16 +56,24 @@ Web dashboard (`cd web/apps/app`, pnpm):
   command in `sops exec-env secrets.env "<single quoted cmd>"` (quoting avoids a flag-eating bug).
 - **Equity IB Gateway sidecar (oracle-amd-002, x86_64):** Gateway is x86-only + unpackaged in
   nixpkgs, so it runs as a `gnzsnz/ib-gateway` podman container (paper) on the AMD box, API bound
-  to the wg mesh IP `172.22.240.97:4002` (wg0 is trusted; never public). `nautilus_equity` connects
+  to the wg mesh IP `172.22.240.97:4002` (wg0 is trusted; never public). The equity node connects
   over WireGuard (`IB_HOST=172.22.240.97 IB_PORT=4002`). Config:
   `dotfiles/nixos-configurations/oracle-amd-002/ib-gateway.nix`; runbook + 2FA/sops steps:
   `nautilus_equity/deploy/ib-gateway-headless.md`. Disable 2FA on the paper login first.
+- **Equity EXECUTION runs on the game box, NOT amd-002** (decided 2026-06-10). The amd-002 nix
+  node `services.nautilus-equity-trend` traded but didn't persist (stale nur copy) + under-sized;
+  it is **RETIRED** (`enable = false`). amd-002 hosts ONLY the IB Gateway now. The single equity
+  node is `quant-equity.service` on the game box (see Local services). They must never both run —
+  they share IB client id 8 on the one paper account.
 
-## Local services (game box, `~/.config/systemd/user/quant-*`, on `.venv-bots`)
-Monitoring/reporting only after the single-stack migration: `quant-ts-sync` (wf sync),
-`quant-alerts` (telegram), `quant-deribit`, `quant-risk-monitor`, `quant-daily-report`,
-`quant-dashboard` (md_http :3001). The crypto bots `quant-event-dca`/`quant-reactor`/`quant-dca`
-were **retired** (function moved to Nautilus@oracle-arm-002).
+## Local services (game box, `~/.config/systemd/user/quant-*`)
+Monitoring/reporting on `.venv-bots`: `quant-ts-sync` (wf sync), `quant-alerts` (telegram),
+`quant-deribit`, `quant-risk-monitor`, `quant-daily-report`, `quant-dashboard` (md_http :3001).
+On `nautilus_equity/.venv` (needs nautilus_trader): `quant-backtest-runner` (playground compute)
+and **`quant-equity`** — the US-equity LIVE node (`live_honest_equity.py`, IB paper, persists to
+`quant.nautilus_trades` asset_class='equity' via in-node TradeLedger). Env in
+`~/.config/quant/equity.env` (IB_* + EQ_QUOTE_PER_BASE_FX=0.74 for the SGD-base account + TIMESCALE_URL).
+The crypto bots `quant-event-dca`/`quant-reactor`/`quant-dca` were **retired** (moved to Nautilus@oracle-arm-002).
 
 ## Guardrails (hard)
 - All crypto stays **testnet/dry-run**; IB stays **paper**. `DCA_LIVE_ENABLED` empty/false.
