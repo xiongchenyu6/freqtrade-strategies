@@ -14,8 +14,10 @@
 		type BacktestJob,
 		type BacktestResult
 	} from '$lib/backtests';
+	import { createSignal, signalsVersion, isEquityAsset, type NewSignal } from '$lib/signals';
 	import { onMount, onDestroy } from 'svelte';
 	import AlertSubscribe from '$lib/components/alert-subscribe.svelte';
+	import MySignals from '$lib/components/my-signals.svelte';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
@@ -216,6 +218,69 @@
 
 	function toggle(id: string) {
 		openId = openId === id ? null : id;
+	}
+
+	// ── One-click "turn this backtest into a live signal" ─────────────────────
+	// Maps a completed job's config onto a user signal: honest_trend → ema_cross
+	// (both crossings), donchian → donchian_breakout (both sides), accumulator →
+	// market-wide fng_threshold below 25 (its fear-buy trigger).
+	let sigBusy = $state<string | null>(null);
+	let sigMsg = $state<Record<string, { ok: boolean; text: string }>>({});
+
+	function mapJobToSignal(j: BacktestJob, userId: string): NewSignal {
+		const p = j.params as Record<string, string | number>;
+		const asset = String(p.asset ?? 'BTC');
+		const tf = String(p.tf ?? '1d');
+		if (j.strategy === 'honest_trend') {
+			const f = Number(p.ema_fast);
+			const s = Number(p.ema_slow);
+			const sigTf = isEquityAsset(asset) ? '1d' : tf; // equity signals are 1d-only
+			return {
+				user_id: userId,
+				name: `${asset} ${sigTf} EMA${f}/${s} ${en ? 'cross' : '金叉死叉'}`,
+				kind: 'ema_cross',
+				asset,
+				timeframe: sigTf,
+				params: { ema_fast: f, ema_slow: s, direction: 'both' }
+			};
+		}
+		if (j.strategy === 'donchian') {
+			const e = Number(p.entry_lb);
+			const x = Number(p.exit_lb);
+			return {
+				user_id: userId,
+				name: `${asset} ${tf} ${en ? 'Donchian' : '唐奇安'}${e}/${x} ${en ? 'breakout' : '突破'}`,
+				kind: 'donchian_breakout',
+				asset,
+				timeframe: tf,
+				params: { entry_lb: e, exit_lb: x, side: 'both' }
+			};
+		}
+		// accumulator — fear-driven DCA; the live equivalent is a market-wide FNG alert,
+		// so don't embed the backtest's asset/tf in the name (the signal isn't per-asset).
+		return {
+			user_id: userId,
+			name: en ? 'FNG<25 market fear alert' : 'FNG<25 全市场恐慌提醒',
+			kind: 'fng_threshold',
+			asset: '*',
+			timeframe: '1d',
+			params: { below: 25 }
+		};
+	}
+
+	async function toSignal(j: BacktestJob) {
+		const sub = $user?.sub;
+		if (!sub || sigBusy) return;
+		sigBusy = j.id;
+		try {
+			await createSignal(mapJobToSignal(j, sub));
+			signalsVersion.update((n) => n + 1); // <MySignals /> below re-fetches
+			sigMsg = { ...sigMsg, [j.id]: { ok: true, text: en ? 'Created — manage it below.' : '已创建,在下方管理' } };
+		} catch (e) {
+			sigMsg = { ...sigMsg, [j.id]: { ok: false, text: (e as Error).message } };
+		} finally {
+			sigBusy = null;
+		}
 	}
 
 	let timer: ReturnType<typeof setInterval>;
@@ -501,6 +566,17 @@
 										{/each}
 									</dl>
 								</div>
+
+								<!-- Turn this exact config into a live signal alert -->
+								<div class="mt-4 flex flex-wrap items-center gap-3">
+									<button type="button" onclick={() => toSignal(j)} disabled={sigBusy === j.id}
+										class="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted/30 disabled:opacity-50">
+										🔔 {en ? 'Turn into a live signal' : '变成实时信号'}
+									</button>
+									{#if sigMsg[j.id]}
+										<span class="text-xs {sigMsg[j.id].ok ? 'text-emerald-600' : 'text-red-600'}">{sigMsg[j.id].text}</span>
+									{/if}
+								</div>
 							</div>
 						{/if}
 					</div>
@@ -511,6 +587,11 @@
 		<!-- Post-aha moment: they've just seen real results — offer Telegram alerts. -->
 		<div class="mt-8">
 			<AlertSubscribe />
+		</div>
+
+		<!-- Manage user-defined signals: list/pause/delete, create new, recent fires. -->
+		<div class="mt-4">
+			<MySignals />
 		</div>
 	{/if}
 </main>
