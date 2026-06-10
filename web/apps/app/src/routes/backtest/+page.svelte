@@ -26,7 +26,17 @@
 	let busy = $state(false);
 	let err = $state('');
 	let jobs = $state<BacktestJob[]>([]);
-	let results = $state<Record<string, BacktestResult['metrics']>>({});
+	let results = $state<Record<string, BacktestResult>>({});
+
+	// Build SVG polyline points for a compact equity sparkline (normalized min→max).
+	function spark(curve: number[] | null, w = 96, h = 24): string {
+		if (!curve || curve.length < 2) return '';
+		const lo = Math.min(...curve);
+		const hi = Math.max(...curve);
+		const span = hi - lo || 1;
+		const dx = w / (curve.length - 1);
+		return curve.map((v, i) => `${(i * dx).toFixed(1)},${(h - ((v - lo) / span) * h).toFixed(1)}`).join(' ');
+	}
 
 	async function refresh() {
 		if (!$user) return;
@@ -35,7 +45,7 @@
 			for (const j of jobs) {
 				if (j.status === 'done' && !results[j.id]) {
 					const r = await jobResult(j.id);
-					if (r) results = { ...results, [j.id]: r.metrics };
+					if (r) results = { ...results, [j.id]: r };
 				}
 			}
 		} catch (e) {
@@ -146,9 +156,14 @@
 						<span class="font-mono text-xs">{j.strategy} · {(j.params.asset as string) ?? '?'} · {(j.params.tf as string) ?? '?'} · {(j.params.ema_fast as number) ?? '?'}/{(j.params.ema_slow as number) ?? '?'}</span>
 						<span class="rounded border px-1.5 py-0.5 text-[10px] {badge(j.status)}">{j.status}</span>
 						{#if j.status === 'done' && results[j.id]}
-							{@const m = results[j.id]}
+							{@const m = results[j.id].metrics}
 							<span class="text-xs {m.return_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}">{m.return_pct >= 0 ? '+' : ''}{m.return_pct}%</span>
-							<span class="text-xs text-muted-foreground">DD {m.max_dd_pct}% · Sharpe {m.sharpe} · {m.trades} {en ? 'trades' : '笔'}</span>
+							<span class="text-xs text-muted-foreground">DD {m.max_dd_pct ?? '—'}% · Sharpe {m.sharpe ?? '—'} · {m.trades} {en ? 'trades' : '笔'}</span>
+							{#if results[j.id].equity_curve}
+								<svg viewBox="0 0 96 24" width="96" height="24" class="ml-auto {m.return_pct >= 0 ? 'text-emerald-500' : 'text-red-500'}" aria-hidden="true">
+									<polyline points={spark(results[j.id].equity_curve)} fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" />
+								</svg>
+							{/if}
 						{:else if j.status === 'error'}
 							<span class="text-xs text-red-600">{j.error}</span>
 						{/if}
