@@ -63,18 +63,24 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 
 	const ohlcByCoin = { BTC: btcOhlc, ETH: ethOhlc, BNB: bnbOhlc, SOL: solOhlc };
 	const stats = statsRow[0] ?? null;
+	// Coerce to arrays — a malformed 200 from the API would otherwise crash the derivations
+	// below (.filter/.find) and 500 the home page. Resilience over a hard fail.
+	const semiUni = Array.isArray(semiUniverse) ? semiUniverse : [];
+	const semiGrp = Array.isArray(semiGroups) ? semiGroups : [];
+	const nautilusBTArr = Array.isArray(nautilusBT) ? nautilusBT : [];
+	const equityTradesArr = Array.isArray(equityTrades) ? equityTrades : [];
 
 	// Semis market pulse — honest facts derived from real closes; the component phrases the read.
 	// No fabricated headlines: just breadth, weekly leaders/laggards, and tier rotation.
 	const semiPulse = (() => {
-		const u = semiUniverse.filter((s) => s.tier !== 'benchmark' && s.ret_1w !== null);
+		const u = semiUni.filter((s) => s.tier !== 'benchmark' && s.ret_1w !== null);
 		if (u.length === 0) return null;
 		const byWeek = [...u].sort((a, b) => (b.ret_1w ?? 0) - (a.ret_1w ?? 0));
 		const upCount = u.filter((s) => (s.ret_1w ?? 0) > 0).length;
-		const tiers = semiGroups
+		const tiers = semiGrp
 			.filter((g) => g.tier !== 'benchmark' && g.avg_ret_1m !== null)
 			.sort((a, b) => (b.avg_ret_1m ?? 0) - (a.avg_ret_1m ?? 0));
-		const nvda = semiUniverse.find((s) => s.symbol === 'NVDA') ?? null;
+		const nvda = semiUni.find((s) => s.symbol === 'NVDA') ?? null;
 		const pick = (s: (typeof u)[number]) => ({
 			symbol: s.symbol,
 			ret_1w: s.ret_1w,
@@ -113,11 +119,11 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 			dca_count: dca.length
 		},
 		recent_runs: runs.slice(0, 50),
-		nautilus_backtests: nautilusBT,
-		equity_backtests: nautilusBT
+		nautilus_backtests: nautilusBTArr,
+		equity_backtests: nautilusBTArr
 			.filter((b) => b.asset_class === 'equity')
 			.sort((a, b) => (b.total_profit_pct ?? 0) - (a.total_profit_pct ?? 0)),
-		equity_trades: equityTrades,
+		equity_trades: equityTradesArr,
 		semi_pulse: semiPulse,
 		strategy_options: [...distinctStrategies].sort(),
 		timeframe_options: [...distinctTimeframes].sort(),

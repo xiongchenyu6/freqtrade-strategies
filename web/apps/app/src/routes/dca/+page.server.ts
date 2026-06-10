@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 					.publicOhlcDaily(fetch, pair, { from: '2017-01-01', limit: 4000 })
 					.catch(() => [] as OhlcRow[]);
 
-	const [triggers, log, btcOhlc, ethOhlc, bnbOhlc, solOhlc] = await Promise.all([
+	const [triggersRaw, logRaw, btcOhlc, ethOhlc, bnbOhlc, solOhlc] = await Promise.all([
 		isAuthed
 			? vps
 					.eventDcaTriggers(fetch, { limit: 500, authHeader: auth })
@@ -35,6 +35,11 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		ohlcFor('BNB/USDT'),
 		ohlcFor('SOL/USDT')
 	]);
+	// Coerce to arrays: a malformed 200 (PostgREST/Supabase returning a non-array body during a
+	// transient hiccup) passes req()'s ok-check, so the post-processing below would otherwise
+	// crash with a 500 and take the whole page down. Be resilient instead.
+	const triggers = Array.isArray(triggersRaw) ? triggersRaw : [];
+	const log = Array.isArray(logRaw) ? logRaw : [];
 	const ohlcByCoin = { BTC: btcOhlc, ETH: ethOhlc, BNB: bnbOhlc, SOL: solOhlc };
 
 	const byKind = new Map<string, EventDcaTrigger[]>();
@@ -52,7 +57,7 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		})
 		.sort((a, b) => b.count - a.count);
 
-	const sortedLog = [...log].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+	const sortedLog = [...log].sort((a, b) => (a.timestamp ?? '').localeCompare(b.timestamp ?? ''));
 	let cum = 0;
 	const cumulative = sortedLog.map((r) => {
 		cum += r.amount_usdt ?? 0;
