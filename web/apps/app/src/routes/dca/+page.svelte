@@ -7,6 +7,7 @@
 	import { t, type Lang } from '$lib/i18n';
 	import { onMount } from 'svelte';
 	import ChartInfo from '$lib/components/chart-info.svelte';
+	import AlertSubscribe from '$lib/components/alert-subscribe.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
@@ -2183,6 +2184,11 @@
 		<h1 class="text-3xl font-semibold tracking-tight">{t(lang, 'dca.title')}</h1>
 		<p class="mt-2 max-w-3xl text-sm text-muted-foreground">{t(lang, 'dca.subtitle')}</p>
 	</header>
+
+	<!-- Telegram alert subscription — the component handles anonymous visitors itself. -->
+	<div class="mb-8">
+		<AlertSubscribe />
+	</div>
 
 	<PersonalPlan ohlcByCoin={data.ohlcByCoin} events={data.triggers} />
 	<BinanceConnect />

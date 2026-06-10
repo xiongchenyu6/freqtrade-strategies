@@ -199,6 +199,21 @@
 				? 'These are explanations of terms, not recommendations. Nothing here constitutes investment advice.'
 				: '以上是名词解释,不是操作建议。这不构成投资建议。'}
 		</p>
+		<p class="mt-3 text-sm text-muted-foreground">
+			{#if en}
+				Want a Telegram ping when one of these signals fires? Subscribe on the <a
+					href="/dca"
+					class="font-medium text-primary hover:underline">DCA page</a
+				>
+				or the
+				<a href="/backtest" class="font-medium text-primary hover:underline">backtest page</a>.
+			{:else}
+				想在信号触发时收到 Telegram 通知?去<a
+					href="/dca"
+					class="font-medium text-primary hover:underline">定投页</a
+				>或<a href="/backtest" class="font-medium text-primary hover:underline">回测页</a>订阅。
+			{/if}
+		</p>
 	</section>
 
 	<!-- Why we don't just tell you what to buy -->

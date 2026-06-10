@@ -15,6 +15,7 @@
 		type BacktestResult
 	} from '$lib/backtests';
 	import { onMount, onDestroy } from 'svelte';
+	import AlertSubscribe from '$lib/components/alert-subscribe.svelte';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
@@ -506,5 +507,10 @@
 				{/each}
 			</div>
 		{/if}
+
+		<!-- Post-aha moment: they've just seen real results — offer Telegram alerts. -->
+		<div class="mt-8">
+			<AlertSubscribe />
+		</div>
 	{/if}
 </main>
