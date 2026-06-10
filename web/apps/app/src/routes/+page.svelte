@@ -3,6 +3,7 @@
 	import FactorBadges from '$lib/components/factor-badges.svelte';
 	import InfoTip from '$lib/components/info-tip.svelte';
 	import GreetingBanner from '$lib/components/greeting-banner.svelte';
+	import Hero from '$lib/components/hero.svelte';
 	import TrustIntro from '$lib/components/trust-intro.svelte';
 	import AffiliateCta from '$lib/components/affiliate-cta.svelte';
 	import { fmtPct, fmtTime } from '$lib/utils';
@@ -140,6 +141,7 @@
 </svelte:head>
 
 <main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-10">
+	<Hero />
 	<GreetingBanner ohlcByCoin={data.ohlcByCoin} events={data.triggers} />
 
 	<div class="mb-10">
