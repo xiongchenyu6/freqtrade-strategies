@@ -241,6 +241,13 @@ def main() -> int:
     import psycopg2
     conn = psycopg2.connect(url)
     conn.autocommit = False
+    # Recover jobs left 'running' by a previous crashed run (single runner → safe to requeue).
+    with conn.cursor() as cur:
+        cur.execute("UPDATE quant.backtest_jobs SET status='queued' WHERE status='running'")
+        recovered = cur.rowcount
+        conn.commit()
+    if recovered:
+        print(f"backtest_runner: recovered {recovered} stale running job(s) -> queued")
     print("backtest_runner: polling quant.backtest_jobs …")
     try:
         _run_loop(conn)
