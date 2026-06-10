@@ -13,7 +13,10 @@ import type {
 	HyperoptEpoch,
 	KolEvent,
 	DcaLogRow,
-	PublicStats
+	PublicStats,
+	NautilusBacktest,
+	SemiTicker,
+	SemiGroup
 } from './types';
 import { getToken } from './auth';
 
@@ -48,6 +51,20 @@ export const vps = {
 	// ---- public-preview endpoints (anon-accessible) ----
 	publicStats: (f: Fetch = fetch) =>
 		req<PublicStats[]>(CONFIG.API_BASE, '/public_stats', {}, f),
+
+	// Honest current numbers: aggregates over quant.nautilus_backtests (re-run on Nautilus),
+	// NOT the retired freqtrade backtest_runs. Same shape as PublicStats (superset).
+	nautilusStats: (f: Fetch = fetch) =>
+		req<PublicStats[]>(CONFIG.API_BASE, '/nautilus_stats', {}, f),
+
+	nautilusBacktests: (f: Fetch = fetch) =>
+		req<NautilusBacktest[]>(CONFIG.API_BASE, '/nautilus_backtests', {}, f),
+
+	// NVDA-centric semiconductor supply-chain analysis (real Yahoo data).
+	semiUniverse: (f: Fetch = fetch) =>
+		req<SemiTicker[]>(CONFIG.API_BASE, '/semi_universe', { order: 'ret_3m.desc.nullslast' }, f),
+	semiGroups: (f: Fetch = fetch) =>
+		req<SemiGroup[]>(CONFIG.API_BASE, '/semi_groups', {}, f),
 
 	publicOhlcDaily: (
 		f: Fetch = fetch,
@@ -150,10 +167,16 @@ export const vps = {
 	// NautilusTrader execution-engine positions (separate from freqtrade live_trades).
 	nautilusTrades: (
 		f: Fetch = fetch,
-		{ environment, limit = 100, authHeader }: { environment?: string; limit?: number } & WithAuth = {}
+		{
+			environment,
+			assetClass,
+			limit = 100,
+			authHeader
+		}: { environment?: string; assetClass?: 'crypto' | 'equity'; limit?: number } & WithAuth = {}
 	) => {
 		const params: Params = { order: 'open_date.desc', limit };
 		if (environment) params.environment = `eq.${environment}`;
+		if (assetClass) params.asset_class = `eq.${assetClass}`;
 		return req<NautilusTrade[]>(CONFIG.API_BASE, '/nautilus_trades', params, f, vpsAuth(authHeader));
 	},
 

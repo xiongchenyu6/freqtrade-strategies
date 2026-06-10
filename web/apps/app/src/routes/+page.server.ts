@@ -19,9 +19,26 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 				? vps.publicOhlcDaily(fetch, pair, { from: '2017-01-01', limit: 4000 }).catch(() => [] as OhlcRow[])
 				: Promise.resolve([] as OhlcRow[]);
 
-	const [statsRow, runs, dca, kol, btcOhlc, ethOhlc, bnbOhlc, solOhlc, triggers] =
-		await Promise.all([
-			vps.publicStats(fetch).catch(() => [] as PublicStats[]),
+	const [
+		statsRow,
+		nautilusBT,
+		equityTrades,
+		runs,
+		dca,
+		kol,
+		btcOhlc,
+		ethOhlc,
+		bnbOhlc,
+		solOhlc,
+		triggers
+	] = await Promise.all([
+		// Honest current numbers: aggregates over the deployed strategies re-run on Nautilus,
+		// NOT the retired freqtrade backtest_runs.
+		vps.nautilusStats(fetch).catch(() => [] as PublicStats[]),
+		vps.nautilusBacktests(fetch).catch(() => []),
+		// US-equity live paper positions (IB paper). Usually empty — trend signals are rare —
+		// the home equity card shows an honest "awaiting signal" state when so.
+		vps.nautilusTrades(fetch, { assetClass: 'equity', limit: 20 }).catch(() => []),
 			isAuthed
 				? vps.backtestRuns(fetch, { limit: 500, authHeader: auth }).catch(() => [] as BacktestRun[])
 				: Promise.resolve([] as BacktestRun[]),
@@ -63,6 +80,11 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 			dca_count: dca.length
 		},
 		recent_runs: runs.slice(0, 50),
+		nautilus_backtests: nautilusBT,
+		equity_backtests: nautilusBT
+			.filter((b) => b.asset_class === 'equity')
+			.sort((a, b) => (b.total_profit_pct ?? 0) - (a.total_profit_pct ?? 0)),
+		equity_trades: equityTrades,
 		strategy_options: [...distinctStrategies].sort(),
 		timeframe_options: [...distinctTimeframes].sort(),
 		recent_kol: kol,
