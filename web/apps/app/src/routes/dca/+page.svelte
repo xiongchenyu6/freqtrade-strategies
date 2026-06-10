@@ -78,7 +78,7 @@
 	const SCENARIOS = $derived([
 		{ label: lang === 'en' ? 'Bear (0% CAGR)' : '熊市 (0%)', cagr: 0,   color: 'var(--ch-loss-strong)' },
 		{ label: lang === 'en' ? 'Base (40% CAGR)' : '基础 (40%)', cagr: 0.4, color: 'var(--ch-warn)' },
-		{ label: lang === 'en' ? 'Bull (100% CAGR)' : '牛市 (100%)', cagr: 1.0, color: 'var(--ch-profit-strong)' },
+		{ label: lang === 'en' ? 'Extreme bull (100% CAGR, unlikely to repeat)' : '极端牛市 (100%,历史不可重复)', cagr: 1.0, color: 'var(--ch-profit-strong)' },
 	] as const);
 	const projectionData = $derived.by(() => {
 		const btc = projBtcPrice ?? 60000;

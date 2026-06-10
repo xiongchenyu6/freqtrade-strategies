@@ -103,6 +103,17 @@
 		return { w, h, pad, lo, hi, start, poly, area, baselineY: toY(start), up: curve[curve.length - 1] >= start };
 	}
 
+	// Hardcoded teaser for logged-out visitors. The METRICS are real — HonestTrend NVDA 1d
+	// EMA 20/50 from our logged backtest (public via api.nautilus_backtests: +33.98%,
+	// DD -29.31%, Sharpe 2.59, 2 trades, 2023-06→2026-06). The curve SHAPE is illustrative
+	// (labelled 示意曲线): 100k start, ~-29% dip mid-way, 133,980 finish.
+	const SAMPLE_CURVE = [
+		100000, 100400, 101900, 104100, 107600, 111800, 115900, 119400, 122300, 124100, 124600,
+		121800, 117200, 111300, 104600, 97900, 92400, 89100, 88100, 90600, 94800, 99700, 105200,
+		110900, 116500, 121600, 126000, 129600, 132300, 133980
+	];
+	const sampleChart = bigChart(SAMPLE_CURVE);
+
 	async function refresh() {
 		if (!$user) return;
 		try {
@@ -148,6 +159,30 @@
 		} finally {
 			busy = false;
 		}
+	}
+
+	// One-click presets: seed the form through the normal strategy-change path (so all
+	// inputs render valid), apply the preset's asset/tf/param overrides, then submit.
+	type Preset = {
+		zh: string;
+		en: string;
+		strategy: StratKey;
+		asset: string;
+		tf: string;
+		overrides?: Record<string, number | string>;
+	};
+	const PRESETS: Preset[] = [
+		{ zh: 'BTC 智能定投 (推荐新手)', en: 'BTC smart DCA (beginner pick)', strategy: 'accumulator', asset: 'BTC', tf: '1d' },
+		{ zh: 'NVDA 趋势跟随', en: 'NVDA trend following', strategy: 'honest_trend', asset: 'NVDA', tf: '1d', overrides: { ema_fast: 20, ema_slow: 50 } },
+		{ zh: 'ETH 突破策略', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' }
+	];
+
+	async function runPreset(p: Preset) {
+		onStrategyChange(p.strategy);
+		asset = p.asset;
+		tf = p.tf;
+		if (p.overrides) params = { ...params, ...p.overrides };
+		await submit();
 	}
 
 	function badge(s: BacktestJob['status']): string {
@@ -208,6 +243,9 @@
 					? 'Pick a strategy below, set your own parameters, and we run a real backtest on historical data. Results are private to your account.'
 					: '选下面任意一个策略，设你自己的参数，我们用历史数据跑一次真实回测。结果只属于你的账号。'}
 			</p>
+			<p class="mt-2 text-xs font-medium text-primary">
+				{en ? 'Instant signup — no email verification, running in 10 seconds.' : '注册即用 —— 无需邮箱验证，10 秒开跑'}
+			</p>
 			<a href="/login?next=/backtest" class="mt-3 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
 				{en ? 'Sign in' : '登录'}
 			</a>
@@ -231,9 +269,83 @@
 				</div>
 			{/each}
 		</div>
+
+		<!-- Fully-rendered sample result so visitors see the payoff before the login wall.
+		     Metrics are real (logged backtest); the curve shape is illustrative (示意曲线). -->
+		<div class="mt-4 rounded-md border border-border p-4">
+			<div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+				<span class="text-sm font-medium text-foreground">{en ? 'Sample result' : '示例结果'}</span>
+				<span class="text-xs text-muted-foreground">{en ? '— sign up to run your own' : '— 注册后用你自己的参数跑'}</span>
+			</div>
+			<div class="mt-1 font-mono text-xs text-muted-foreground">HonestTrend · NVDA · 1d · ema_fast=20 ema_slow=50</div>
+
+			{#if sampleChart}
+				<svg viewBox="0 0 {sampleChart.w} {sampleChart.h}" width="100%" height={sampleChart.h} class="mt-3 max-w-[480px]" role="img"
+					aria-label={en ? 'Sample equity curve (illustrative)' : '示例权益曲线（示意）'}>
+					<!-- plot border -->
+					<rect x={sampleChart.pad} y={sampleChart.pad} width={sampleChart.w - sampleChart.pad * 2} height={sampleChart.h - sampleChart.pad * 2}
+						fill="none" class="stroke-border" stroke-width="1" />
+					<!-- baseline at starting equity -->
+					<line x1={sampleChart.pad} x2={sampleChart.w - sampleChart.pad} y1={sampleChart.baselineY} y2={sampleChart.baselineY}
+						class="stroke-muted-foreground/40" stroke-width="1" stroke-dasharray="3 3" />
+					<!-- area + line -->
+					<polygon points={sampleChart.area} class="fill-emerald-500/10" />
+					<polyline points={sampleChart.poly} fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"
+						class="stroke-emerald-500" />
+					<!-- honesty label: the shape is illustrative, the metrics below are real -->
+					<text x={sampleChart.pad + 3} y={sampleChart.pad + 12} class="fill-muted-foreground" font-size="10">{en ? 'illustrative curve' : '示意曲线'}</text>
+					<!-- min/max + start labels -->
+					<text x={sampleChart.w - sampleChart.pad - 2} y={sampleChart.pad + 10} text-anchor="end" class="fill-muted-foreground" font-size="10">{sampleChart.hi.toFixed(0)}</text>
+					<text x={sampleChart.w - sampleChart.pad - 2} y={sampleChart.h - sampleChart.pad - 3} text-anchor="end" class="fill-muted-foreground" font-size="10">{sampleChart.lo.toFixed(0)}</text>
+					<text x={sampleChart.pad + 3} y={sampleChart.baselineY - 3} class="fill-muted-foreground" font-size="10">{en ? 'start' : '起点'} {sampleChart.start.toFixed(0)}</text>
+				</svg>
+			{/if}
+
+			<dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+				<div>
+					<dt class="text-muted-foreground">{en ? 'Return' : '收益'}</dt>
+					<dd class="font-mono text-emerald-600">+33.98%</dd>
+				</div>
+				<div>
+					<dt class="text-muted-foreground">{en ? 'Max drawdown' : '最大回撤'}</dt>
+					<dd class="font-mono">-29.31%</dd>
+				</div>
+				<div>
+					<dt class="text-muted-foreground">Sharpe</dt>
+					<dd class="font-mono">2.59</dd>
+				</div>
+				<div>
+					<dt class="text-muted-foreground">{en ? 'Trades' : '成交笔数'}</dt>
+					<dd class="font-mono">2</dd>
+				</div>
+				<div class="col-span-2">
+					<dt class="text-muted-foreground">{en ? 'Period' : '区间'}</dt>
+					<dd class="font-mono">2023-06 → 2026-06</dd>
+				</div>
+			</dl>
+			<p class="mt-3 text-[11px] text-muted-foreground">
+				{en
+					? 'Backtest on real historical data · backtest ≠ live trading · 2 trades is a small sample — demo only'
+					: '真实历史数据回测 · 回测 ≠ 实盘 · 2 笔交易样本量小，仅供体验'}
+			</p>
+		</div>
 	{:else}
+		<!-- One-click presets: fill the form with a recommended config and submit immediately. -->
+		<div class="mt-6">
+			<div class="text-xs font-medium text-muted-foreground">{en ? 'Recommended configs — one-click backtest' : '推荐配置 一键回测'}</div>
+			<div class="mt-2 grid gap-2 sm:grid-cols-3">
+				{#each PRESETS as p}
+					<button type="button" onclick={() => runPreset(p)} disabled={busy}
+						class="rounded-md border border-border p-3 text-left hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50">
+						<div class="text-sm font-medium text-foreground">{en ? p.en : p.zh}</div>
+						<div class="mt-1 text-xs text-muted-foreground">{en ? '~30s to results' : '~30 秒出结果'}</div>
+					</button>
+				{/each}
+			</div>
+		</div>
+
 		<!-- Form -->
-		<div class="mt-6 grid grid-cols-2 gap-4 rounded-md border border-border p-4 sm:grid-cols-4">
+		<div class="mt-4 grid grid-cols-2 gap-4 rounded-md border border-border p-4 sm:grid-cols-4">
 			<label class="text-xs">
 				<span class="text-muted-foreground">{en ? 'Strategy' : '策略'}</span>
 				<select

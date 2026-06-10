@@ -43,6 +43,12 @@
 			>
 				{en ? 'Browse strategies' : '看策略'}
 			</a>
+			<a
+				href="/start"
+				class="rounded-md border border-border bg-background px-5 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+			>
+				{en ? 'New here? →' : '我是新手 →'}
+			</a>
 		</div>
 		<p class="mt-4 text-xs text-muted-foreground">
 			{en

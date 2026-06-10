@@ -7,6 +7,7 @@ export default {
 
 	// --- topbar ---
 	'nav.home': '主页',
+	'nav.start': '新手指南',
 	'nav.live': 'Live',
 	'nav.nautilus': '执行引擎',
 	'nav.semis': '半导体',
@@ -52,15 +53,15 @@ export default {
 	'home.kpi.apiStatus': 'API 状态',
 	'home.kpi.apiOnline': 'ONLINE',
 	'home.kpi.apiDown': 'DOWN',
-	'home.kpi.apiSub': 'PostgREST + GoTrue',
+	'home.kpi.apiSub': '数据服务',
 	'home.kpi.totalRuns': '回测总数',
 	'home.kpi.totalRunsSub': '{n} 个策略',
 	'home.kpi.totalTrades': '累计 trades',
 	'home.kpi.totalTradesSub': '全部回测合计',
 	'home.kpi.dca': 'DCA 记录',
-	'home.kpi.dcaSub': 'Supabase scheduled log',
+	'home.kpi.dcaSub': '定时任务记录',
 	'home.kpi.bestProfit': '最佳利润',
-	'home.kpi.bestProfitSub': '最佳回测收益(DCA 累积含 BTC beta)',
+	'home.kpi.bestProfitSub': '其中大部分是 BTC 本身涨幅(持有不动也会涨)',
 	'home.kpi.bestCalmar': '最佳 Calmar',
 	'home.kpi.bestCalmarSub': 'profit / maxDD',
 	'home.kpi.bestSharpe': '最佳 Sharpe',
@@ -101,8 +102,7 @@ export default {
 	'home.anonGate.body':
 		'未登录只能看聚合数据（左边的 KPI）。登录后解锁完整档案、策略因子、每次 trade、Walk-Forward 矩阵、实时 feed。',
 	'home.anonGate.cta': '去登录 →',
-	'home.footer':
-		'Built with SvelteKit · 数据来自 api.panda.qzz.io + *.supabase.co · 部署于 Cloudflare Workers',
+	'home.footer': 'Built with SvelteKit · 实时数据 · 每日更新 · 部署于 Cloudflare Workers',
 
 	// --- strategies index ---
 	'strategies.title': '📚 策略目录',
