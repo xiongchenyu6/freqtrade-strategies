@@ -1110,8 +1110,20 @@
 		const SEVS = ['low', 'medium', 'high', 'critical'];
 		const map: Record<string, number[]> = {};
 		for (const t of filteredTriggers) {
-			if (!t.severity || t.amount_usdt == null || !isFinite(t.amount_usdt) || t.amount_usdt <= 0) continue;
-			const sev = t.severity.toLowerCase();
+			if (t.severity == null || t.amount_usdt == null || !isFinite(t.amount_usdt) || t.amount_usdt <= 0) continue;
+			// severity is NUMERIC (0..1) in the live data — the original .toLowerCase() threw a
+			// TypeError and 500'd the whole page for authed users (anon public view masked it).
+			// Bucket numbers into the severity bands; tolerate legacy string values too.
+			const sev =
+				typeof t.severity === 'number'
+					? t.severity < 0.25
+						? 'low'
+						: t.severity < 0.5
+							? 'medium'
+							: t.severity < 0.75
+								? 'high'
+								: 'critical'
+					: String(t.severity).toLowerCase();
 			if (!map[sev]) map[sev] = [];
 			map[sev].push(t.amount_usdt);
 		}
