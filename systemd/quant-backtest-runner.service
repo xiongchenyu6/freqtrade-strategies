@@ -1,0 +1,30 @@
+[Unit]
+# Self-service backtest playground compute backend (game-box USER service). Polls
+# quant.backtest_jobs, runs the predefined strategy with the user's params over the local
+# catalogs/feathers, writes quant.backtest_results. Cloudflare Workers can't run Python/Nautilus.
+#
+# This is the ONE quant-* user service on the nautilus venv (nautilus_equity/.venv) rather than
+# .venv-bots — it needs nautilus_trader. All runs are backtest-only over stored data; it never
+# touches an exchange and never places orders.
+#
+# Install (the maintainer runs this; do NOT enable from CI):
+#   mkdir -p ~/.config/quant
+#   cp systemd/quant-backtest-runner.service ~/.config/systemd/user/
+#   # create ~/.config/quant/backtest-runner.env with:  TIMESCALE_URL=postgres://…  (chmod 600)
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now quant-backtest-runner.service
+Description=Quant self-service backtest runner (playground compute backend)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/freeman.xiong/Documents/github/public/quant
+# TIMESCALE_URL (required) lives here, mode 0600 (DB credentials, not committed):
+EnvironmentFile=%h/.config/quant/backtest-runner.env
+Environment=PATH=/home/freeman.xiong/Documents/github/public/quant/nautilus_equity/.venv/bin:/etc/profiles/per-user/freeman.xiong/bin:/run/current-system/sw/bin:/usr/bin:/bin
+ExecStart=/home/freeman.xiong/Documents/github/public/quant/nautilus_equity/.venv/bin/python /home/freeman.xiong/Documents/github/public/quant/nautilus_equity/backtest_runner.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

@@ -8,7 +8,10 @@ export default {
 	// --- topbar ---
 	'nav.home': '主页',
 	'nav.live': 'Live',
+	'nav.nautilus': '执行引擎',
+	'nav.semis': '半导体',
 	'nav.strategies': '策略',
+	'nav.backtest': '回测',
 	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': '档案',
@@ -22,7 +25,7 @@ export default {
 	'nav.docs': '文档',
 	'topbar.login': '登录',
 	'topbar.logout': '退出',
-	'topbar.title': 'Crypto Quant',
+	'topbar.title': 'Quant',
 
 	// --- shared ---
 	'common.loading': '加载中...',
@@ -43,9 +46,9 @@ export default {
 	'common.load': '耗时',
 
 	// --- home ---
-	'home.title': 'Crypto Quant',
+	'home.title': '加密 + 美股量化',
 	'home.subtitle':
-		'BTC/ETH/BNB/SOL 加密货币量化交易系统。回测数据来自 TimescaleDB，情绪/DCA 事件来自 Supabase。实时生成、全球 CDN 分发。',
+		'两条腿都在 NautilusTrader 一套引擎上：加密货币(累积 + 趋势)实时在测试网执行，美股半导体趋势策略在回测验证中。策略代码、回测、实时执行全部公开。',
 	'home.kpi.apiStatus': 'API 状态',
 	'home.kpi.apiOnline': 'ONLINE',
 	'home.kpi.apiDown': 'DOWN',
@@ -57,7 +60,7 @@ export default {
 	'home.kpi.dca': 'DCA 记录',
 	'home.kpi.dcaSub': 'Supabase scheduled log',
 	'home.kpi.bestProfit': '最佳利润',
-	'home.kpi.bestProfitSub': 'profit_total_pct',
+	'home.kpi.bestProfitSub': '最佳回测收益(DCA 累积含 BTC beta)',
 	'home.kpi.bestCalmar': '最佳 Calmar',
 	'home.kpi.bestCalmarSub': 'profit / maxDD',
 	'home.kpi.bestSharpe': '最佳 Sharpe',
@@ -244,7 +247,7 @@ export default {
 	// --- trust + affiliate ---
 	'trust.heading': '为什么做这个',
 	'trust.body':
-		'我把自己的 BTC/ETH/BNB/SOL 现货 + 期货对冲 + Smart DCA 都跑在上面，策略代码、回测、walk-forward 全部公开。这里看到的任何数字，都是我真金白银在做的事。',
+		'加密货币的累积(Smart DCA)+ 趋势(Donchian)都迁到了 NautilusTrader 上，实时在 Binance 测试网执行；美股半导体这条腿在回测验证中。策略代码、回测、实时执行全部公开 —— 实盘(测试网)与回测分得清清楚楚，不夸大。',
 	'trust.architecture': '架构',
 	'trust.dca': 'DCA 计划',
 	'affiliate.title': '还没交易所账号？',
