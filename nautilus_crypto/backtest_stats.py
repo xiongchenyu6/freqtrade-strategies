@@ -170,10 +170,14 @@ def run_accumulator(base="BTC", *, base_buy_usd=500.0, interval_bars=7, mode="sm
         base_buy_usd=base_buy_usd, interval_bars=interval_bars, mode=mode,
     ))
     eng.add_strategy(strat)
+    # Record true equity (cash + coin×close) per daily bar → the DCA accumulation curve.
+    rec = EquityRecorder([inst], VENUE, USDT, bar_spec="1-DAY-LAST-EXTERNAL")
+    eng.add_actor(rec)
     eng.run()
     # Accumulator is a never-sell DCA — trade-round-trip metrics (Sharpe/win-rate/DD) don't
     # apply; the honest headline is ROI on invested capital. total_trades = number of buys.
     roi = strat.roi()
+    curve = list(rec.curve)
     eng.dispose()
     stats = {
         "total_trades": int(strat.buys),
@@ -184,6 +188,7 @@ def run_accumulator(base="BTC", *, base_buy_usd=500.0, interval_bars=7, mode="sm
                    "invested_usd": round(float(strat.invested_usd), 0),
                    "coin_qty": round(float(strat.coin_qty), 6)},
         "instruments": [f"{base}USDT.BINANCE"],
+        "curve": curve,  # per-bar equity (cash + coin×close) — the DCA accumulation series
     }
     stats["period_start"], stats["period_end"] = _period(bars)
     return stats
