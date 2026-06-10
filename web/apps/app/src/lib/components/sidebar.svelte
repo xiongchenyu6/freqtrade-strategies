@@ -5,6 +5,7 @@
 	import bearMark from '$lib/assets/bear-mark.svg';
 	import {
 		Home,
+		Compass,
 		Radio,
 		Cpu,
 		Boxes,
@@ -38,6 +39,7 @@
 	// status indicator and would conflict with a static glyph.
 	const PRIMARY_NAV = $derived<NavItem[]>([
 		{ href: '/', labelKey: 'nav.home', icon: Home },
+		{ href: '/start', labelKey: 'nav.start', icon: Compass },
 		{ href: '/live', labelKey: 'nav.live' },
 		{ href: '/nautilus', labelKey: 'nav.nautilus', icon: Cpu },
 		{ href: '/signals', labelKey: 'nav.signals', icon: Radio },
@@ -65,19 +67,15 @@
 	const liveDotCls = $derived(
 		$realtimeStatus === 'open'
 			? 'bg-[var(--profit)] shadow-[0_0_8px_color-mix(in_oklab,var(--profit)_50%,transparent)]'
-			: $realtimeStatus === 'connecting'
-				? 'bg-[var(--warn)]'
-				: 'bg-muted-foreground/40'
+			: 'bg-muted-foreground/40'
 	);
-	const liveDotPulse = $derived(
-		$realtimeStatus === 'open' || $realtimeStatus === 'connecting' ? 'animate-pulse' : ''
-	);
+	const liveDotPulse = $derived($realtimeStatus === 'open' ? 'animate-pulse' : '');
 	const liveLabel = $derived(
 		$realtimeStatus === 'open'
-			? 'CONNECTED'
-			: $realtimeStatus === 'connecting'
-				? 'CONNECTING'
-				: 'OFFLINE'
+			? 'Realtime · Connected'
+			: lang === 'en'
+				? 'Data · Scheduled'
+				: '数据 · 定时更新'
 	);
 
 	function isActive(href: string, pathname: string): boolean {
@@ -182,7 +180,7 @@
 	<div class="border-t border-border px-4 py-3">
 		<div class="flex items-center gap-2">
 			<span class="inline-block h-1.5 w-1.5 rounded-full {liveDotCls} {liveDotPulse}" aria-hidden="true"></span>
-			<span class="bdv-eyebrow text-[9px] text-muted-foreground">Realtime · {liveLabel}</span>
+			<span class="bdv-eyebrow text-[9px] text-muted-foreground">{liveLabel}</span>
 		</div>
 	</div>
 </aside>

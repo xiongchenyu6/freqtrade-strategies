@@ -186,12 +186,19 @@
 	</section>
 
 	<section class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-		<Kpi
-			label={t(lang, 'home.kpi.bestProfit')}
-			value={fmtPct(s.best_profit_pct)}
-			tone={(s.best_profit_pct ?? 0) > 0 ? 'good' : 'bad'}
-			sub={t(lang, 'home.kpi.bestProfitSub')}
-		/>
+		<!-- ChartInfo overlays the card corner (not inside Kpi) because the Kpi card is
+			 overflow-hidden; ChartInfo's fixed-position popover escapes the clipping. -->
+		<div class="relative">
+			<Kpi
+				label={t(lang, 'home.kpi.bestProfit')}
+				value={fmtPct(s.best_profit_pct)}
+				tone={(s.best_profit_pct ?? 0) > 0 ? 'good' : 'bad'}
+				sub={t(lang, 'home.kpi.bestProfitSub')}
+			/>
+			<div class="absolute right-3 top-3">
+				<ChartInfo metric="bestProfit" {lang} size="xs" />
+			</div>
+		</div>
 		<Kpi
 			label={t(lang, 'home.kpi.bestCalmar')}
 			value={s.best_calmar == null ? '—' : s.best_calmar.toFixed(2)}
@@ -284,7 +291,8 @@
 		</a>
 	</section>
 
-	<!-- Market regime widget -->
+	<!-- Market regime widget (hidden entirely when the upstream fetch fails) -->
+	{#if regimeLoading || regimeFng}
 	<section class="mt-6 rounded-xl border bg-card p-4">
 		<div class="flex flex-wrap items-center justify-between gap-4">
 			<h2 class="text-sm font-semibold">{lang === 'en' ? '🌡️ Market Regime' : '🌡️ 市场状态'}</h2>
@@ -316,11 +324,10 @@
 					</div>
 				</div>
 				<p class="w-full text-xs text-muted-foreground">{sig.desc}</p>
-			{:else}
-				<span class="text-xs text-muted-foreground">{lang === 'en' ? 'Could not load market data' : '无法加载市场数据'}</span>
 			{/if}
 		</div>
 	</section>
+	{/if}
 
 	{#if !data.isAuthed}
 		<section class="mt-10 rounded-xl border-2 border-dashed border-primary/40 bg-gradient-to-br from-primary/5 to-transparent p-8 text-center">

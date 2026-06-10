@@ -162,6 +162,11 @@
 					? 'Backtest ≠ live. Returns are over ~3 years on a small number of trend trades — high single-position drawdowns are real and shown, not hidden.'
 					: '回测 ≠ 实盘。收益是约 3 年、少量趋势交易的结果 —— 单仓回撤偏大是真实的，照实显示，不藏。'}
 			</p>
+			<p class="mt-1 text-xs text-muted-foreground">
+				{en
+					? 'Few trades (1–7 over 3 years) is normal for trend following, but limits statistical significance.'
+					: '趋势策略交易次数少(1–7 笔/3 年)属正常，但统计意义有限。'}
+			</p>
 		{/if}
 
 		<div class="mt-4 flex flex-wrap gap-2 text-xs">

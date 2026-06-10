@@ -200,6 +200,20 @@ export const METRICS: Record<string, MetricEntry> = {
 			rules: ['0–25 extreme fear (scale in)', '25–45 fear', '45–55 neutral', '55–75 greed', '75–100 extreme greed (scale out)']
 		}
 	},
+	bestProfit: {
+		zh: {
+			name: '最佳回测收益',
+			plain: 'DCA 累积策略只买不卖，收益主要来自 BTC 长期上涨 —— 持有不动也会有大部分涨幅。',
+			why: '策略的增值在于恐慌时多买拉低成本，而不是"跑赢 BTC 几倍"。请与同期 BTC 买入持有对比着看，别只看绝对数字。',
+			rules: ['含 BTC beta：BTC 涨它就涨', '看相对买入持有的超额收益，不看绝对值', '只买不卖 → 回撤与 BTC 同步']
+		},
+		en: {
+			name: 'Best backtest return',
+			plain: 'The DCA accumulator only buys, never sells — most of this return is BTC’s own long-term appreciation (plain holding would also gain).',
+			why: 'The strategy’s edge is buying more during panic to lower average cost, not multiplying BTC. Compare against buy-and-hold over the same window, not the absolute number.',
+			rules: ['Includes BTC beta — rises when BTC rises', 'Judge the excess vs buy-and-hold, not the headline %', 'Buy-only → drawdowns track BTC']
+		}
+	},
 	leaderboard: {
 		zh: {
 			name: '排行榜',

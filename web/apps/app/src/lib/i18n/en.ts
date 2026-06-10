@@ -7,6 +7,7 @@ export default {
 
 	// --- topbar ---
 	'nav.home': 'Home',
+	'nav.start': 'Getting started',
 	'nav.live': 'Live',
 	'nav.nautilus': 'Engine',
 	'nav.semis': 'Semis',
@@ -52,15 +53,15 @@ export default {
 	'home.kpi.apiStatus': 'API status',
 	'home.kpi.apiOnline': 'ONLINE',
 	'home.kpi.apiDown': 'DOWN',
-	'home.kpi.apiSub': 'PostgREST + GoTrue',
+	'home.kpi.apiSub': 'data service',
 	'home.kpi.totalRuns': 'Backtest runs',
 	'home.kpi.totalRunsSub': '{n} strategies',
 	'home.kpi.totalTrades': 'Total trades',
 	'home.kpi.totalTradesSub': 'across all runs',
 	'home.kpi.dca': 'DCA records',
-	'home.kpi.dcaSub': 'Supabase scheduled log',
+	'home.kpi.dcaSub': 'scheduled log',
 	'home.kpi.bestProfit': 'Best profit',
-	'home.kpi.bestProfitSub': 'best backtest return (DCA incl. BTC beta)',
+	'home.kpi.bestProfitSub': "mostly BTC's own appreciation (holding would gain too)",
 	'home.kpi.bestCalmar': 'Best Calmar',
 	'home.kpi.bestCalmarSub': 'profit / maxDD',
 	'home.kpi.bestSharpe': 'Best Sharpe',
@@ -101,8 +102,7 @@ export default {
 	'home.anonGate.body':
 		'Aggregate stats (left) are public. Logging in unlocks the full archive, strategy factors, every trade, the Walk-Forward matrix, and the live feed.',
 	'home.anonGate.cta': 'Sign in →',
-	'home.footer':
-		'Built with SvelteKit · Data from api.panda.qzz.io + *.supabase.co · Deployed on Cloudflare Workers',
+	'home.footer': 'Built with SvelteKit · Live data · Updated daily · Deployed on Cloudflare Workers',
 
 	// --- strategies index ---
 	'strategies.title': '📚 Strategy catalog',

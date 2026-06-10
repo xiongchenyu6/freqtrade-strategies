@@ -94,7 +94,8 @@
 								{t.open_rate != null ? fmtUSD(t.open_rate) : '—'} → {t.close_rate != null ? fmtUSD(t.close_rate) : '—'}
 							</td>
 							<td class="px-3 py-2 text-right font-mono {pnlClass(t.realized_pnl)}">{t.realized_pnl != null ? fmtUSD(t.realized_pnl) : '—'}</td>
-							<td class="px-3 py-2 text-right font-mono {pnlClass(t.profit_pct)}">{t.profit_pct != null ? fmtPct(t.profit_pct) : '—'}</td>
+							<!-- profit_pct is stored as a FRACTION (Nautilus realized_return), not a percent -->
+							<td class="px-3 py-2 text-right font-mono {pnlClass(t.profit_pct)}">{t.profit_pct != null ? fmtPct(t.profit_pct * 100) : '—'}</td>
 							<td class="px-3 py-2 text-right text-muted-foreground">{t.close_date ? fmtTime(t.close_date) : '—'}</td>
 						</tr>
 					{:else}
