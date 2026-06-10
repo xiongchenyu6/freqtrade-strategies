@@ -15,6 +15,7 @@
 		type TelegramLink,
 		type TelegramTopic
 	} from '$lib/alerts';
+	import { track } from '$lib/track';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
@@ -59,10 +60,13 @@
 		pollTimer = setInterval(async () => {
 			pollCount += 1;
 			try {
+				const wasBound = link?.bound === true;
 				const l = await getMyLink();
 				if (l) link = l;
-				if (l?.bound) stopPolling();
-				else if (pollCount >= POLL_MAX) {
+				if (l?.bound) {
+					stopPolling();
+					if (!wasBound) track('telegram_bound');
+				} else if (pollCount >= POLL_MAX) {
 					stopPolling();
 					pollExpired = true; // give up quietly; user gets a manual refresh button
 				}
@@ -115,8 +119,10 @@
 	async function refreshNow() {
 		err = '';
 		try {
+			const wasBound = link?.bound === true;
 			const l = await getMyLink();
 			if (l) link = l;
+			if (l?.bound && !wasBound) track('telegram_bound');
 			if (l && !l.bound) startPolling(); // re-arm another 2-min window
 		} catch (e) {
 			err = (e as Error).message;

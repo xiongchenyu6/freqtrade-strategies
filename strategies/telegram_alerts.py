@@ -510,6 +510,45 @@ def send_daily_report():
         except Exception as e:
             logger.warning(f"Nautilus P&L query failed: {e}")
 
+    # Growth funnel from first-party analytics (quant.web_events, migration 020) —
+    # the validation plan's daily eyes: visitors / signups / activation / D1 return.
+    growth = ""
+    if psycopg2 is not None and timescale_url:
+        try:
+            conn = psycopg2.connect(timescale_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        WITH yest AS (
+                          SELECT * FROM quant.web_events
+                          WHERE ts >= now() - interval '24 hours'
+                        )
+                        SELECT
+                          (SELECT count(DISTINCT visitor) FROM yest WHERE event = 'page_view'),
+                          (SELECT count(*) FROM yest WHERE event = 'page_view'),
+                          (SELECT count(*) FROM yest WHERE event = 'signup'),
+                          (SELECT count(*) FROM yest WHERE event = 'backtest_submit'),
+                          (SELECT count(*) FROM yest WHERE event = 'signal_create'),
+                          (SELECT count(*) FROM yest WHERE event = 'telegram_bound'),
+                          -- D1 return: visitors seen yesterday AND in the 24h before
+                          (SELECT count(DISTINCT y.visitor) FROM yest y
+                            WHERE EXISTS (SELECT 1 FROM quant.web_events p
+                                           WHERE p.visitor = y.visitor
+                                             AND p.ts >= now() - interval '48 hours'
+                                             AND p.ts <  now() - interval '24 hours'))
+                    """)
+                    vis, pv, su_n, bt, sig, tg, ret = cur.fetchone()
+            finally:
+                conn.close()
+            if (vis or 0) > 0:
+                growth = (
+                    f"\n*Growth (24h):*\n"
+                    f"  Visitors: {vis}  |  Views: {pv}  |  D1 return: {ret}\n"
+                    f"  Signups: {su_n}  |  Backtests: {bt}  |  Signals: {sig}  |  TG bound: {tg}"
+                )
+        except Exception as e:
+            logger.warning(f"growth query failed: {e}")
+
     # Build the message line-by-line. Previous version chained f-strings inside
     # parentheses with a `... if btc else ""` ternary on one of them — that
     # binds the conditional at the PYTHON expression level (not string level),
@@ -526,7 +565,7 @@ def send_daily_report():
         f"  Sentiment: {score:+.2f}",
         f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)",
     ])
-    message = "\n".join(parts) + history_str + bot_status + format_kelly_report()
+    message = "\n".join(parts) + history_str + bot_status + growth + format_kelly_report()
 
     # Snapshot the structured Kelly status alongside the Telegram send so
     # dashboards / monitoring can read the same numbers without re-running

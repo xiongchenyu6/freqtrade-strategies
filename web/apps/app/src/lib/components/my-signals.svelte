@@ -24,6 +24,7 @@
 		type SignalFire
 	} from '$lib/signals';
 	import { getMyLink } from '$lib/alerts';
+	import { track } from '$lib/track';
 	import AlertSubscribe from './alert-subscribe.svelte';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
@@ -177,6 +178,7 @@
 				timeframe: kind === 'fng_threshold' || kind === 'vix_threshold' ? '1d' : tf,
 				params: { ...params }
 			});
+			track('signal_create');
 			formOpen = false;
 			nameTouched = false;
 			await load();
