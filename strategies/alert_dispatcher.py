@@ -223,6 +223,42 @@ def fan_out_equity(conn, state: dict) -> None:
         state["last_eq_synced"] = synced.isoformat()
 
 
+def fan_out_user_fires(conn) -> None:
+    """Push pending quant.signal_fires (user-defined signals from signal_evaluator.py) to
+    each fire's OWNER — per-user routing, unlike the broadcast topics above. Wording is
+    deliberately "你的信号" — the user's own rule fired; never advice. notified_at marks
+    delivery so restarts can't double-send (no watermark needed)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT f.id, f.details, s.name, s.asset, s.timeframe, l.chat_id
+                 FROM quant.signal_fires f
+                 JOIN quant.user_signals s ON s.id = f.signal_id
+                 LEFT JOIN quant.telegram_links l ON l.user_id = f.user_id
+                WHERE f.notified_at IS NULL
+                ORDER BY f.id
+                LIMIT 50"""
+        )
+        rows = cur.fetchall()
+    if not rows:
+        return
+    log(f"user-signal fan-out: {len(rows)} fire(s)")
+    for fid, details, name, asset, tf, chat_id in rows:
+        d = details or {}
+        ok = True
+        if chat_id:  # unbound users still see fires in the web UI; nothing to push
+            text = (f"🔔 <b>你的信号「{name}」触发了</b>\n"
+                    f"{asset} · {tf}\n{d.get('message', '')}\n\n"
+                    f"这是你自己设定的规则提醒。管理信号:{DASH}/backtest"
+                    f"{DISCLAIMER}")
+            ok = send(chat_id, text)
+        if ok:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE quant.signal_fires SET notified_at=now() WHERE id=%s", (fid,))
+            except Exception as e:
+                log(f"mark notified {fid} failed: {e!r}")
+
+
 def main() -> int:
     if not TOKEN or not DSN:
         print("TELEGRAM_BOT_TOKEN / TIMESCALE_URL required", file=sys.stderr)
@@ -239,6 +275,7 @@ def main() -> int:
             if time.time() - last_fan >= INTERVAL:
                 fan_out_dca(conn, state)
                 fan_out_equity(conn, state)
+                fan_out_user_fires(conn)
                 last_fan = time.time()
             save_state(state)
         except KeyboardInterrupt:

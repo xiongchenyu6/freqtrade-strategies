@@ -37,6 +37,11 @@
 						? 'Run a real backtest with zero code — see whether an idea actually made money historically.'
 						: '免代码跑真实回测,看一个想法历史上到底赚不赚钱。'}
 				</p>
+				<p class="mt-1.5 text-xs text-muted-foreground">
+					{en
+						? 'Happy with a backtest? Turn the config into a live signal alert in one click.'
+						: '回测满意后,可以一键把配置变成实时信号提醒。'}
+				</p>
 				<a href="/backtest" class="mt-4 text-sm font-medium text-primary hover:underline">
 					{en ? 'Run a backtest →' : '去跑回测 →'}
 				</a>
