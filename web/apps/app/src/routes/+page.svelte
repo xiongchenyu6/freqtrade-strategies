@@ -5,6 +5,7 @@
 	import GreetingBanner from '$lib/components/greeting-banner.svelte';
 	import Hero from '$lib/components/hero.svelte';
 	import EquitySection from '$lib/components/equity-section.svelte';
+	import MarketPulse from '$lib/components/market-pulse.svelte';
 	import TrustIntro from '$lib/components/trust-intro.svelte';
 	import AffiliateCta from '$lib/components/affiliate-cta.svelte';
 	import { fmtPct, fmtTime } from '$lib/utils';
@@ -152,6 +153,8 @@
 		</h1>
 		<p class="mt-3 max-w-2xl text-[14px] text-muted-foreground">{t(lang, 'home.subtitle')}</p>
 	</div>
+
+	<MarketPulse pulse={data.semi_pulse} />
 
 	<EquitySection backtests={data.equity_backtests} trades={data.equity_trades} />
 

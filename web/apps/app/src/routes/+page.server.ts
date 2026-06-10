@@ -23,6 +23,8 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		statsRow,
 		nautilusBT,
 		equityTrades,
+		semiUniverse,
+		semiGroups,
 		runs,
 		dca,
 		kol,
@@ -39,6 +41,10 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		// US-equity live paper positions (IB paper). Usually empty — trend signals are rare —
 		// the home equity card shows an honest "awaiting signal" state when so.
 		vps.nautilusTrades(fetch, { assetClass: 'equity', limit: 20 }).catch(() => []),
+		// Semiconductor universe (real Yahoo closes) → the home "semis market pulse" card
+		// derives an honest, data-driven market read from it (breadth, rotation, movers).
+		vps.semiUniverse(fetch).catch(() => []),
+		vps.semiGroups(fetch).catch(() => []),
 			isAuthed
 				? vps.backtestRuns(fetch, { limit: 500, authHeader: auth }).catch(() => [] as BacktestRun[])
 				: Promise.resolve([] as BacktestRun[]),
@@ -57,6 +63,33 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 
 	const ohlcByCoin = { BTC: btcOhlc, ETH: ethOhlc, BNB: bnbOhlc, SOL: solOhlc };
 	const stats = statsRow[0] ?? null;
+
+	// Semis market pulse — honest facts derived from real closes; the component phrases the read.
+	// No fabricated headlines: just breadth, weekly leaders/laggards, and tier rotation.
+	const semiPulse = (() => {
+		const u = semiUniverse.filter((s) => s.tier !== 'benchmark' && s.ret_1w !== null);
+		if (u.length === 0) return null;
+		const byWeek = [...u].sort((a, b) => (b.ret_1w ?? 0) - (a.ret_1w ?? 0));
+		const upCount = u.filter((s) => (s.ret_1w ?? 0) > 0).length;
+		const tiers = semiGroups
+			.filter((g) => g.tier !== 'benchmark' && g.avg_ret_1m !== null)
+			.sort((a, b) => (b.avg_ret_1m ?? 0) - (a.avg_ret_1m ?? 0));
+		const nvda = semiUniverse.find((s) => s.symbol === 'NVDA') ?? null;
+		const pick = (s: (typeof u)[number]) => ({
+			symbol: s.symbol,
+			ret_1w: s.ret_1w,
+			ret_1m: s.ret_1m
+		});
+		return {
+			total: u.length,
+			up: upCount,
+			leaders: byWeek.slice(0, 3).map(pick),
+			laggards: byWeek.slice(-3).reverse().map(pick),
+			tiers: tiers.map((g) => ({ tier: g.tier, avg_ret_1m: g.avg_ret_1m, members: g.members })),
+			nvda_ret_1w: nvda?.ret_1w ?? null,
+			updated_at: u[0].updated_at
+		};
+	})();
 
 	const distinctStrategies = new Set(runs.map((r) => r.strategy).filter(Boolean));
 	const distinctTimeframes = new Set(runs.map((r) => r.timeframe).filter((t): t is string => !!t));
@@ -85,6 +118,7 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 			.filter((b) => b.asset_class === 'equity')
 			.sort((a, b) => (b.total_profit_pct ?? 0) - (a.total_profit_pct ?? 0)),
 		equity_trades: equityTrades,
+		semi_pulse: semiPulse,
 		strategy_options: [...distinctStrategies].sort(),
 		timeframe_options: [...distinctTimeframes].sort(),
 		recent_kol: kol,
