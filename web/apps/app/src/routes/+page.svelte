@@ -4,6 +4,7 @@
 	import InfoTip from '$lib/components/info-tip.svelte';
 	import GreetingBanner from '$lib/components/greeting-banner.svelte';
 	import Hero from '$lib/components/hero.svelte';
+	import EquitySection from '$lib/components/equity-section.svelte';
 	import TrustIntro from '$lib/components/trust-intro.svelte';
 	import AffiliateCta from '$lib/components/affiliate-cta.svelte';
 	import { fmtPct, fmtTime } from '$lib/utils';
@@ -151,6 +152,8 @@
 		</h1>
 		<p class="mt-3 max-w-2xl text-[14px] text-muted-foreground">{t(lang, 'home.subtitle')}</p>
 	</div>
+
+	<EquitySection backtests={data.equity_backtests} trades={data.equity_trades} />
 
 	<TrustIntro />
 	<AffiliateCta variant="card" />

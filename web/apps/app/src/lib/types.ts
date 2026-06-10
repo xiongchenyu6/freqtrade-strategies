@@ -90,6 +90,7 @@ export interface NautilusTrade {
 	instrument: string;
 	venue: string;
 	environment: string;
+	asset_class: 'crypto' | 'equity';
 	is_short: boolean;
 	open_date: string;
 	close_date: string | null;
@@ -100,6 +101,67 @@ export interface NautilusTrade {
 	profit_pct: number | null;
 	exit_reason: string | null;
 	synced_at: string;
+}
+
+// A backtest of a CURRENTLY-DEPLOYED Nautilus strategy (honest numbers, not freqtrade).
+export interface NautilusBacktest {
+	id: number;
+	engine: string;
+	asset_class: 'crypto' | 'equity';
+	strategy: string;
+	label: string;
+	instruments: string[] | null;
+	timeframe: string | null;
+	period_start: string | null;
+	period_end: string | null;
+	environment: string;
+	total_trades: number | null;
+	wins: number | null;
+	losses: number | null;
+	win_rate_pct: number | null;
+	total_profit_pct: number | null;
+	max_drawdown_pct: number | null;
+	calmar: number | null;
+	sharpe: number | null;
+	sortino: number | null;
+	params: Record<string, unknown> | null;
+	run_at: string;
+}
+
+// NVDA-centric semiconductor supply-chain universe (real Yahoo data → /semis page).
+export interface SemiTicker {
+	symbol: string;
+	name: string;
+	tier: 'core' | 'upstream' | 'peer' | 'downstream' | 'benchmark';
+	role: string | null;
+	market_cap: number | null;
+	last_price: number | null;
+	ret_1w: number | null;
+	ret_1m: number | null;
+	ret_3m: number | null;
+	ret_6m: number | null;
+	ret_1y: number | null;
+	ret_ytd: number | null;
+	rs_vs_nvda: number | null;
+	rs_vs_smh: number | null;
+	corr_nvda: number | null;
+	beta_nvda: number | null;
+	vol_annual: number | null;
+	from_52w_high: number | null;
+	mom_score: number | null;
+	alpha_score: number | null;
+	alpha_note: string | null;
+	updated_at: string;
+}
+
+export interface SemiGroup {
+	tier: string;
+	members: number;
+	avg_ret_1m: number | null;
+	avg_ret_3m: number | null;
+	avg_ret_1y: number | null;
+	avg_corr_nvda: number | null;
+	updated_at: string;
 }
 
 export interface WfResult {
