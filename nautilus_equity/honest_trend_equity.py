@@ -253,22 +253,25 @@ class HonestTrendEquity(Strategy):
         # Multi-currency live (IB): when an FX rate is configured (base != quote, e.g. an
         # SGD-base account trading USD stocks), size off TOTAL account equity (the base
         # NetLiquidation) converted to the quote currency — NOT the quote-currency CASH
-        # sleeve. On an IB multi-currency account balance_total(USD) is just the (often tiny)
-        # USD residual, so using it under-sizes massively (e.g. 1 share instead of ~100).
-        # quote_per_base_fx == 1.0 means base == quote (every backtest) → fall through to the
-        # quote-balance path below, so backtest behaviour is unchanged.
+        # sleeve, which on an IB account is just a (often tiny) residual and under-sizes
+        # massively (1 share instead of ~100). The IB margin account reports base_currency
+        # =None, so account.balance_total() with NO arg RAISES — read the balances dict and
+        # take the largest balance as the base. quote_per_base_fx == 1.0 means base == quote
+        # (every backtest) → skip this and use the quote balance, so backtests are unchanged.
         if self.config.quote_per_base_fx != 1.0:
-            base_bal = account.balance_total()  # base-currency total ≈ NetLiquidation
-            if base_bal is not None:
-                return float(base_bal) * self.config.quote_per_base_fx
+            totals = account.balances_total()  # dict[Currency, Money]; no base_currency needed
+            if totals:
+                biggest = max(totals.values(), key=lambda m: float(m))
+                return float(biggest) * self.config.quote_per_base_fx
         bal = account.balance_total(quote_ccy)
         if bal is not None:
             return float(bal)
-        # Last resort (no quote balance, FX not configured): convert the base total.
-        base_bal = account.balance_total()  # base-currency total (default arg)
-        if base_bal is None:
-            return 0.0
-        return float(base_bal) * self.config.quote_per_base_fx
+        # Last resort (no quote balance, FX not configured): convert the largest balance.
+        totals = account.balances_total()
+        if totals:
+            biggest = max(totals.values(), key=lambda m: float(m))
+            return float(biggest) * self.config.quote_per_base_fx
+        return 0.0
 
     def _avg_entry(self) -> float | None:
         return self._cost / self._shares if self._shares > 0 else None
