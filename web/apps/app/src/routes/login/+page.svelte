@@ -3,6 +3,7 @@
 	import { login, signup, loginWithGoogle } from '$lib/auth';
 	import { page } from '$app/stores';
 	import { t, type Lang } from '$lib/i18n';
+	import { track } from '$lib/track';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
@@ -27,7 +28,8 @@
 		status = { msg: t(lang, 'login.loading'), kind: 'loading' };
 		try {
 			const fn = mode === 'login' ? login : signup;
-			await fn(email, password);
+			const sess = await fn(email, password);
+			if (mode === 'signup' && sess) track('signup');
 			status = { msg: en ? '✓ OK, redirecting…' : '✓ 成功，跳转中…', kind: 'ok' };
 			setTimeout(() => goto(safeNext), 400);
 		} catch (e) {

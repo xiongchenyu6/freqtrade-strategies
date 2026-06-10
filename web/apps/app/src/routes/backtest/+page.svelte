@@ -18,6 +18,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import AlertSubscribe from '$lib/components/alert-subscribe.svelte';
 	import MySignals from '$lib/components/my-signals.svelte';
+	import { track } from '$lib/track';
 
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
@@ -156,6 +157,7 @@
 		err = '';
 		try {
 			await submitBacktest(strategy as Strategy, { asset, tf, ...params }, $user.sub);
+			track('backtest_submit');
 			await refresh();
 		} catch (e) {
 			err = (e as Error).message;

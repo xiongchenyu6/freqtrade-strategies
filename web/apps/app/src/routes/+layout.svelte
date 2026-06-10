@@ -2,11 +2,16 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
+	import { afterNavigate } from '$app/navigation';
 	import Topbar from '$lib/components/topbar.svelte';
 	import Sidebar from '$lib/components/sidebar.svelte';
+	import { track } from '$lib/track';
 
 	let { children } = $props();
 	let sidebarOpen = $state(false);
+
+	// First-party analytics: one page_view per navigation (de-duped in track()).
+	afterNavigate((nav) => track('page_view', nav.to?.url.pathname));
 </script>
 
 <svelte:head>
