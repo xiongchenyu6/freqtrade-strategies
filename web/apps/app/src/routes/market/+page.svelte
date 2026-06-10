@@ -196,13 +196,14 @@
 				</div>
 			</div>
 
-			<!-- Section 1: Valuation -->
+			<!-- Core read: three plain-question cards -->
 			<section class="mb-8">
-				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
-					① {t(lang, 'market.section.valuation')}
-				</h2>
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					<!-- MA4Y -->
 					<div class="rounded-xl border border-border bg-card p-4 ">
+						<div class="mb-1 text-sm font-bold text-foreground">
+							{lang === 'en' ? 'Is it expensive or cheap right now?' : '现在贵还是便宜?'}
+						</div>
 						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
 							{t(lang, 'market.card.ma4y.title')}
 						</div>
@@ -225,17 +226,11 @@
 							{t(lang, 'market.signal')}: {signalLabel(signals.ma4y, lang)}
 						</div>
 					</div>
-				</div>
-			</section>
-
-			<!-- Section 2: Technicals -->
-			<section class="mb-8">
-				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
-					② {t(lang, 'market.section.technicals')}
-				</h2>
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<!-- MA5W Direction -->
 					<div class="rounded-xl border border-border bg-card p-4 ">
+						<div class="mb-1 text-sm font-bold text-foreground">
+							{lang === 'en' ? 'Is the trend up or down?' : '趋势向上还是向下?'}
+						</div>
 						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
 							{t(lang, 'market.card.ma5w.title')}
 						</div>
@@ -259,6 +254,47 @@
 						</div>
 					</div>
 
+					<!-- Fear & Greed -->
+					<div class="rounded-xl border border-border bg-card p-4 ">
+						<div class="mb-1 text-sm font-bold text-foreground">
+							{lang === 'en' ? 'How is market sentiment?' : '市场情绪如何?'}
+						</div>
+						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+							{t(lang, 'market.card.fng.title')}
+						</div>
+						<div class="mb-1 text-[26px] font-bold leading-none text-foreground">
+							{asset.fng_value}
+						</div>
+						<div class="mb-2 text-xs text-muted-foreground">{asset.fng_class}</div>
+						<div class="mb-3 h-12">
+							<Sparkline
+								values={asset.fng_series}
+								color={sparklineColor(signals.fng)}
+								height={48}
+							/>
+						</div>
+						<div
+							class="mb-2 rounded border-l-2 border-border bg-secondary px-3 py-2 text-xs text-muted-foreground"
+						>
+							{t(lang, 'market.card.fng.desc')}
+						</div>
+						<div class="rounded px-3 py-1.5 text-xs font-semibold {signalBg(signals.fng)}">
+							{t(lang, 'market.signal')}: {signalLabel(signals.fng, lang)}
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Advanced analytics: expert cards collapsed by default -->
+			<details class="mt-8 rounded-xl border border-border bg-card">
+				<summary class="cursor-pointer p-4 text-sm font-semibold text-muted-foreground">📊 高级分析(给量化爱好者)/ Advanced analytics</summary>
+				<div class="p-4 pt-0 space-y-8">
+			<!-- Technicals -->
+			<section>
+				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
+					{t(lang, 'market.section.technicals')}
+				</h2>
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					<!-- MACD -->
 					<div class="rounded-xl border border-border bg-card p-4 ">
 						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -336,38 +372,12 @@
 				</div>
 			</section>
 
-			<!-- Section 3: Sentiment -->
-			<section class="mb-8">
+			<!-- Sentiment: funding -->
+			<section>
 				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
-					③ {t(lang, 'market.section.sentiment')}
+					{t(lang, 'market.section.sentiment')}
 				</h2>
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					<!-- Fear & Greed -->
-					<div class="rounded-xl border border-border bg-card p-4 ">
-						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-							{t(lang, 'market.card.fng.title')}
-						</div>
-						<div class="mb-1 text-[26px] font-bold leading-none text-foreground">
-							{asset.fng_value}
-						</div>
-						<div class="mb-2 text-xs text-muted-foreground">{asset.fng_class}</div>
-						<div class="mb-3 h-12">
-							<Sparkline
-								values={asset.fng_series}
-								color={sparklineColor(signals.fng)}
-								height={48}
-							/>
-						</div>
-						<div
-							class="mb-2 rounded border-l-2 border-border bg-secondary px-3 py-2 text-xs text-muted-foreground"
-						>
-							{t(lang, 'market.card.fng.desc')}
-						</div>
-						<div class="rounded px-3 py-1.5 text-xs font-semibold {signalBg(signals.fng)}">
-							{t(lang, 'market.signal')}: {signalLabel(signals.fng, lang)}
-						</div>
-					</div>
-
 					<!-- Funding Rate APR -->
 					<div class="rounded-xl border border-border bg-card p-4 ">
 						<div class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -395,10 +405,10 @@
 				</div>
 			</section>
 
-			<!-- Section 4: Leverage -->
-			<section class="mb-8">
+			<!-- Leverage: open interest -->
+			<section>
 				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
-					④ {t(lang, 'market.section.leverage')}
+					{t(lang, 'market.section.leverage')}
 				</h2>
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					<div class="rounded-xl border border-border bg-card p-4 ">
@@ -425,10 +435,10 @@
 				</div>
 			</section>
 
-			<!-- Section 5: Derivatives Sentiment -->
-			<section class="mb-8">
+			<!-- Derivatives sentiment: L/S, taker, top traders -->
+			<section>
 				<h2 class="mb-4 pl-3 text-base font-bold text-foreground" style="border-left: 4px solid var(--violet-500);">
-					⑤ {t(lang, 'market.derivatives.title')}
+					{t(lang, 'market.derivatives.title')}
 				</h2>
 
 				{#if asset}
@@ -552,6 +562,8 @@
 					</div>
 				{/if}
 			</section>
+				</div>
+			</details>
 
 			<!-- Footer note -->
 			<p class="text-center text-xs text-muted-foreground">

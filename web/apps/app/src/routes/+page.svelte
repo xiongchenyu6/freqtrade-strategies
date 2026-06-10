@@ -35,41 +35,6 @@
 		return s;
 	}
 
-	// Backtest activity calendar (GitHub-style 52-week heatmap)
-	const activityCalendar = $derived.by(() => {
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		const WEEKS = 52;
-		const startDate = new Date(today);
-		startDate.setDate(today.getDate() - WEEKS * 7 + 1);
-		// Align to Monday
-		const dow = (startDate.getDay() + 6) % 7;
-		startDate.setDate(startDate.getDate() - dow);
-
-		const counts = new Map<string, number>();
-		for (const r of data.recent_runs) {
-			if (!r.started_at) continue;
-			const day = r.started_at.slice(0, 10);
-			counts.set(day, (counts.get(day) ?? 0) + 1);
-		}
-		const maxCount = Math.max(1, ...counts.values());
-
-		const weeks: { date: string; count: number; intensity: number }[][] = [];
-		let d = new Date(startDate);
-		for (let w = 0; w < WEEKS; w++) {
-			const week: { date: string; count: number; intensity: number }[] = [];
-			for (let day = 0; day < 7; day++) {
-				const key = d.toISOString().slice(0, 10);
-				const count = counts.get(key) ?? 0;
-				week.push({ date: key, count, intensity: count / maxCount });
-				d.setDate(d.getDate() + 1);
-			}
-			weeks.push(week);
-		}
-		const total = [...counts.values()].reduce((a, b) => a + b, 0);
-		return { weeks, total, maxCount };
-	});
-
 	// Strategy performance leaderboard — best recent run per strategy
 	const stratLeaderboard = $derived.by(() => {
 		if (data.recent_runs.length === 0) return null;
@@ -200,10 +165,10 @@
 			</div>
 		</div>
 		<Kpi
-			label={t(lang, 'home.kpi.bestCalmar')}
-			value={s.best_calmar == null ? '—' : s.best_calmar.toFixed(2)}
-			tone={(s.best_calmar ?? 0) > 1 ? 'good' : 'default'}
-			sub={t(lang, 'home.kpi.bestCalmarSub')}
+			label={t(lang, 'home.kpi.minMaxDd')}
+			value={s.min_max_dd == null ? '—' : s.min_max_dd.toFixed(1) + '%'}
+			tone={(s.min_max_dd ?? 100) < 20 ? 'good' : 'bad'}
+			sub={t(lang, 'home.kpi.minMaxDdSub')}
 		/>
 		<Kpi
 			label={t(lang, 'home.kpi.bestSharpe')}
@@ -212,35 +177,9 @@
 			sub={t(lang, 'home.kpi.bestSharpeSub')}
 		/>
 		<Kpi
-			label={t(lang, 'home.kpi.bestSortino')}
-			value={s.best_sortino == null ? '—' : s.best_sortino.toFixed(2)}
-			tone={(s.best_sortino ?? 0) > 1.5 ? 'good' : 'default'}
-			sub={t(lang, 'home.kpi.bestSortinoSub')}
-		/>
-	</section>
-
-	<section class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-		<Kpi
-			label={t(lang, 'home.kpi.bestWinRate')}
-			value={s.best_win_rate == null ? '—' : s.best_win_rate.toFixed(1) + '%'}
-			tone="good"
-			sub={t(lang, 'home.kpi.bestWinRateSub')}
-		/>
-		<Kpi
-			label={t(lang, 'home.kpi.minMaxDd')}
-			value={s.min_max_dd == null ? '—' : s.min_max_dd.toFixed(1) + '%'}
-			tone={(s.min_max_dd ?? 100) < 20 ? 'good' : 'bad'}
-			sub={t(lang, 'home.kpi.minMaxDdSub')}
-		/>
-		<Kpi
 			label={t(lang, 'home.kpi.strategyCount')}
 			value={s.distinct_strategies}
 			sub={t(lang, 'home.kpi.strategyCountSub')}
-		/>
-		<Kpi
-			label={t(lang, 'home.kpi.runCount')}
-			value={s.total_runs}
-			sub={t(lang, 'home.kpi.runCountSub')}
 		/>
 	</section>
 
@@ -441,39 +380,6 @@
 				</button>
 			{/each}
 		</div>
-
-		{#if activityCalendar.total > 0}
-			<div class="mb-4 rounded-lg border bg-card p-4">
-				<div class="mb-2 flex items-baseline justify-between">
-					<span class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Backtest Activity</span>
-					<span class="font-mono text-[11px] text-muted-foreground">{activityCalendar.total} runs · last 52 weeks</span>
-				</div>
-				<div class="overflow-x-auto">
-					<div class="flex gap-[3px]" style="min-width:max-content">
-						{#each activityCalendar.weeks as week}
-							<div class="flex flex-col gap-[3px]">
-								{#each week as cell}
-									<div
-										class="h-[10px] w-[10px] rounded-sm {cell.count === 0 ? 'bg-muted/25' : cell.intensity > 0.7 ? 'bg-indigo-400' : cell.intensity > 0.4 ? 'bg-indigo-600/70' : 'bg-indigo-800/60'}"
-										title="{cell.date}: {cell.count} run{cell.count !== 1 ? 's' : ''}"
-									></div>
-								{/each}
-							</div>
-						{/each}
-					</div>
-				</div>
-				<div class="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
-					<span>Less</span>
-					<span class="flex gap-1">
-						<span class="h-3 w-3 rounded-sm bg-muted/25 inline-block"></span>
-						<span class="h-3 w-3 rounded-sm bg-indigo-800/60 inline-block"></span>
-						<span class="h-3 w-3 rounded-sm bg-indigo-600/70 inline-block"></span>
-						<span class="h-3 w-3 rounded-sm bg-indigo-400 inline-block"></span>
-					</span>
-					<span>More</span>
-				</div>
-			</div>
-		{/if}
 
 		<div class="overflow-x-auto rounded-lg border bg-card">
 			<table class="w-full text-sm">
