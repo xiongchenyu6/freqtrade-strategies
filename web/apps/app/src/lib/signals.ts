@@ -8,7 +8,7 @@ import { writable } from 'svelte/store';
 import { CONFIG } from './config';
 import { getToken } from './auth';
 
-export type SignalKind = 'ema_cross' | 'donchian_breakout' | 'fng_threshold';
+export type SignalKind = 'ema_cross' | 'donchian_breakout' | 'fng_threshold' | 'vix_threshold';
 export type SignalStatus = 'active' | 'paused';
 
 export interface UserSignal {
@@ -48,7 +48,13 @@ export interface NewSignal {
 // STRATEGIES). The UI renders forms from this; the evaluator re-validates
 // server-side (never trust the client).
 export const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
-export const EQUITY_ASSETS = ['NVDA', 'AMD', 'QQQ'] as const;
+// Core 3 + the semi-universe chain (matches quant.semi_universe — the evaluator's allowed set).
+export const EQUITY_ASSETS = [
+	'NVDA', 'AMD', 'QQQ', 'SPY', 'SMH', 'MSFT', 'GOOGL', 'META', 'AMZN', 'AVGO', 'TSM',
+	'ASML', 'AMAT', 'LRCX', 'KLAC', 'MU', 'INTC', 'QCOM', 'TXN', 'ARM', 'MRVL', 'ANET',
+	'SMCI', 'DELL', 'HPE', 'ORCL', 'COHR', 'CDNS', 'SNPS', 'TER', 'ENTG', 'GFS', 'UMC',
+	'ASX', 'AMKR', 'CRDO', 'MKSI', 'DD', 'LIN'
+] as const;
 
 export const SIGNAL_KINDS = {
 	ema_cross: {
@@ -69,9 +75,16 @@ export const SIGNAL_KINDS = {
 	},
 	// Market-wide Fear & Greed threshold — no asset/timeframe choice (always '*' / '1d').
 	fng_threshold: {
-		label: ['恐惧贪婪阈值', 'Fear & Greed threshold'] as const,
+		label: ['恐惧贪婪阈值 (加密)', 'Fear & Greed threshold (crypto)'] as const,
 		params: {
 			below: { min: 1, max: 99, default: 25 }
+		}
+	},
+	// Market-wide VIX fear threshold — the US-equity counterpart of FNG (always '*' / '1d').
+	vix_threshold: {
+		label: ['VIX 恐慌阈值 (美股)', 'VIX fear threshold (US equity)'] as const,
+		params: {
+			above: { min: 10, max: 80, default: 25 }
 		}
 	}
 } as const;
@@ -82,7 +95,7 @@ export function isEquityAsset(a: string): boolean {
 
 /** Allowed timeframes for a kind+asset: equity is 1d only; crypto 1h or 1d; FNG fixed 1d. */
 export function timeframesFor(kind: SignalKind, asset: string): string[] {
-	if (kind === 'fng_threshold' || isEquityAsset(asset)) return ['1d'];
+	if (kind === 'fng_threshold' || kind === 'vix_threshold' || isEquityAsset(asset)) return ['1d'];
 	return ['1h', '1d'];
 }
 

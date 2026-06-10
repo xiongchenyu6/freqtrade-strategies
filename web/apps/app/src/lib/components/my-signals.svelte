@@ -98,6 +98,7 @@
 	let nameTouched = $state(false);
 	const suggested = $derived.by(() => {
 		if (kind === 'fng_threshold') return `FNG<${params.below} ${en ? 'fear alert' : '恐慌提醒'}`;
+		if (kind === 'vix_threshold') return `VIX>${params.above} ${en ? 'US fear alert' : '美股恐慌提醒'}`;
 		if (kind === 'ema_cross') {
 			const d = choiceLabel(String(params.direction));
 			return `${asset} EMA${params.ema_fast}/${params.ema_slow} ${d}`;
@@ -172,8 +173,8 @@
 				user_id: sub,
 				name: name.trim() || suggested,
 				kind,
-				asset: kind === 'fng_threshold' ? '*' : asset,
-				timeframe: kind === 'fng_threshold' ? '1d' : tf,
+				asset: kind === 'fng_threshold' || kind === 'vix_threshold' ? '*' : asset,
+				timeframe: kind === 'fng_threshold' || kind === 'vix_threshold' ? '1d' : tf,
 				params: { ...params }
 			});
 			formOpen = false;
@@ -287,7 +288,7 @@
 							{/each}
 						</select>
 					</label>
-					{#if kind !== 'fng_threshold'}
+					{#if kind !== 'fng_threshold' && kind !== 'vix_threshold'}
 						<label class="text-xs">
 							<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
 							<select

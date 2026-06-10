@@ -38,7 +38,9 @@ DSN = os.environ.get("TIMESCALE_URL", "")
 INTERVAL = int(os.environ.get("EVAL_INTERVAL", "300"))
 
 CRYPTO = {"BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "LINK"}
-EQUITY = {"NVDA", "AMD", "QQQ"}
+# Core equity set; extended at sweep time with quant.semi_universe symbols (38-ticker
+# NVDA supply chain incl. SPY/MSFT/META/GOOGL/AMZN) so the allowed list tracks the DB.
+EQUITY_CORE = {"NVDA", "AMD", "QQQ"}
 _YF = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=2y&interval=1d"
 _HDRS = {"User-Agent": "Mozilla/5.0 (quant signal evaluator)"}
 
@@ -83,6 +85,19 @@ def fng_now() -> tuple[int, int]:
     r.raise_for_status()
     d = r.json()["data"][0]
     return int(d["timestamp"]) * 1000, int(d["value"])
+
+
+def vix_now() -> tuple[int, float]:
+    """(unix_ms_of_bar, vix_close) — latest daily VIX close from Yahoo (^VIX). Unlike the
+    bar feeds we DO use the most recent value even if today's session is open: VIX alerts
+    are about the fear level right now, and the (signal_id, bar_ts) dedupe still caps one
+    fire per VIX bar."""
+    r = requests.get(_YF.format(sym="^VIX"), headers=_HDRS, timeout=15)
+    r.raise_for_status()
+    res = r.json()["chart"]["result"][0]
+    ts, close = res["timestamp"], res["indicators"]["quote"][0]["close"]
+    pairs = [(int(t) * 1000, float(c)) for t, c in zip(ts, close) if c is not None]
+    return pairs[-1]
 
 
 # ---------- indicators (plain python — small series, no pandas needed) ----------
@@ -148,7 +163,28 @@ def eval_fng(p: dict) -> dict | None:
     return None
 
 
+def eval_vix(p: dict) -> dict | None:
+    above = float(p.get("above", 25))
+    ts_ms, val = vix_now()
+    if val >= above:
+        return {"bar_ts": ts_ms, "price": None, "direction": "fear",
+                "value": val,
+                "message": f"VIX 恐慌指数 {val:.1f} ≥ 你设定的 {above:g}(美股波动/恐慌升高)"}
+    return None
+
+
 # ---------- sweep ----------
+
+def equity_allowed(conn) -> set[str]:
+    """Core equities + the semi-universe tickers (tracks the DB; cheap query)."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT symbol FROM quant.semi_universe")
+            return EQUITY_CORE | {r[0] for r in cur.fetchall()}
+    except Exception as e:
+        log(f"semi_universe fetch failed (using core set): {e!r}")
+        return set(EQUITY_CORE)
+
 
 def sweep(conn) -> int:
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -157,6 +193,7 @@ def sweep(conn) -> int:
         signals = cur.fetchall()
     if not signals:
         return 0
+    equities = equity_allowed(conn)
 
     # Group identical configs → one evaluation each.
     groups: dict[str, dict] = {}
@@ -172,12 +209,14 @@ def sweep(conn) -> int:
         try:
             if kind == "fng_threshold":
                 hit = eval_fng(params)
+            elif kind == "vix_threshold":
+                hit = eval_vix(params)
             else:
                 ck = f"{asset}:{tf}"
                 if ck not in cache:
                     if asset in CRYPTO:
                         cache[ck] = crypto_closes(asset, tf)
-                    elif asset in EQUITY:
+                    elif asset in equities:
                         cache[ck] = equity_closes(asset)
                     else:
                         log(f"unknown asset {asset!r} (signal {s['id']}) — skipping")
