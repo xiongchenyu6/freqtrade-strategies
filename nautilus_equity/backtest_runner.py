@@ -101,6 +101,16 @@ def _catalog():
     return _CATALOG
 
 
+def _downsample(curve: list, n: int = 80) -> list:
+    """Reduce an equity series to ~n evenly-spaced points for a compact sparkline."""
+    if not curve:
+        return []
+    if len(curve) <= n:
+        return [round(float(v), 2) for v in curve]
+    step = len(curve) / n
+    return [round(float(curve[min(int(i * step), len(curve) - 1)]), 2) for i in range(n)]
+
+
 def run_honest_trend(params: dict) -> dict:
     p = _validate_honest_trend(params)
     from grid_honest_equity_real import run_one  # reuse the validated backtest path
@@ -116,6 +126,7 @@ def run_honest_trend(params: dict) -> dict:
         "entries": r["entries"],
         "bars": r["bars"],
         "config": p,
+        "equity_curve": _downsample(r.get("curve", [])),  # popped out + stored in its own column
     }
 
 
@@ -200,12 +211,14 @@ def _run_loop(conn):
             if fn is None:
                 raise ValueError(f"unknown strategy {strategy!r}")
             metrics = fn(params)
+            equity_curve = metrics.pop("equity_curve", None)  # charted separately from metrics
             with conn.cursor() as cur:
                 cur.execute(
-                    """INSERT INTO quant.backtest_results (job_id, user_id, metrics)
-                       VALUES (%s, %s, %s)
-                       ON CONFLICT (job_id) DO UPDATE SET metrics=EXCLUDED.metrics""",
-                    (job_id, user_id, json.dumps(metrics)),
+                    """INSERT INTO quant.backtest_results (job_id, user_id, metrics, equity_curve)
+                       VALUES (%s, %s, %s, %s)
+                       ON CONFLICT (job_id) DO UPDATE
+                         SET metrics=EXCLUDED.metrics, equity_curve=EXCLUDED.equity_curve""",
+                    (job_id, user_id, json.dumps(metrics), json.dumps(equity_curve) if equity_curve else None),
                 )
                 cur.execute("UPDATE quant.backtest_jobs SET status='done' WHERE id=%s", (job_id,))
                 conn.commit()

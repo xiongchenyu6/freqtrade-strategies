@@ -30,7 +30,7 @@ export interface BacktestResult {
 		trades: number;
 		[k: string]: unknown;
 	};
-	equity_curve: [number, number][] | null;
+	equity_curve: number[] | null; // downsampled equity values (~80 pts) for a sparkline
 	created_at: string;
 }
 

@@ -156,6 +156,7 @@ def run_one(catalog, symbol, venue_name, ema_fast, ema_slow,
         "mdd_pct": mdd * 100,
         "sharpe": sharpe,
         "calmar": calmar,
+        "curve": curve,  # daily realized-cash equity series (for playground charting)
     }
     engine.dispose()
     return result
