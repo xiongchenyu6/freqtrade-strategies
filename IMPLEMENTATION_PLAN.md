@@ -56,14 +56,17 @@ Do this with REAL data only (don't pollute prod DB with synthetic trades).
 
 **Crypto half: DONE** — `trade_ledger.py` writes Accumulator/Donchian round-trips to
 `quant.nautilus_trades` (asset_class defaults 'crypto').
-**Equity half: CODE DONE (not deployed) 2026-06-10** — `HonestTrendEquity` now hooks
-`on_position_opened/changed/closed` → `TradeLedger(asset_class="equity")` (generalized,
-crypto callers unchanged). Migration `013_nautilus_trades_asset_class.sql` adds the column
-(DEFAULT 'crypto' backfill) + re-creates `api.nautilus_trades` exposing it. nur module
-`nautilus-equity-trend` now ships `trade_ledger.py` + an `environmentFile`/`environment`
-option carrying `TIMESCALE_URL` (DB = `db.panda.qzz.io:5432/api?sslmode=require`, reachable
-from oracle-amd-002 over public Internet). REMAINING: run migration 013 on oracle-arm-002,
-add the sops `nautilus-equity.env` template, then rebuild oracle-amd-002.
+**Equity half: DONE & LIVE 2026-06-10** — `HonestTrendEquity` hooks
+`on_position_opened/changed/closed` → `TradeLedger(asset_class="equity")`. Migration
+`013_nautilus_trades_asset_class.sql` APPLIED (column + `api.nautilus_trades` view). The
+equity node now runs as **`quant-equity.service` on the GAME BOX** (not amd-002) — the
+amd-002 nix node `nautilus-equity-trend` traded but never persisted (stale nur copy) +
+under-sized, so it was stopped; amd-002 = IB Gateway only. The game-box node connects to the
+Gateway over wg (172.22.240.97:4002, client id 8) and persists in-process. Sizing fix: IB
+margin account reports `base_currency=None` → `balance_total()` no-arg RAISES → `_equity_usd`
+reads `balances_total()` × `EQ_QUOTE_PER_BASE_FX=0.74`. Migration 016 APPLIED (DELETE grant).
+REMAINING: set `services.nautilus-equity-trend.enable=false` in dotfiles (amd-002) before its
+next rebuild; verify the first live round-trip persists when US market opens.
 
 ## Stage 4 — Crypto live execution on Nautilus — DEPLOYED TO PROD (testnet) 2026-06-07
 Packaged nautilus-trader (aarch64 wheel) + a nautilus-accumulator NixOS service in
