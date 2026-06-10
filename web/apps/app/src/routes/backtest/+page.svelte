@@ -203,9 +203,33 @@
 	{#if !$user}
 		<div class="mt-6 rounded-md border border-primary/50 bg-primary/5 p-4 text-sm">
 			<div class="font-medium text-foreground">{en ? 'Sign in to run your own backtests' : '登录后即可跑你自己的回测'}</div>
+			<p class="mt-1 text-muted-foreground">
+				{en
+					? 'Pick a strategy below, set your own parameters, and we run a real backtest on historical data. Results are private to your account.'
+					: '选下面任意一个策略，设你自己的参数，我们用历史数据跑一次真实回测。结果只属于你的账号。'}
+			</p>
 			<a href="/login?next=/backtest" class="mt-3 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
 				{en ? 'Sign in' : '登录'}
 			</a>
+		</div>
+
+		<!-- Read-only strategy preview so logged-out visitors see what's on offer. -->
+		<div class="mt-4 grid gap-3 sm:grid-cols-3">
+			{#each Object.keys(STRATEGIES) as s}
+				{@const c = STRATEGIES[s as StratKey]}
+				<div class="rounded-md border border-border p-4">
+					<div class="text-sm font-medium text-foreground">{c.label}</div>
+					<p class="mt-1.5 text-xs text-muted-foreground">{en ? c.blurb[1] : c.blurb[0]}</p>
+					<div class="mt-2 flex flex-wrap gap-1">
+						{#each c.assets.slice(0, 4) as a}
+							<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{a}</span>
+						{/each}
+						{#if c.assets.length > 4}
+							<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+{c.assets.length - 4}</span>
+						{/if}
+					</div>
+				</div>
+			{/each}
 		</div>
 	{:else}
 		<!-- Form -->

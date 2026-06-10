@@ -41,6 +41,7 @@ const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK']
 export const STRATEGIES = {
 	honest_trend: {
 		label: 'HonestTrend (US equity)',
+		blurb: ['EMA 金叉/死叉趋势跟随，真实复权美股日/小时线', 'EMA cross trend-following on real split-adjusted US equities'] as const,
 		assets: ['NVDA', 'AMD', 'QQQ'],
 		timeframes: ['1h', '1d'],
 		params: { ema_fast: { min: 5, max: 400, default: 50 }, ema_slow: { min: 5, max: 400, default: 100 } }
@@ -48,6 +49,7 @@ export const STRATEGIES = {
 	// Donchian breakout — crypto trend, real Binance 1h bars. Honest equity-curve maxDD.
 	donchian: {
 		label: 'Donchian breakout (crypto trend)',
+		blurb: ['唐奇安通道突破做多，真实币安 1h K 线，诚实净值回撤', 'Donchian channel breakout long, real Binance 1h bars, honest drawdown'] as const,
 		assets: CRYPTO_ASSETS,
 		timeframes: ['1h'],
 		params: {
@@ -60,6 +62,7 @@ export const STRATEGIES = {
 	// return_pct is ROI on invested capital; max_dd/sharpe/calmar are null (round-trip metrics N/A).
 	accumulator: {
 		label: 'Smart DCA accumulator (crypto)',
+		blurb: ['恐惧贪婪指数驱动的定投，越跌越买，只买不卖', 'Fear & Greed-driven DCA — buys more on dips, never sells'] as const,
 		assets: CRYPTO_ASSETS,
 		timeframes: ['1d'],
 		params: {
