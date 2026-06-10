@@ -10,5 +10,9 @@
 BEGIN;
 
 GRANT DELETE, UPDATE ON quant.nautilus_backtests TO quant;
+-- Also let the equity sync/maintenance tooling prune stale rows in the live trades table
+-- (e.g. one-off reconciliation backfills). The live node only ever INSERT/UPDATEs its own
+-- positions; DELETE is for housekeeping by the maintainer-run scripts.
+GRANT DELETE ON quant.nautilus_trades TO quant;
 
 COMMIT;

@@ -250,14 +250,21 @@ class HonestTrendEquity(Strategy):
         if account is None:
             return 0.0
         quote_ccy = instrument.quote_currency
+        # Multi-currency live (IB): when an FX rate is configured (base != quote, e.g. an
+        # SGD-base account trading USD stocks), size off TOTAL account equity (the base
+        # NetLiquidation) converted to the quote currency — NOT the quote-currency CASH
+        # sleeve. On an IB multi-currency account balance_total(USD) is just the (often tiny)
+        # USD residual, so using it under-sizes massively (e.g. 1 share instead of ~100).
+        # quote_per_base_fx == 1.0 means base == quote (every backtest) → fall through to the
+        # quote-balance path below, so backtest behaviour is unchanged.
+        if self.config.quote_per_base_fx != 1.0:
+            base_bal = account.balance_total()  # base-currency total ≈ NetLiquidation
+            if base_bal is not None:
+                return float(base_bal) * self.config.quote_per_base_fx
         bal = account.balance_total(quote_ccy)
         if bal is not None:
             return float(bal)
-        # Multi-currency live (IB): the account holds no balance in the quote currency
-        # (it reports a single base-currency figure, e.g. SGD NetLiquidation). Fall back
-        # to the base balance and convert to the quote currency via the configured FX
-        # rate. Without this, balance_total(USD) is None → equity 0 → the strategy would
-        # silently never enter on an SGD/EUR/etc. base account.
+        # Last resort (no quote balance, FX not configured): convert the base total.
         base_bal = account.balance_total()  # base-currency total (default arg)
         if base_bal is None:
             return 0.0

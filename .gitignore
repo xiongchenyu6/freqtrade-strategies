@@ -45,6 +45,8 @@ backtest_results/
 
 # Local state
 risk_state.json
+event_dca_state.json
+walk_forward_history/
 
 # Logs
 logs/
