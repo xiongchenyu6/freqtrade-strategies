@@ -148,7 +148,10 @@ export async function fetchAssetData(
 	const open_interest_usd = parseFloat(oiData.openInterest) * price;
 
 	// --- Fear & Greed ---
-	const fngLatest = fngData.data[0];
+	// alternative.me is a third-party API — a 200 with an error/odd shape must not
+	// throw (it would null the whole AssetData via the caller's catch).
+	const fngEntries = Array.isArray(fngData?.data) ? fngData.data : [];
+	const fngLatest = fngEntries[0];
 	const fng_value = fngLatest ? parseInt(fngLatest.value, 10) : 50;
 	const fng_class = fngLatest ? fngLatest.value_classification : 'Neutral';
 
@@ -162,7 +165,7 @@ export async function fetchAssetData(
 	const rsiLast30 = rsiValues.slice(-30).map((v) => (isFinite(v) ? v : 50));
 	const rsi_series = normalize(rsiLast30);
 
-	const fngSeries = fngData.data
+	const fngSeries = fngEntries
 		.slice()
 		.reverse()
 		.map((f) => parseInt(f.value, 10));

@@ -45,10 +45,12 @@ function min<T>(xs: T[], score: (x: T) => number | null | undefined): number | n
 export const load: PageServerLoad = async ({ fetch, locals, cookies }) => {
 	const jwt = cookies.get('qt_jwt');
 	const auth = jwt ? `Bearer ${jwt}` : undefined;
-	const [runs, kellyStatus] = await Promise.all([
+	const [runsRaw, kellyStatus] = await Promise.all([
 		vps.backtestRuns(fetch, { limit: 1000, authHeader: auth }).catch(() => [] as BacktestRun[]),
 		loadKellyStatus(fetch)
 	]);
+	// Coerce to array — a malformed 200 body would otherwise crash the for..of below.
+	const runs = Array.isArray(runsRaw) ? runsRaw : [];
 	const byName = new Map<string, BacktestRun[]>();
 	for (const r of runs) {
 		if (!r.strategy) continue;

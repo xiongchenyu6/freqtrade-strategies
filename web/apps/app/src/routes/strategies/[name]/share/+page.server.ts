@@ -16,8 +16,11 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 		fetch(`${base}/wf_results?strategy=eq.${name}&order=run_date.desc&limit=50`, { headers })
 	]);
 
-	const topRuns: BacktestRun[] = runsRes.ok ? await runsRes.json() : [];
-	const wfAll: WfResult[] = wfRes.ok ? await wfRes.json() : [];
+	const topRunsRaw: BacktestRun[] = runsRes.ok ? await runsRes.json().catch(() => []) : [];
+	const wfAllRaw: WfResult[] = wfRes.ok ? await wfRes.json().catch(() => []) : [];
+	// Coerce to arrays — a malformed 200 body would otherwise crash the reduce/filter below.
+	const topRuns = Array.isArray(topRunsRaw) ? topRunsRaw : [];
+	const wfAll = Array.isArray(wfAllRaw) ? wfAllRaw : [];
 
 	if (topRuns.length === 0) throw error(404, `No backtest runs found for strategy: ${name}`);
 
@@ -37,7 +40,10 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 			`${base}/backtest_trades?run_id=eq.${bestRun.id}&order=close_date.asc&limit=10000`,
 			{ headers }
 		);
-		if (tradesRes.ok) trades = await tradesRes.json();
+		if (tradesRes.ok) {
+			const parsed = await tradesRes.json().catch(() => []);
+			trades = Array.isArray(parsed) ? parsed : [];
+		}
 	}
 
 	return {

@@ -12,8 +12,19 @@
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
 
+	// Fields referenced by some optional charts that are NOT part of the
+	// api.live_trades row (legacy freqtrade payloads only) — typed optional so
+	// those charts degrade to "no data" instead of failing the type-check.
+	type LiveRow = LiveTrade & {
+		trade_duration_min?: number | null;
+		trade_duration?: number | null;
+		max_drawdown_pct?: number | null;
+		exchange?: string | null;
+		trade_direction?: string | null;
+	};
+
 	let runs = $state<BacktestRun[]>(data.runs);
-	let trades = $state<LiveTrade[]>(data.trades);
+	let trades = $state<LiveRow[]>(data.trades);
 	let events = $state<EventDcaTrigger[]>(data.events);
 	let status = $state<RealtimeStatus>('idle');
 	let feed = $state<Array<{ kind: string; msg: string; ts: string; hot?: boolean }>>([]);
@@ -24,8 +35,8 @@
 	let pricesPending = $state(false);
 
 	const openTrades = $derived(trades.filter((t) => !t.close_date));
-	const liveTrades = $derived(data.trades);
-	const closedTrades = $derived(data.closedTrades);
+	const liveTrades = $derived(data.trades as LiveRow[]);
+	const closedTrades = $derived(data.closedTrades as LiveRow[]);
 
 	// Convert freqtrade pair "BTC/USDT" → Binance symbol "BTCUSDT"
 	function toBinanceSymbol(pair: string) {
@@ -154,7 +165,7 @@
 
 	// Win/loss streak from most-recent closed trades
 	const tradeStreak = $derived.by(() => {
-		const sorted = data.closedTrades
+		const sorted = closedTrades
 			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => b.close_date!.localeCompare(a.close_date!));
 		if (sorted.length === 0) return null;
@@ -172,7 +183,7 @@
 
 	// Bot breakdown
 	const botBreakdown = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length === 0) return null;
 		const map = new Map<string, { profit: number; count: number; wins: number; lastDate: string }>();
 		for (const t of closed) {
@@ -190,7 +201,7 @@
 
 	// Daily closed P&L chart
 	const dailyPnl = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length === 0) return null;
 		const byDay = new Map<string, number>();
 		for (const t of closed) {
@@ -225,7 +236,7 @@
 
 	// Pair P&L breakdown from closedTrades
 	const pairPnl = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null && t.pair);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null && t.pair);
 		if (closed.length < 3) return null;
 		const map = new Map<string, { profit: number; count: number; wins: number }>();
 		for (const t of closed) {
@@ -267,7 +278,7 @@
 
 	// Monthly P&L heatmap from live closed trades
 	const liveMonthlyPnl = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length < 5) return null;
 		const byYM = new Map<string, number>();
 		for (const t of closed) {
@@ -295,7 +306,7 @@
 	// Day-of-week P&L from live closed trades
 	const DOW_NAMES_LIVE = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 	const liveDowPnl = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length < 7) return null;
 		const byDow = Array.from({ length: 7 }, () => ({ sum: 0, count: 0, wins: 0 }));
 		for (const t of closed) {
@@ -316,7 +327,7 @@
 	});
 
 	const weeklyPnl = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length < 5) return null;
 		const byWeek = new Map<string, number>();
 		for (const t of closed) {
@@ -348,7 +359,7 @@
 
 	// Trade close hour-of-day distribution
 	const closeHourChart = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null);
 		if (closed.length < 5) return null;
 		const hours = Array.from({ length: 24 }, (_, h) => ({ h, count: 0, profit: 0, wins: 0 }));
 		for (const t of closed) {
@@ -368,7 +379,7 @@
 
 	// Closed trade equity curve: running cumulative P&L
 	const closedEquityCurve = $derived.by(() => {
-		const sorted = data.closedTrades
+		const sorted = closedTrades
 			.filter(t => t.close_date && t.profit_abs != null)
 			.sort((a, b) => a.close_date!.localeCompare(b.close_date!));
 		if (sorted.length < 5) return null;
@@ -405,7 +416,7 @@
 
 	// Trade duration histogram — how long trades are held
 	const durationHist = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.trade_duration_min != null && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.trade_duration_min != null && t.profit_abs != null);
 		if (closed.length < 5) return null;
 		const BUCKETS = [
 			{ label: '<30m', max: 30, count: 0, profit: 0, wins: 0 },
@@ -435,7 +446,7 @@
 
 	// Stake efficiency: profit per USDT staked per pair
 	const stakeEfficiency = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null && t.pair && t.stake_amount != null && t.stake_amount > 0);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null && t.pair && t.stake_amount != null && t.stake_amount > 0);
 		if (closed.length < 5) return null;
 		const map = new Map<string, { profit: number; count: number; stake: number; wins: number }>();
 		for (const t of closed) {
@@ -458,7 +469,7 @@
 
 	// Trade profit % distribution histogram
 	const tradeProfitDist = $derived.by(() => {
-		const vals = data.closedTrades.filter(t => t.profit_pct != null).map(t => t.profit_pct! * 100);
+		const vals = closedTrades.filter(t => t.profit_pct != null).map(t => t.profit_pct! * 100);
 		if (vals.length < 5) return null;
 		const BUCKETS = [
 			{ label: '<-5%', lo: -Infinity, hi: -5, count: 0, color: 'var(--ch-loss)' },
@@ -478,7 +489,7 @@
 
 	// Live exit reason breakdown
 	const liveExitReasons = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_abs != null && t.exit_reason);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_abs != null && t.exit_reason);
 		if (closed.length < 3) return null;
 		const map = new Map<string, { count: number; profit: number; wins: number }>();
 		for (const t of closed) {
@@ -514,7 +525,7 @@
 
 	// Win/loss streak distribution: how long do streaks run?
 	const streakDistribution = $derived.by(() => {
-		const closed = data.closedTrades
+		const closed = closedTrades
 			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => a.close_date!.localeCompare(b.close_date!));
 		if (closed.length < 10) return null;
@@ -548,7 +559,7 @@
 
 	// Pair profit matrix: top 12 pairs by total profit_abs with win rate bar
 	const pairProfitMatrix = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.pair && t.profit_pct != null && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.pair && t.profit_pct != null && t.profit_abs != null);
 		if (closed.length < 8) return null;
 		const map = new Map<string, { wins: number; count: number; profitPctSum: number; profitAbsSum: number }>();
 		for (const t of closed) {
@@ -574,7 +585,7 @@
 
 	// Bot profit ranking: total P&L and win rate per bot
 	const botProfitRanking = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.bot_name && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.bot_name && t.profit_abs != null);
 		if (closed.length < 4) return null;
 		const map = new Map<string, { wins: number; count: number; profitAbsSum: number }>();
 		for (const t of closed) {
@@ -594,7 +605,7 @@
 
 	// Monthly win rate trend: last 12 months of closed trade win rate
 	const monthlyWinRateTrend = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_pct != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_pct != null);
 		if (closed.length < 10) return null;
 		const now = new Date();
 		const months = Array.from({ length: 12 }, (_, i) => {
@@ -623,7 +634,7 @@
 
 	// Rolling 20-trade win rate sparkline: shows whether performance is improving or degrading
 	const rollingWinRate = $derived.by(() => {
-		const closed = data.closedTrades
+		const closed = closedTrades
 			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => a.close_date!.localeCompare(b.close_date!));
 		if (closed.length < 25) return null;
@@ -646,7 +657,7 @@
 
 	// Trade profit percentile summary: P10/P25/P50/P75/P90/P95
 	const profitPercentiles = $derived.by(() => {
-		const vals = data.closedTrades
+		const vals = closedTrades
 			.filter(t => t.profit_pct != null)
 			.map(t => t.profit_pct! * 100)
 			.sort((a, b) => a - b);
@@ -669,7 +680,7 @@
 
 	// Weekly win rate trend: last 12 calendar weeks win rate (distinct from rolling-20 trade and monthly)
 	const weeklyWinRateTrend = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_pct != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_pct != null);
 		if (closed.length < 15) return null;
 		const getWeekKey = (dateStr: string) => {
 			const d = new Date(dateStr);
@@ -704,7 +715,7 @@
 
 	// Profit factor per bot: gross win USDT / gross loss USDT per bot_name
 	const profitFactorByBot = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.bot_name && t.profit_abs != null);
+		const closed = closedTrades.filter(t => t.bot_name && t.profit_abs != null);
 		if (closed.length < 5) return null;
 		const map = new Map<string, { wins: number; losses: number }>();
 		for (const t of closed) {
@@ -722,7 +733,7 @@
 	});
 
 	const recentTradeTimeline = $derived.by(() => {
-		const closed = data.closedTrades
+		const closed = closedTrades
 			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => a.close_date!.localeCompare(b.close_date!))
 			.slice(-30);
@@ -759,7 +770,7 @@
 	});
 
 	const tradeDoWHourHeatmap = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date && t.profit_pct != null);
+		const closed = closedTrades.filter(t => t.close_date && t.profit_pct != null);
 		if (closed.length < 20) return null;
 		const cells: { sum: number; count: number }[][] = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => ({ sum: 0, count: 0 })));
 		for (const t of closed) {
@@ -777,7 +788,7 @@
 
 	// Bot win rate comparison: % profitable closed trades per bot (distinct from profitFactorByBot gross ratio and botProfitRanking cumulative profit)
 	const botWinRateComparison = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.bot_name && t.profit_pct != null);
+		const closed = closedTrades.filter(t => t.bot_name && t.profit_pct != null);
 		if (closed.length < 6) return null;
 		const map = new Map<string, { wins: number; total: number; profitSum: number }>();
 		for (const t of closed) {
@@ -797,7 +808,7 @@
 
 	// Trade count and net profit per strategy across all bots (distinct from botBreakdown/botProfitRanking which group by bot_name)
 	const strategyTradeVolume = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.strategy && t.profit_pct != null);
+		const closed = closedTrades.filter(t => t.strategy && t.profit_pct != null);
 		if (closed.length < 6) return null;
 		const map = new Map<string, { count: number; wins: number; profitSum: number }>();
 		for (const t of closed) {
@@ -837,7 +848,7 @@
 	});
 
 	const pairProfitLeaderboard = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.pair && t.profit_abs != null && isFinite(t.profit_abs));
+		const closed = closedTrades.filter(t => t.pair && t.profit_abs != null && isFinite(t.profit_abs));
 		if (closed.length < 5) return null;
 		const map = new Map<string, { sum: number; count: number; wins: number }>();
 		for (const t of closed) {
@@ -857,7 +868,7 @@
 	});
 
 	const botCumulativePnlTimeline = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.bot_name && t.profit_abs != null && t.close_date);
+		const closed = closedTrades.filter(t => t.bot_name && t.profit_abs != null && t.close_date);
 		if (closed.length < 5) return null;
 		const bots = [...new Set(closed.map(t => t.bot_name!))];
 		if (bots.length < 2) return null;
@@ -903,7 +914,7 @@
 
 	const closedTradeProfitByMonth = $derived.by(() => {
 		const map = new Map<string, { sum: number; count: number }>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.close_date || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const ym = new Date(t.close_date).toISOString().slice(0, 7);
 			if (!map.has(ym)) map.set(ym, { sum: 0, count: 0 });
@@ -921,7 +932,7 @@
 
 	const strategyProfitLeaderboard = $derived.by(() => {
 		const map = new Map<string, { sum: number; count: number; wins: number }>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.strategy || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			if (!map.has(t.strategy)) map.set(t.strategy, { sum: 0, count: 0, wins: 0 });
 			const e = map.get(t.strategy)!;
@@ -940,7 +951,7 @@
 	});
 
 	const tradeDurationVsProfit = $derived.by(() => {
-		const pts = data.closedTrades.filter(t => t.trade_duration_min != null && t.profit_pct != null && isFinite(t.profit_pct) && t.trade_duration_min > 0 && t.trade_duration_min < 100000);
+		const pts = closedTrades.filter(t => t.trade_duration_min != null && t.profit_pct != null && isFinite(t.profit_pct) && t.trade_duration_min > 0 && t.trade_duration_min < 100000);
 		if (pts.length < 10) return null;
 		const durations = pts.map(t => t.trade_duration_min!);
 		const profits = pts.map(t => t.profit_pct!);
@@ -956,7 +967,7 @@
 	});
 
 	const closedTradeExitReasonBreakdown = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.exit_reason && t.profit_pct != null && isFinite(t.profit_pct));
+		const closed = closedTrades.filter(t => t.exit_reason && t.profit_pct != null && isFinite(t.profit_pct));
 		if (closed.length < 5) return null;
 		const map = new Map<string, { sum: number; count: number; wins: number }>();
 		for (const t of closed) {
@@ -977,7 +988,7 @@
 	});
 
 	const closedTradePairFrequency = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.pair && t.profit_pct != null && isFinite(t.profit_pct));
+		const closed = closedTrades.filter(t => t.pair && t.profit_pct != null && isFinite(t.profit_pct));
 		if (closed.length < 5) return null;
 		const map = new Map<string, { sum: number; count: number; wins: number }>();
 		for (const t of closed) {
@@ -998,7 +1009,7 @@
 	});
 
 	const closedTradeDurationDistribution = $derived.by(() => {
-		const vals = data.closedTrades
+		const vals = closedTrades
 			.filter(t => t.trade_duration_min != null && isFinite(t.trade_duration_min) && t.trade_duration_min >= 0)
 			.map(t => t.trade_duration_min!);
 		if (vals.length < 8) return null;
@@ -1008,7 +1019,7 @@
 			label: i === BINS - 1 ? `>${(i * step / 60).toFixed(0)}h` : `${(i * step / 60).toFixed(0)}–${((i + 1) * step / 60).toFixed(0)}h`,
 			count: 0, sumProfit: 0, wins: 0
 		}));
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (t.trade_duration_min == null || !isFinite(t.trade_duration_min)) continue;
 			const idx = Math.min(BINS - 1, Math.floor(t.trade_duration_min / step));
 			buckets[idx].count++;
@@ -1022,7 +1033,7 @@
 
 	const closedTradeStrategyWinRate = $derived.by(() => {
 		const map = new Map<string, { wins: number; total: number; sumProfit: number }>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.strategy || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			if (!map.has(t.strategy)) map.set(t.strategy, { wins: 0, total: 0, sumProfit: 0 });
 			const e = map.get(t.strategy)!;
@@ -1041,10 +1052,10 @@
 	});
 
 	const closedTradeBotProfitByMonth = $derived.by(() => {
-		const bots = [...new Set(data.closedTrades.map(t => t.bot_name).filter(Boolean))] as string[];
+		const bots = [...new Set(closedTrades.map(t => t.bot_name).filter(Boolean))] as string[];
 		if (bots.length < 2) return null;
 		const map = new Map<string, Map<string, number>>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.close_date || !t.bot_name || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const ym = t.close_date.slice(0, 7);
 			if (!map.has(ym)) map.set(ym, new Map());
@@ -1077,11 +1088,11 @@
 
 	const closedTradePairDowHeatmap = $derived.by(() => {
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-		const pairs = [...new Set(data.closedTrades.map(t => t.pair).filter(Boolean))] as string[];
+		const pairs = [...new Set(closedTrades.map(t => t.pair).filter(Boolean))] as string[];
 		if (pairs.length < 2) return null;
 		const map = new Map<string, { wins: number; total: number }[]>();
 		for (const p of pairs) map.set(p, Array.from({ length: 7 }, () => ({ wins: 0, total: 0 })));
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.pair || !t.close_date || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const dow = new Date(t.close_date).getDay();
 			const e = map.get(t.pair)?.[dow];
@@ -1103,7 +1114,7 @@
 
 	const closedTradeMonthlyWinRate = $derived.by(() => {
 		const map = new Map<string, { wins: number; total: number }>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.close_date || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const ym = t.close_date.slice(0, 7);
 			if (!map.has(ym)) map.set(ym, { wins: 0, total: 0 });
@@ -1128,7 +1139,7 @@
 
 	// Closed trade profit% distribution histogram
 	const closedTradeProfitDistribution = $derived.by(() => {
-		const vals = data.closedTrades.map(t => t.profit_pct).filter((v): v is number => v != null && isFinite(v));
+		const vals = closedTrades.map(t => t.profit_pct).filter((v): v is number => v != null && isFinite(v));
 		if (vals.length < 10) return null;
 		const BINS = [
 			{ lo: -Infinity, hi: -10, label: '<-10%' },
@@ -1153,7 +1164,7 @@
 	// Avg profit by exit reason
 	const closedTradeProfitByExitReason = $derived.by(() => {
 		const map = new Map<string, { sum: number; wins: number; total: number }>();
-		for (const t of data.closedTrades) {
+		for (const t of closedTrades) {
 			if (!t.exit_reason || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			if (!map.has(t.exit_reason)) map.set(t.exit_reason, { sum: 0, wins: 0, total: 0 });
 			const e = map.get(t.exit_reason)!;
@@ -1171,7 +1182,7 @@
 	});
 
 	const liveEntryTagPerformance = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => (t as any).enter_tag && t.profit_pct != null && isFinite(t.profit_pct));
+		const closed = closedTrades.filter(t => (t as any).enter_tag && t.profit_pct != null && isFinite(t.profit_pct));
 		if (closed.length < 5) return null;
 		const map = new Map<string, { sum: number; count: number; wins: number }>();
 		for (const t of closed) {
@@ -1192,7 +1203,7 @@
 	});
 
 	const liveRecentTradeProfitMovingAvg = $derived.by(() => {
-		const sorted = data.closedTrades
+		const sorted = closedTrades
 			.filter(t => t.close_date && t.profit_pct != null && isFinite(t.profit_pct))
 			.sort((a, b) => a.close_date!.localeCompare(b.close_date!));
 		const WINDOW = 10;
@@ -1215,7 +1226,7 @@
 	});
 
 	const liveMonthlyTradeCount = $derived.by(() => {
-		const closed = data.closedTrades.filter(t => t.close_date);
+		const closed = closedTrades.filter(t => t.close_date);
 		if (closed.length < 5) return null;
 		const map = new Map<string, number>();
 		for (const t of closed) {
@@ -1289,7 +1300,7 @@
 		}
 		const bots = Object.entries(map).filter(([, v]) => Object.values(v).reduce((a, b) => a + b, 0) >= 3);
 		if (bots.length < 1) return null;
-		const allReasons = [...new Set(closedTrades.map(t => t.exit_reason).filter(Boolean))].slice(0, 6);
+		const allReasons = [...new Set(closedTrades.map(t => t.exit_reason).filter((r): r is string => Boolean(r)))].slice(0, 6);
 		const REASON_COL: Record<string, string> = {
 			roi: 'var(--ch-profit)', stop_loss: 'var(--ch-loss)', stoploss: 'var(--ch-loss)',
 			trailing_stop_loss: 'var(--ch-warn)', exit_signal: 'var(--ch-violet)', force_sell: 'var(--ch-violet-strong)'
@@ -1446,8 +1457,8 @@
 
 	const liveStrategyProfitBoxplot = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const t of data.trades) {
-			if (t.profit_pct == null || !isFinite(t.profit_pct)) continue;
+		for (const t of liveTrades) {
+			if (!t.strategy || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			if (!map[t.strategy]) map[t.strategy] = [];
 			map[t.strategy].push(t.profit_pct);
 		}
@@ -1480,7 +1491,7 @@
 
 	const liveDurationByPair = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.pair || t.trade_duration_min == null || !isFinite(t.trade_duration_min)) continue;
 			if (!map[t.pair]) map[t.pair] = [];
 			map[t.pair].push(t.trade_duration_min);
@@ -1501,7 +1512,7 @@
 
 	const liveProfitByHourOfDay = $derived.by(() => {
 		const map: Record<number, number[]> = {};
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (t.close_date == null || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const hr = new Date(t.close_date).getUTCHours();
 			if (!map[hr]) map[hr] = [];
@@ -1521,7 +1532,7 @@
 	const liveProfitByExitReason = $derived.by(() => {
 		const map: Record<string, number[]> = {};
 		for (const t of trades) {
-			if (!t.exit_reason) continue;
+			if (!t.exit_reason || t.profit_pct == null) continue;
 			if (!map[t.exit_reason]) map[t.exit_reason] = [];
 			map[t.exit_reason].push(t.profit_pct);
 		}
@@ -1791,7 +1802,7 @@
 
 	const liveMonthlyTradeCountTrend = $derived.by(() => {
 		const map = new Map<string, number>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.close_date) continue;
 			const mo = t.close_date.slice(0, 7);
 			map.set(mo, (map.get(mo) ?? 0) + 1);
@@ -1821,7 +1832,7 @@
 			{ label: '1–3d', min: 1440, max: 4320 },
 			{ label: '>3d', min: 4320, max: Infinity },
 		].map(b => ({ ...b, profits: [] as number[] }));
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (t.profit_pct == null || !isFinite(t.profit_pct) || t.trade_duration == null) continue;
 			const dur = t.trade_duration;
 			const b = buckets.find(bk => dur >= bk.min && dur < bk.max);
@@ -1839,7 +1850,7 @@
 
 	const liveProfitPerBotBar = $derived.by(() => {
 		const map = new Map<string, { sum: number; count: number }>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.bot_name || t.profit_abs == null || !isFinite(t.profit_abs)) continue;
 			const cur = map.get(t.bot_name) ?? { sum: 0, count: 0 };
 			cur.sum += t.profit_abs;
@@ -1856,7 +1867,7 @@
 
 	const liveBotAvgTradeDuration = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.bot_name || t.trade_duration == null || !isFinite(t.trade_duration) || t.trade_duration < 0) continue;
 			const arr = map.get(t.bot_name) ?? [];
 			arr.push(t.trade_duration);
@@ -1875,7 +1886,7 @@
 
 	const liveProfitByMonth = $derived.by(() => {
 		const map = new Map<string, number>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.close_date || t.profit_abs == null || !isFinite(t.profit_abs)) continue;
 			const mo = t.close_date.slice(0, 7);
 			map.set(mo, (map.get(mo) ?? 0) + t.profit_abs);
@@ -1898,7 +1909,7 @@
 
 	const livePairWinRateRanking = $derived.by(() => {
 		const map = new Map<string, { wins: number; total: number }>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.pair || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const cur = map.get(t.pair) ?? { wins: 0, total: 0 };
 			cur.total++;
@@ -1917,7 +1928,7 @@
 
 	const liveCumProfitByBot = $derived.by(() => {
 		const botMap = new Map<string, { date: string; profit: number }[]>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.close_date || t.profit_abs == null || !isFinite(t.profit_abs) || !t.bot_name) continue;
 			const arr = botMap.get(t.bot_name) ?? [];
 			arr.push({ date: t.close_date.slice(0, 10), profit: t.profit_abs });
@@ -1948,7 +1959,7 @@
 
 	const livePairProfitDistribution = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const t of data.trades) {
+		for (const t of liveTrades) {
 			if (!t.pair || t.profit_pct == null || !isFinite(t.profit_pct)) continue;
 			const arr = map.get(t.pair) ?? [];
 			arr.push(t.profit_pct);
@@ -1987,7 +1998,7 @@
 			if (!t.open_date) continue;
 			const dow = new Date(t.open_date).getUTCDay();
 			const e = map.get(dow) ?? { sum: 0, count: 0 };
-			e.sum += (t.profit_ratio ?? 0) * 100;
+			e.sum += (t.profit_pct ?? 0) * 100;
 			e.count++;
 			map.set(dow, e);
 		}
@@ -2029,10 +2040,10 @@
 	const liveProfitVsDurationScatter = $derived.by(() => {
 		if (!trades || trades.length < 10) return null;
 		const pts = trades
-			.filter(t => t.open_date && t.close_date && t.profit_ratio != null)
+			.filter(t => t.open_date && t.close_date && t.profit_pct != null)
 			.map(t => ({
 				dur: (new Date(t.close_date as string).getTime() - new Date(t.open_date as string).getTime()) / 3600000,
-				profit: (t.profit_ratio as number) * 100,
+				profit: (t.profit_pct as number) * 100,
 			}))
 			.filter(p => p.dur > 0 && p.dur < 720);
 		if (pts.length < 8) return null;
@@ -2051,9 +2062,9 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, { sum: number; count: number }>();
 		for (const t of trades) {
-			if (!t.pair || t.profit_ratio == null) continue;
+			if (!t.pair || t.profit_pct == null) continue;
 			const s = map.get(t.pair as string) ?? { sum: 0, count: 0 };
-			s.sum += (t.profit_ratio as number) * 100;
+			s.sum += (t.profit_pct as number) * 100;
 			s.count++;
 			map.set(t.pair as string, s);
 		}
@@ -2141,10 +2152,10 @@
 		if (!trades || trades.length < 10) return null;
 		const groups: Record<string, number[]> = { BTC: [], ETH: [], SOL: [], BNB: [], Other: [] };
 		for (const t of trades) {
-			if (t.profit_ratio == null || !t.pair) continue;
+			if (t.profit_pct == null || !t.pair) continue;
 			const base = (t.pair as string).split('/')[0];
 			const key = ['BTC', 'ETH', 'SOL', 'BNB'].includes(base) ? base : 'Other';
-			groups[key].push(t.profit_ratio as number);
+			groups[key].push(t.profit_pct as number);
 		}
 		const rows = Object.entries(groups)
 			.filter(([, vals]) => vals.length > 0)
@@ -2160,14 +2171,14 @@
 	const liveWinStreakDistribution = $derived.by(() => {
 		if (!trades || trades.length < 15) return null;
 		const sorted = [...trades]
-			.filter(t => t.close_date && t.profit_ratio != null)
+			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => (a.close_date as string).localeCompare(b.close_date as string));
 		if (sorted.length < 15) return null;
 		const streaks: number[] = [];
 		let cur = 0;
 		let prevWin: boolean | null = null;
 		for (const t of sorted) {
-			const win = (t.profit_ratio as number) > 0;
+			const win = (t.profit_pct as number) > 0;
 			if (prevWin === null || win === prevWin) { cur++; }
 			else { if (cur > 0) streaks.push(prevWin ? cur : -cur); cur = 1; }
 			prevWin = win;
@@ -2189,10 +2200,10 @@
 	const liveProfitVolatility = $derived.by(() => {
 		if (!trades || trades.length < 20) return null;
 		const sorted = [...trades]
-			.filter(t => t.close_date && t.profit_ratio != null)
+			.filter(t => t.close_date && t.profit_pct != null)
 			.sort((a, b) => (a.close_date as string).localeCompare(b.close_date as string));
 		if (sorted.length < 20) return null;
-		const profits = sorted.map(t => (t.profit_ratio as number) * 100);
+		const profits = sorted.map(t => (t.profit_pct as number) * 100);
 		const WINDOW = 10;
 		const pts: { i: number; vol: number }[] = [];
 		for (let i = WINDOW - 1; i < profits.length; i++) {
@@ -2213,10 +2224,10 @@
 		if (!trades || trades.length < 10) return null;
 		const botMap = new Map<string, { pairs: Set<string>; profits: number[] }>();
 		for (const t of trades) {
-			if (!t.bot_name || !t.pair || t.profit_ratio == null) continue;
+			if (!t.bot_name || !t.pair || t.profit_pct == null) continue;
 			const entry = botMap.get(t.bot_name as string) ?? { pairs: new Set(), profits: [] };
 			entry.pairs.add(t.pair as string);
-			entry.profits.push((t.profit_ratio as number) * 100);
+			entry.profits.push((t.profit_pct as number) * 100);
 			botMap.set(t.bot_name as string, entry);
 		}
 		if (botMap.size < 3) return null;
@@ -2239,10 +2250,10 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.exit_reason || t.profit_ratio == null) continue;
+			if (!t.exit_reason || t.profit_pct == null) continue;
 			const reason = (t.exit_reason as string).slice(0, 14);
 			const arr = map.get(reason) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(reason, arr);
 		}
 		if (map.size < 2) return null;
@@ -2260,10 +2271,10 @@
 		if (!trades || trades.length < 15) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.close_date || t.profit_ratio == null) continue;
+			if (!t.close_date || t.profit_pct == null) continue;
 			const mo = (t.close_date as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -2308,10 +2319,10 @@
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
 			const stake = t.stake_amount as number;
-			if (stake == null || t.profit_ratio == null) continue;
+			if (stake == null || t.profit_pct == null) continue;
 			const bucket = stake < 50 ? '<50' : stake < 100 ? '50-100' : stake < 200 ? '100-200' : stake < 500 ? '200-500' : '500+';
 			const arr = map.get(bucket) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(bucket, arr);
 		}
 		if (map.size < 2) return null;
@@ -2333,7 +2344,7 @@
 			const bot = (t.bot_name as string | undefined) ?? (t.exchange as string | undefined) ?? 'default';
 			const s = map.get(bot) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((t.profit_ratio as number) > 0) s.wins++;
+			if ((t.profit_pct as number) > 0) s.wins++;
 			map.set(bot, s);
 		}
 		if (map.size < 2) return null;
@@ -2351,10 +2362,10 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.close_date || t.profit_ratio == null) continue;
+			if (!t.close_date || t.profit_pct == null) continue;
 			const mo = (t.close_date as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -2370,10 +2381,10 @@
 		if (!trades || trades.length < 10) return null;
 		const byPair = new Map<string, { wins: number; total: number }>();
 		for (const t of trades) {
-			if (!t.pair || t.profit_ratio == null) continue;
+			if (!t.pair || t.profit_pct == null) continue;
 			const s = byPair.get(t.pair as string) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((t.profit_ratio as number) > 0) s.wins++;
+			if ((t.profit_pct as number) > 0) s.wins++;
 			byPair.set(t.pair as string, s);
 		}
 		const wrs = [...byPair.values()].filter(s => s.total >= 2).map(s => s.wins / s.total * 100).sort((a, b) => a - b);
@@ -2414,9 +2425,9 @@
 		const byBot = new Map<string, { profits: number[]; maxDD: number }>();
 		for (const t of trades) {
 			const bot = (t.bot_name ?? t.strategy ?? 'unknown') as string;
-			if (t.profit_ratio == null) continue;
+			if (t.profit_pct == null) continue;
 			const s = byBot.get(bot) ?? { profits: [], maxDD: 0 };
-			const p = (t.profit_ratio as number) * 100;
+			const p = (t.profit_pct as number) * 100;
 			s.profits.push(p);
 			if (p < -s.maxDD) s.maxDD = Math.abs(p);
 			byBot.set(bot, s);
@@ -2439,7 +2450,7 @@
 
 	const liveProfitCDF = $derived.by(() => {
 		if (!trades || trades.length < 10) return null;
-		const vals = trades.filter(t => t.profit_ratio != null).map(t => (t.profit_ratio as number) * 100).sort((a, b) => a - b);
+		const vals = trades.filter(t => t.profit_pct != null).map(t => (t.profit_pct as number) * 100).sort((a, b) => a - b);
 		if (vals.length < 8) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
 		if (maxV === minV) return null;
@@ -2456,10 +2467,10 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.pair || t.profit_ratio == null) continue;
+			if (!t.pair || t.profit_pct == null) continue;
 			const base = (t.pair as string).split('/')[0];
 			const arr = map.get(base) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(base, arr);
 		}
 		if (map.size < 3) return null;
@@ -2497,9 +2508,9 @@
 		if (!trades || trades.length < 10) return null;
 		const map = new Map<string, number[]>();
 		for (const t of trades) {
-			if (!t.pair || t.profit_ratio == null) continue;
+			if (!t.pair || t.profit_pct == null) continue;
 			const arr = map.get(t.pair as string) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			map.set(t.pair as string, arr);
 		}
 		if (map.size < 3) return null;
@@ -2524,11 +2535,11 @@
 		if (!trades || trades.length < 10) return null;
 		const byMonth = new Map<string, { wins: number; total: number }>();
 		for (const t of trades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const mo = (t.open_date as string).slice(0, 7);
 			const rec = byMonth.get(mo) ?? { wins: 0, total: 0 };
 			rec.total++;
-			if ((t.profit_ratio as number) > 0) rec.wins++;
+			if ((t.profit_pct as number) > 0) rec.wins++;
 			byMonth.set(mo, rec);
 		}
 		if (byMonth.size < 3) return null;
@@ -2550,10 +2561,10 @@
 		const byDow = new Map<number, { profit: number; count: number }>();
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		for (const t of liveTrades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const d = new Date(t.open_date as string).getUTCDay();
 			const prev = byDow.get(d) ?? { profit: 0, count: 0 };
-			prev.profit += (t.profit_ratio as number) * 100;
+			prev.profit += (t.profit_pct as number) * 100;
 			prev.count++;
 			byDow.set(d, prev);
 		}
@@ -2590,8 +2601,8 @@
 			const side = (t.trade_direction as string ?? 'long');
 			const prev = sides.get(side) ?? { wins: 0, total: 0, sumProfit: 0 };
 			prev.total++;
-			prev.sumProfit += (t.profit_ratio as number ?? 0) * 100;
-			if ((t.profit_ratio as number ?? 0) > 0) prev.wins++;
+			prev.sumProfit += (t.profit_pct as number ?? 0) * 100;
+			if ((t.profit_pct as number ?? 0) > 0) prev.wins++;
 			sides.set(side, prev);
 		}
 		if (sides.size < 1) return null;
@@ -2626,10 +2637,10 @@
 		if (!liveTrades || liveTrades.length < 15) return null;
 		const byMonth = new Map<string, { profits: number[] }>();
 		for (const t of liveTrades) {
-			if (!t.open_date || t.profit_ratio == null) continue;
+			if (!t.open_date || t.profit_pct == null) continue;
 			const mo = (t.open_date as string).slice(0, 7);
 			const prev = byMonth.get(mo) ?? { profits: [] };
-			prev.profits.push((t.profit_ratio as number) * 100);
+			prev.profits.push((t.profit_pct as number) * 100);
 			byMonth.set(mo, prev);
 		}
 		if (byMonth.size < 3) return null;
@@ -2655,10 +2666,10 @@
 		if (!liveTrades || liveTrades.length < 10) return null;
 		const byPair = new Map<string, { wins: number; total: number }>();
 		for (const t of liveTrades) {
-			if (t.pair == null || t.profit_ratio == null) continue;
+			if (t.pair == null || t.profit_pct == null) continue;
 			const prev = byPair.get(t.pair as string) ?? { wins: 0, total: 0 };
 			prev.total++;
-			if ((t.profit_ratio as number) > 0) prev.wins++;
+			if ((t.profit_pct as number) > 0) prev.wins++;
 			byPair.set(t.pair as string, prev);
 		}
 		const wrs = [...byPair.values()]
@@ -2680,9 +2691,9 @@
 		if (!liveTrades || liveTrades.length < 10) return null;
 		const byBot = new Map<string, number[]>();
 		for (const t of liveTrades) {
-			if (!t.bot_name || t.profit_ratio == null) continue;
+			if (!t.bot_name || t.profit_pct == null) continue;
 			const arr = byBot.get(t.bot_name as string) ?? [];
-			arr.push((t.profit_ratio as number) * 100);
+			arr.push((t.profit_pct as number) * 100);
 			byBot.set(t.bot_name as string, arr);
 		}
 		const bars = [...byBot.entries()]
@@ -2706,10 +2717,10 @@
 		if (!liveTrades || liveTrades.length < 10) return null;
 		const byPair = new Map<string, { sum: number; count: number }>();
 		for (const t of liveTrades) {
-			if (t.pair == null || t.profit_ratio == null) continue;
+			if (t.pair == null || t.profit_pct == null) continue;
 			const base = (t.pair as string).split('/')[0];
 			const prev = byPair.get(base) ?? { sum: 0, count: 0 };
-			prev.sum += (t.profit_ratio as number) * 100;
+			prev.sum += (t.profit_pct as number) * 100;
 			prev.count++;
 			byPair.set(base, prev);
 		}

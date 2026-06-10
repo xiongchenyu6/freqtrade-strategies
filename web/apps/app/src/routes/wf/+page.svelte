@@ -6,8 +6,23 @@
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
-	const windows = $derived(data.results);
+	const windows = $derived(data.results as WfRow[]);
 	const results = $derived(data.results);
+
+	// Metrics referenced by some optional charts that are NOT part of the
+	// api.wf_results row (legacy payloads only). Typed as optional so the
+	// charts degrade to "no data" instead of failing the type-check.
+	type WfRow = WfResult & {
+		sharpe_ratio?: number | null;
+		sortino_ratio?: number | null;
+		sortino?: number | null;
+		calmar_ratio?: number | null;
+		profit_factor?: number | null;
+		max_drawdown?: number | null;
+		max_drawdown_pct?: number | null;
+		winning_trades?: number | null;
+	};
+	const wfRows = $derived(data.results as WfRow[]);
 
 	type WfSort = 'name' | 'sum' | 'stability';
 	let wfSort = $state<WfSort>('sum');
@@ -787,10 +802,10 @@
 	});
 
 	const windowProfitConcentration = $derived.by(() => {
-		const labels = [...new Set(data.results.map(r => r.window_label).filter(Boolean))].sort() as string[];
+		const labels = [...new Set(wfRows.map(r => r.window_label).filter(Boolean))].sort() as string[];
 		if (labels.length < 3) return null;
 		const rows = labels.map(label => {
-			const wins = data.results.filter(r => r.window_label === label && r.tot_profit_pct != null && isFinite(r.tot_profit_pct));
+			const wins = wfRows.filter(r => r.window_label === label && r.tot_profit_pct != null && isFinite(r.tot_profit_pct));
 			if (wins.length < 2) return null;
 			const total = wins.reduce((s, r) => s + r.tot_profit_pct!, 0);
 			const positives = wins.filter(r => r.tot_profit_pct! > 0);
@@ -807,8 +822,8 @@
 
 	const strategyAvgProfitTrend = $derived.by(() => {
 		const stratMap: Record<string, { idx: number; profit: number }[]> = {};
-		const windowLabels = [...new Set(allWindows.map(w => w.window_label))].sort();
-		for (const w of allWindows) {
+		const windowLabels = [...new Set(wfRows.map(w => w.window_label))].sort();
+		for (const w of wfRows) {
 			if (w.avg_profit_pct == null || !isFinite(w.avg_profit_pct)) continue;
 			const idx = windowLabels.indexOf(w.window_label);
 			if (!stratMap[w.strategy]) stratMap[w.strategy] = [];
@@ -835,10 +850,10 @@
 	});
 
 	const windowMedianTradeTimeline = $derived.by(() => {
-		const windowLabels = [...new Set(allWindows.map(w => w.window_label))].sort();
+		const windowLabels = [...new Set(wfRows.map(w => w.window_label))].sort();
 		if (windowLabels.length < 3) return null;
 		const pts = windowLabels.map(label => {
-			const wins = allWindows.filter(w => w.window_label === label && w.trades != null && isFinite(w.trades));
+			const wins = wfRows.filter(w => w.window_label === label && w.trades != null && isFinite(w.trades));
 			if (wins.length === 0) return null;
 			const sorted = wins.map(w => w.trades!).sort((a, b) => a - b);
 			const mid = Math.floor(sorted.length / 2);
@@ -859,9 +874,9 @@
 	});
 
 	const windowNetProfitVsParticipation = $derived.by(() => {
-		const windowLabels = [...new Set(allWindows.map(w => w.window_label))];
+		const windowLabels = [...new Set(wfRows.map(w => w.window_label))];
 		const pts = windowLabels.map(label => {
-			const wins = allWindows.filter(w => w.window_label === label);
+			const wins = wfRows.filter(w => w.window_label === label);
 			const participation = wins.length;
 			const netProfit = wins.reduce((s, w) => s + (w.tot_profit_pct ?? 0), 0);
 			return { label, participation, netProfit };
@@ -879,7 +894,7 @@
 
 	const windowAvgProfitByStrategy = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map[w.strategy]) map[w.strategy] = [];
 			map[w.strategy].push(w.tot_profit_pct);
@@ -899,7 +914,7 @@
 
 	const windowTradeCountByStrategy = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.trades == null || w.trades <= 0) continue;
 			if (!map[w.strategy]) map[w.strategy] = [];
 			map[w.strategy].push(w.trades);
@@ -921,7 +936,7 @@
 
 	const windowStatusBreakdown = $derived.by(() => {
 		const map: Record<string, { win: number; loss: number; flat: number }> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.tot_profit_pct == null) continue;
 			if (!map[w.strategy]) map[w.strategy] = { win: 0, loss: 0, flat: 0 };
 			if (w.tot_profit_pct > 0.1) map[w.strategy].win++;
@@ -942,7 +957,7 @@
 
 	const windowProfitVolatilityByStrategy = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map[w.strategy]) map[w.strategy] = [];
 			map[w.strategy].push(w.tot_profit_pct);
@@ -968,7 +983,7 @@
 	const windowTimeframeWinRate = $derived.by(() => {
 		const TF_ORDER = ['5m', '15m', '1h', '4h', '1d'];
 		const map: Record<string, { wins: number; total: number }> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.timeframe || w.tot_profit_pct == null) continue;
 			if (!map[w.timeframe]) map[w.timeframe] = { wins: 0, total: 0 };
 			map[w.timeframe].total++;
@@ -988,7 +1003,7 @@
 
 	const windowBestWorstByStrategy = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of allWindows) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map[w.strategy]) map[w.strategy] = [];
 			map[w.strategy].push(w.tot_profit_pct);
@@ -1010,7 +1025,7 @@
 
 	const windowStatusBreakdownByStrategy = $derived.by(() => {
 		const map: Record<string, { pass: number; fail: number; total: number }> = {};
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.strategy) continue;
 			if (!map[w.strategy]) map[w.strategy] = { pass: 0, fail: 0, total: 0 };
 			map[w.strategy].total++;
@@ -1028,7 +1043,7 @@
 
 	const windowAvgProfitByTimeframe = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.timeframe || w.avg_profit_pct == null || !isFinite(w.avg_profit_pct)) continue;
 			if (!map[w.timeframe]) map[w.timeframe] = [];
 			map[w.timeframe].push(w.avg_profit_pct);
@@ -1050,7 +1065,7 @@
 
 	const windowTotalTradesByStrategy = $derived.by(() => {
 		const map: Record<string, number> = {};
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.trades == null) continue;
 			map[w.strategy] = (map[w.strategy] ?? 0) + w.trades;
 		}
@@ -1121,7 +1136,7 @@
 
 	const windowProfitByWindowLabel = $derived.by(() => {
 		const map: Record<string, number[]> = {};
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.window_label || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map[w.window_label]) map[w.window_label] = [];
 			map[w.window_label].push(w.tot_profit_pct);
@@ -1143,7 +1158,7 @@
 
 	const windowTradesByWindowLabel = $derived.by(() => {
 		const map: Record<string, number> = {};
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.window_label || w.trades == null) continue;
 			map[w.window_label] = (map[w.window_label] ?? 0) + w.trades;
 		}
@@ -1158,12 +1173,12 @@
 
 	const windowStrategyPassRate = $derived.by(() => {
 		const map = new Map<string, { pass: number; total: number }>();
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.strategy) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, { pass: 0, total: 0 });
 			const e = map.get(w.strategy)!;
 			e.total++;
-			if (w.profit != null && w.profit > 0) e.pass++;
+			if (w.tot_profit_pct != null && w.tot_profit_pct > 0) e.pass++;
 		}
 		const rows = [...map.entries()]
 			.filter(([, e]) => e.total >= 3)
@@ -1175,9 +1190,9 @@
 	});
 
 	const windowProfitVsTradeCount = $derived.by(() => {
-		const pts = data.results
-			.filter(w => w.profit != null && isFinite(w.profit) && w.trades != null && w.trades > 0)
-			.map(w => ({ profit: w.profit!, trades: w.trades!, strategy: (w.strategy ?? '').slice(0, 10) }));
+		const pts = wfRows
+			.filter(w => w.tot_profit_pct != null && isFinite(w.tot_profit_pct) && w.trades != null && w.trades > 0)
+			.map(w => ({ profit: w.tot_profit_pct!, trades: w.trades!, strategy: (w.strategy ?? '').slice(0, 10) }));
 		if (pts.length < 5) return null;
 		const pMin = Math.min(...pts.map(p => p.profit)), pMax = Math.max(...pts.map(p => p.profit), pMin + 0.01);
 		const tMax = Math.max(...pts.map(p => p.trades), 1);
@@ -1191,10 +1206,10 @@
 
 	const windowProfitCumulativeByStrategy = $derived.by(() => {
 		const map = new Map<string, { label: string; profit: number }[]>();
-		for (const w of data.results) {
-			if (!w.strategy || !w.window_label || w.profit == null || !isFinite(w.profit)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || !w.window_label || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, []);
-			map.get(w.strategy)!.push({ label: w.window_label, profit: w.profit });
+			map.get(w.strategy)!.push({ label: w.window_label, profit: w.tot_profit_pct });
 		}
 		const strats = [...map.entries()].filter(([, pts]) => pts.length >= 3).slice(0, 5);
 		if (strats.length < 2) return null;
@@ -1218,7 +1233,7 @@
 
 	const windowDrawdownByStrategy = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.strategy || w.max_drawdown == null || !isFinite(w.max_drawdown)) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, []);
 			map.get(w.strategy)!.push(Math.abs(w.max_drawdown));
@@ -1240,10 +1255,10 @@
 
 	const windowRollingMeanByStrategy = $derived.by(() => {
 		const map = new Map<string, { label: string; profit: number }[]>();
-		for (const w of data.results) {
-			if (!w.strategy || !w.window_label || w.profit == null || !isFinite(w.profit)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || !w.window_label || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, []);
-			map.get(w.strategy)!.push({ label: w.window_label, profit: w.profit });
+			map.get(w.strategy)!.push({ label: w.window_label, profit: w.tot_profit_pct });
 		}
 		const strats = [...map.entries()]
 			.filter(([, pts]) => pts.length >= 4)
@@ -1273,10 +1288,10 @@
 
 	const windowProfitStdByStrategy = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.strategy || w.profit == null || !isFinite(w.profit)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, []);
-			map.get(w.strategy)!.push(w.profit);
+			map.get(w.strategy)!.push(w.tot_profit_pct);
 		}
 		const rows = [...map.entries()]
 			.filter(([, vals]) => vals.length >= 3)
@@ -1295,10 +1310,10 @@
 
 	const windowBestWindowByStrategy = $derived.by(() => {
 		const map = new Map<string, { label: string; profit: number }[]>();
-		for (const w of data.results) {
-			if (!w.strategy || !w.window_label || w.profit == null || !isFinite(w.profit)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || !w.window_label || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			if (!map.has(w.strategy)) map.set(w.strategy, []);
-			map.get(w.strategy)!.push({ label: w.window_label, profit: w.profit });
+			map.get(w.strategy)!.push({ label: w.window_label, profit: w.tot_profit_pct });
 		}
 		const rows = [...map.entries()]
 			.filter(([, pts]) => pts.length >= 3)
@@ -1317,13 +1332,13 @@
 
 	const windowPassRateTrend = $derived.by(() => {
 		const monthMap = new Map<string, { pass: number; total: number }>();
-		for (const w of data.results) {
+		for (const w of wfRows) {
 			if (!w.window_label) continue;
 			const mo = w.window_label.slice(0, 7);
 			if (!monthMap.has(mo)) monthMap.set(mo, { pass: 0, total: 0 });
 			const e = monthMap.get(mo)!;
 			e.total++;
-			if ((w.profit ?? 0) > 0) e.pass++;
+			if ((w.tot_profit_pct ?? 0) > 0) e.pass++;
 		}
 		const months = [...monthMap.keys()].sort();
 		if (months.length < 3) return null;
@@ -1342,10 +1357,10 @@
 
 	const windowMedianProfitByTimeframe = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.timeframe || w.profit_pct == null || !isFinite(w.profit_pct)) continue;
+		for (const w of wfRows) {
+			if (!w.timeframe || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			const arr = map.get(w.timeframe) ?? [];
-			arr.push(w.profit_pct);
+			arr.push(w.tot_profit_pct);
 			map.set(w.timeframe, arr);
 		}
 		if (map.size < 2) return null;
@@ -1362,10 +1377,10 @@
 
 	const windowStrategyAvgProfitRanking = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.strategy || w.profit_pct == null || !isFinite(w.profit_pct)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			const arr = map.get(w.strategy) ?? [];
-			arr.push(w.profit_pct);
+			arr.push(w.tot_profit_pct);
 			map.set(w.strategy, arr);
 		}
 		if (map.size < 3) return null;
@@ -1381,11 +1396,11 @@
 
 	const windowPassRateByStrategy = $derived.by(() => {
 		const map = new Map<string, { pass: number; total: number }>();
-		for (const w of data.results) {
-			if (!w.strategy || w.profit_pct == null || !isFinite(w.profit_pct)) continue;
+		for (const w of wfRows) {
+			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			const cur = map.get(w.strategy) ?? { pass: 0, total: 0 };
 			cur.total++;
-			if (w.profit_pct > 0) cur.pass++;
+			if (w.tot_profit_pct > 0) cur.pass++;
 			map.set(w.strategy, cur);
 		}
 		if (map.size < 3) return null;
@@ -1399,7 +1414,7 @@
 	});
 
 	const windowProfitDistribution = $derived.by(() => {
-		const vals = data.results.filter(w => w.profit_pct != null && isFinite(w.profit_pct)).map(w => w.profit_pct!);
+		const vals = wfRows.filter(w => w.tot_profit_pct != null && isFinite(w.tot_profit_pct)).map(w => w.tot_profit_pct!);
 		if (vals.length < 10) return null;
 		const mn = Math.min(...vals), mx = Math.max(...vals);
 		const bins = 14;
@@ -1424,10 +1439,10 @@
 
 	const windowAvgTradeCountByTF = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.timeframe || w.trade_count == null || !isFinite(w.trade_count) || w.trade_count < 0) continue;
+		for (const w of wfRows) {
+			if (!w.timeframe || w.trades == null || !isFinite(w.trades) || w.trades < 0) continue;
 			const arr = map.get(w.timeframe) ?? [];
-			arr.push(w.trade_count);
+			arr.push(w.trades);
 			map.set(w.timeframe, arr);
 		}
 		if (map.size < 2) return null;
@@ -1447,10 +1462,10 @@
 
 	const windowAvgProfitByTFDiverging = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.timeframe || w.profit_pct == null || !isFinite(w.profit_pct)) continue;
+		for (const w of wfRows) {
+			if (!w.timeframe || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
 			const arr = map.get(w.timeframe) ?? [];
-			arr.push(w.profit_pct);
+			arr.push(w.tot_profit_pct);
 			map.set(w.timeframe, arr);
 		}
 		if (map.size < 2) return null;
@@ -1466,11 +1481,11 @@
 
 	const windowSharpeByStrategy = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.strategy_name || w.sharpe_ratio == null || !isFinite(w.sharpe_ratio) || Math.abs(w.sharpe_ratio) > 50) continue;
-			const arr = map.get(w.strategy_name) ?? [];
+		for (const w of wfRows) {
+			if (!w.strategy || w.sharpe_ratio == null || !isFinite(w.sharpe_ratio) || Math.abs(w.sharpe_ratio) > 50) continue;
+			const arr = map.get(w.strategy) ?? [];
 			arr.push(w.sharpe_ratio);
-			map.set(w.strategy_name, arr);
+			map.set(w.strategy, arr);
 		}
 		if (map.size < 3) return null;
 		const rows = [...map.entries()]
@@ -1484,11 +1499,11 @@
 
 	const windowProfitByStrategy = $derived.by(() => {
 		const map = new Map<string, number[]>();
-		for (const w of data.results) {
-			if (!w.strategy_name || w.profit_pct == null || !isFinite(w.profit_pct)) continue;
-			const arr = map.get(w.strategy_name) ?? [];
-			arr.push(w.profit_pct);
-			map.set(w.strategy_name, arr);
+		for (const w of wfRows) {
+			if (!w.strategy || w.tot_profit_pct == null || !isFinite(w.tot_profit_pct)) continue;
+			const arr = map.get(w.strategy) ?? [];
+			arr.push(w.tot_profit_pct);
+			map.set(w.strategy, arr);
 		}
 		if (map.size < 3) return null;
 		const rows = [...map.entries()]
@@ -1504,9 +1519,9 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.timeframe || w.trade_count == null) continue;
+			if (!w.timeframe || w.trades == null) continue;
 			const arr = map.get(w.timeframe) ?? [];
-			arr.push(w.trade_count as number);
+			arr.push(w.trades as number);
 			map.set(w.timeframe, arr);
 		}
 		if (map.size < 2) return null;
@@ -1608,8 +1623,8 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.strategy || w.winning_trades == null || w.total_trades == null || (w.total_trades as number) === 0) continue;
-			const wr = ((w.winning_trades as number) / (w.total_trades as number)) * 100;
+			if (!w.strategy || w.winning_trades == null || w.trades == null || (w.trades as number) === 0) continue;
+			const wr = ((w.winning_trades as number) / (w.trades as number)) * 100;
 			const arr = map.get(w.strategy as string) ?? [];
 			arr.push(wr);
 			map.set(w.strategy as string, arr);
@@ -1628,10 +1643,10 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.window_start || w.profit_total_pct == null) continue;
+			if (!w.window_start || w.tot_profit_pct == null) continue;
 			const mo = (w.window_start as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push(w.profit_total_pct as number);
+			arr.push(w.tot_profit_pct as number);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -1648,8 +1663,8 @@
 		if (!windows || windows.length < 6) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (w.nb_trades == null || w.sortino == null) continue;
-			const bucket = `${Math.floor((w.nb_trades as number) / 10) * 10}+`;
+			if (w.trades == null || w.sortino == null) continue;
+			const bucket = `${Math.floor((w.trades as number) / 10) * 10}+`;
 			const arr = map.get(bucket) ?? [];
 			arr.push(w.sortino as number);
 			map.set(bucket, arr);
@@ -1669,9 +1684,9 @@
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const buckets: number[][] = Array.from({ length: 7 }, () => []);
 		for (const w of windows) {
-			if (!w.window_start || w.profit_total_pct == null) continue;
+			if (!w.window_start || w.tot_profit_pct == null) continue;
 			const dow = new Date(w.window_start as string).getDay();
-			buckets[dow].push(w.profit_total_pct as number);
+			buckets[dow].push(w.tot_profit_pct as number);
 		}
 		const pts = DAYS.map((d, i) => ({
 			d,
@@ -1706,13 +1721,13 @@
 		if (!windows || windows.length < 6) return null;
 		const map = new Map<string, { pass: number; total: number }>();
 		for (const w of windows) {
-			if (!w.strategy_name || !w.window_start) continue;
-			const strat = (w.strategy_name as string).slice(0, 12);
+			if (!w.strategy || !w.window_start) continue;
+			const strat = (w.strategy as string).slice(0, 12);
 			const mo = (w.window_start as string).slice(0, 7);
 			const key = `${strat}|${mo}`;
 			const entry = map.get(key) ?? { pass: 0, total: 0 };
 			entry.total++;
-			if ((w.profit_total_pct as number ?? 0) > 0) entry.pass++;
+			if ((w.tot_profit_pct as number ?? 0) > 0) entry.pass++;
 			map.set(key, entry);
 		}
 		const strats = [...new Set([...map.keys()].map(k => k.split('|')[0]))].slice(0, 6);
@@ -1733,7 +1748,7 @@
 		if (!windows || windows.length < 10) return null;
 		const pts = windows
 			.filter(w => w.sharpe_ratio != null && w.calmar_ratio != null)
-			.map(w => ({ sharpe: w.sharpe_ratio as number, calmar: w.calmar_ratio as number, profit: w.profit_total_pct as number ?? 0 }));
+			.map(w => ({ sharpe: w.sharpe_ratio as number, calmar: w.calmar_ratio as number, profit: w.tot_profit_pct as number ?? 0 }));
 		if (pts.length < 8) return null;
 		const shMin = Math.min(...pts.map(p => p.sharpe));
 		const shMax = Math.max(...pts.map(p => p.sharpe), 0.01);
@@ -1752,10 +1767,10 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.window_start || w.nb_trades == null) continue;
+			if (!w.window_start || w.trades == null) continue;
 			const mo = (w.window_start as string).slice(0, 7);
 			const arr = map.get(mo) ?? [];
-			arr.push(w.nb_trades as number);
+			arr.push(w.trades as number);
 			map.set(mo, arr);
 		}
 		if (map.size < 3) return null;
@@ -1769,7 +1784,7 @@
 
 	const windowProfitCDF = $derived.by(() => {
 		if (!windows || windows.length < 8) return null;
-		const vals = windows.filter(w => w.profit_total_pct != null).map(w => (w.profit_total_pct as number) * 100).sort((a, b) => a - b);
+		const vals = windows.filter(w => w.tot_profit_pct != null).map(w => (w.tot_profit_pct as number) * 100).sort((a, b) => a - b);
 		if (vals.length < 6) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
 		if (maxV === minV) return null;
@@ -1786,10 +1801,10 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.strategy_name || w.max_drawdown_pct == null) continue;
-			const arr = map.get(w.strategy_name as string) ?? [];
+			if (!w.strategy || w.max_drawdown_pct == null) continue;
+			const arr = map.get(w.strategy as string) ?? [];
 			arr.push(w.max_drawdown_pct as number);
-			map.set(w.strategy_name as string, arr);
+			map.set(w.strategy as string, arr);
 		}
 		if (map.size < 2) return null;
 		const rows = [...map.entries()]
@@ -1805,11 +1820,11 @@
 		if (!windows || windows.length < 4) return null;
 		const map = new Map<string, { wins: number; total: number }>();
 		for (const w of windows) {
-			if (!w.strategy_name || w.profit_total_pct == null) continue;
-			const name = w.strategy_name as string;
+			if (!w.strategy || w.tot_profit_pct == null) continue;
+			const name = w.strategy as string;
 			const s = map.get(name) ?? { wins: 0, total: 0 };
 			s.total++;
-			if ((w.profit_total_pct as number) > 0) s.wins++;
+			if ((w.tot_profit_pct as number) > 0) s.wins++;
 			map.set(name, s);
 		}
 		if (map.size < 2) return null;
@@ -1842,10 +1857,10 @@
 		if (!windows || windows.length < 12) return null;
 		const byStrat = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.strategy_name || w.profit_total_pct == null) continue;
-			const arr = byStrat.get(w.strategy_name as string) ?? [];
-			arr.push(w.profit_total_pct as number);
-			byStrat.set(w.strategy_name as string, arr);
+			if (!w.strategy || w.tot_profit_pct == null) continue;
+			const arr = byStrat.get(w.strategy as string) ?? [];
+			arr.push(w.tot_profit_pct as number);
+			byStrat.set(w.strategy as string, arr);
 		}
 		if (byStrat.size < 2) return null;
 		const rows = [...byStrat.entries()]
@@ -1870,7 +1885,7 @@
 
 	const windowTradeCountCDF = $derived.by(() => {
 		if (!windows || windows.length < 8) return null;
-		const vals = windows.filter(w => w.trade_count != null).map(w => w.trade_count as number).sort((a, b) => a - b);
+		const vals = windows.filter(w => w.trades != null).map(w => w.trades as number).sort((a, b) => a - b);
 		if (vals.length < 6) return null;
 		const minV = vals[0], maxV = vals[vals.length - 1];
 		if (maxV === minV) return null;
@@ -1906,10 +1921,10 @@
 		const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.start_date || w.profit_total_pct == null) continue;
-			const dow = DAYS[new Date(w.start_date as string).getDay()];
+			if (!w.window_start || w.tot_profit_pct == null) continue;
+			const dow = DAYS[new Date(w.window_start as string).getDay()];
 			const arr = map.get(dow) ?? [];
-			arr.push(w.profit_total_pct as number);
+			arr.push(w.tot_profit_pct as number);
 			map.set(dow, arr);
 		}
 		const rows = DAYS.filter(d => map.has(d)).map(d => {
@@ -1947,9 +1962,9 @@
 		if (!windows || windows.length < 5) return null;
 		const map = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.strategy || w.trade_count == null) continue;
+			if (!w.strategy || w.trades == null) continue;
 			const arr = map.get(w.strategy as string) ?? [];
-			arr.push(w.trade_count as number);
+			arr.push(w.trades as number);
 			map.set(w.strategy as string, arr);
 		}
 		if (map.size < 2) return null;
@@ -1966,9 +1981,9 @@
 		if (!windows || windows.length < 10) return null;
 		const byTF = new Map<string, number[]>();
 		for (const w of windows) {
-			if (!w.timeframe || w.profit_total_pct == null) continue;
+			if (!w.timeframe || w.tot_profit_pct == null) continue;
 			const arr = byTF.get(w.timeframe as string) ?? [];
-			arr.push(w.profit_total_pct as number);
+			arr.push(w.tot_profit_pct as number);
 			byTF.set(w.timeframe as string, arr);
 		}
 		if (byTF.size < 2) return null;
@@ -1992,8 +2007,8 @@
 		if (!windows || windows.length < 5) return null;
 		const byMonth = new Map<string, number>();
 		for (const w of windows) {
-			if (!w.start_date) continue;
-			const mo = (w.start_date as string).slice(0, 7);
+			if (!w.window_start) continue;
+			const mo = (w.window_start as string).slice(0, 7);
 			byMonth.set(mo, (byMonth.get(mo) ?? 0) + 1);
 		}
 		if (byMonth.size < 3) return null;
@@ -2010,10 +2025,10 @@
 		if (!windows || windows.length < 5) return null;
 		const byStrat = new Map<string, number[]>();
 		for (const w of windows) {
-			if (w.strategy == null || w.profit_total_pct == null) continue;
+			if (w.strategy == null || w.tot_profit_pct == null) continue;
 			const s = (w.strategy as string).slice(0, 14);
 			const arr = byStrat.get(s) ?? [];
-			arr.push(w.profit_total_pct as number);
+			arr.push(w.tot_profit_pct as number);
 			byStrat.set(s, arr);
 		}
 		if (byStrat.size < 2) return null;
@@ -2030,8 +2045,8 @@
 	const windowProfitTrend = $derived.by(() => {
 		if (!windows || windows.length < 15) return null;
 		const sorted = [...windows]
-			.filter(w => w.start_date && w.profit_factor != null)
-			.sort((a, b) => new Date(a.start_date as string).getTime() - new Date(b.start_date as string).getTime());
+			.filter(w => w.window_start && w.profit_factor != null)
+			.sort((a, b) => new Date(a.window_start).getTime() - new Date(b.window_start).getTime());
 		if (sorted.length < 15) return null;
 		const win = 8;
 		const smoothed = sorted.slice(win - 1).map((_, i) => {
@@ -2052,8 +2067,8 @@
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const byDow = new Map<number, number[]>();
 		for (const w of windows) {
-			if (!w.start_date || w.sortino_ratio == null) continue;
-			const d = new Date(w.start_date as string).getUTCDay();
+			if (!w.window_start || w.sortino_ratio == null) continue;
+			const d = new Date(w.window_start as string).getUTCDay();
 			const arr = byDow.get(d) ?? [];
 			arr.push(w.sortino_ratio as number);
 			byDow.set(d, arr);
@@ -2073,8 +2088,8 @@
 		const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		const byDow = new Map<number, number[]>();
 		for (const w of windows) {
-			if (!w.start_date || w.max_drawdown == null) continue;
-			const d = new Date(w.start_date as string).getUTCDay();
+			if (!w.window_start || w.max_drawdown == null) continue;
+			const d = new Date(w.window_start as string).getUTCDay();
 			const arr = byDow.get(d) ?? [];
 			arr.push((w.max_drawdown as number) * 100);
 			byDow.set(d, arr);

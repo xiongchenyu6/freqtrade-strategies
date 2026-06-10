@@ -8,9 +8,11 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 
 	// Fetch up to 2000 epochs across all strategies; PostgREST sorts by loss asc.
 	// Gracefully return empty array if table doesn't exist yet.
-	const epochs: HyperoptEpoch[] = await vps
+	const epochsRaw: HyperoptEpoch[] = await vps
 		.hyperoptEpochs(fetch, { limit: 2000, authHeader: auth })
 		.catch(() => []);
+	// Coerce to array — a malformed 200 body would otherwise crash the for..of below.
+	const epochs = Array.isArray(epochsRaw) ? epochsRaw : [];
 
 	// Group epochs by strategy name
 	const byStrategy: Record<string, HyperoptEpoch[]> = {};

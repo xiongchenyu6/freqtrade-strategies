@@ -97,14 +97,20 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		};
 	})();
 
-	const distinctStrategies = new Set(runs.map((r) => r.strategy).filter(Boolean));
-	const distinctTimeframes = new Set(runs.map((r) => r.timeframe).filter((t): t is string => !!t));
+	// Same malformed-200 coercion as the other datasets (runs/kol/dca were the leftovers).
+	const runsArr = Array.isArray(runs) ? runs : [];
+	const kolArr = Array.isArray(kol) ? kol : [];
+	const dcaArr = Array.isArray(dca) ? dca : [];
+	const distinctStrategies = new Set(runsArr.map((r) => r.strategy).filter(Boolean));
+	const distinctTimeframes = new Set(
+		runsArr.map((r) => r.timeframe).filter((t): t is string => !!t)
+	);
 
 	return {
 		isAuthed,
 		health: {
 			api: (stats?.total_runs ?? 0) > 0,
-			supabase: kol.length > 0 || dca.length > 0
+			supabase: kolArr.length > 0 || dcaArr.length > 0
 		},
 		summary: {
 			total_runs: stats?.total_runs ?? 0,
@@ -116,9 +122,9 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 			best_sortino: stats?.best_sortino ?? null,
 			best_win_rate: stats?.best_win_rate ?? null,
 			min_max_dd: stats?.min_max_dd ?? null,
-			dca_count: dca.length
+			dca_count: dcaArr.length
 		},
-		recent_runs: runs.slice(0, 50),
+		recent_runs: runsArr.slice(0, 50),
 		nautilus_backtests: nautilusBTArr,
 		equity_backtests: nautilusBTArr
 			.filter((b) => b.asset_class === 'equity')
@@ -127,8 +133,8 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 		semi_pulse: semiPulse,
 		strategy_options: [...distinctStrategies].sort(),
 		timeframe_options: [...distinctTimeframes].sort(),
-		recent_kol: kol,
-		recent_dca: dca.slice(0, 5),
+		recent_kol: kolArr,
+		recent_dca: dcaArr.slice(0, 5),
 		ohlcByCoin,
 		triggers
 	};
