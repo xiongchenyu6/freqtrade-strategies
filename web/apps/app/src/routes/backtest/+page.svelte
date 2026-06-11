@@ -379,7 +379,12 @@
 	onDestroy(() => clearInterval(timer));
 </script>
 
-<svelte:head><title>{en ? 'Backtest playground' : '回测实验室'} · Crypto Quant</title></svelte:head>
+<svelte:head>
+	<title>{en ? 'Backtest playground' : '回测实验室'} · Crypto Quant</title>
+	<meta name="description" content="免代码回测：加密货币 · 任意美股 · 黄金原油 — 真实数据，诚实回撤。" />
+	<meta property="og:title" content="{en ? 'Backtest playground' : '回测实验室'} · Crypto Quant" />
+	<meta property="og:description" content="免代码回测：加密货币 · 任意美股 · 黄金原油 — 真实数据，诚实回撤。" />
+</svelte:head>
 
 <main class="mx-auto mt-12 max-w-2xl px-5">
 	<h1 class="text-2xl font-semibold tracking-tight">{en ? 'Backtest playground' : '回测实验室'}</h1>

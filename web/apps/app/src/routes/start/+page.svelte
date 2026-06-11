@@ -9,7 +9,12 @@
 	const en = $derived(lang === 'en');
 </script>
 
-<svelte:head><title>{en ? 'Getting started' : '新手指南'} · Crypto Quant</title></svelte:head>
+<svelte:head>
+	<title>{en ? 'Getting started' : '新手指南'} · Crypto Quant</title>
+	<meta name="description" content="新手指南：这个平台是什么、能做什么、如何开始——免代码回测、实时信号、公开账本，不荐股、不代客理财。" />
+	<meta property="og:title" content="{en ? 'Getting started' : '新手指南'} · Crypto Quant" />
+	<meta property="og:description" content="新手指南：这个平台是什么、能做什么、如何开始——免代码回测、实时信号、公开账本，不荐股、不代客理财。" />
+</svelte:head>
 
 <main class="mx-auto mt-12 max-w-3xl px-5 pb-16">
 	<!-- H1 + honest opening -->
@@ -240,6 +245,19 @@
 			{en
 				? 'Two reasons. First, the legal red line: we do not pick stocks, signal trades to copy, or manage money for anyone — full stop. Second, the philosophy: anyone promising you certain returns is lying to you. What we can honestly offer is verification tools and a transparent track record — every strategy, every trade, every drawdown, in the open. The judgment stays yours.'
 				: '两个原因。第一是法规红线:我们不荐股、不带单、不代客理财,没有例外。第二是哲学:凡是承诺确定收益的,都在骗你。我们能诚实给出的,是验证工具和透明记录 —— 每个策略、每笔交易、每次回撤都公开。判断,留给你自己。'}
+		</p>
+		<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+			{#if en}
+				We even publish our failed strategies — see the <a
+					href="/graveyard"
+					class="font-medium text-primary hover:underline">strategy graveyard</a
+				>.
+			{:else}
+				我们连失败的策略都公开 —— 看<a
+					href="/graveyard"
+					class="font-medium text-primary hover:underline">策略墓地</a
+				>。
+			{/if}
 		</p>
 	</section>
 

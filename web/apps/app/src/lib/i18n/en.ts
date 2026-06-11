@@ -22,6 +22,7 @@ export default {
 	'nav.market': 'Research',
 	'nav.hyperopt': 'Hyperopt',
 	'nav.factors': 'Factors',
+	'nav.graveyard': 'Graveyard',
 	'nav.more': 'More',
 	'nav.docs': 'Docs',
 	'topbar.login': 'Log in',

@@ -19,6 +19,7 @@
 		Network,
 		FileText,
 		FlaskConical,
+		Skull,
 		BookOpen
 	} from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
@@ -56,6 +57,7 @@
 		{ href: '/hyperopt', labelKey: 'nav.hyperopt', icon: Sparkles },
 		{ href: '/factors', labelKey: 'nav.factors', icon: Network },
 		{ href: '/reports', labelKey: 'nav.reports', icon: FileText },
+		{ href: '/graveyard', labelKey: 'nav.graveyard', icon: Skull },
 		{
 			href: lang === 'en' ? '/docs/en/' : '/docs/',
 			labelKey: 'nav.docs',

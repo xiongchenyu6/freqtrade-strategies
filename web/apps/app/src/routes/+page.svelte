@@ -104,7 +104,10 @@
 	// Median sharpe ratio per timeframe from recent runs</script>
 
 <svelte:head>
-	<title>{t(lang, 'home.title')}</title>
+	<title>{t(lang, 'home.title')} · BearDawnVerse Quant</title>
+	<meta name="description" content="BearDawnVerse Quant — 回测你自己的策略，看什么真的有效。免代码回测、实时信号、公开账本与诚实回撤。" />
+	<meta property="og:title" content="{t(lang, 'home.title')} · BearDawnVerse Quant" />
+	<meta property="og:description" content="BearDawnVerse Quant — 回测你自己的策略，看什么真的有效。免代码回测、实时信号、公开账本与诚实回撤。" />
 </svelte:head>
 
 <main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-10">
@@ -113,9 +116,10 @@
 
 	<div class="mb-10">
 		<div class="bdv-eyebrow mb-2 text-[var(--gold-500)]">BearDawnVerse · Quant</div>
-		<h1 class="bdv-display text-[44px] font-bold leading-[1.05] tracking-[-0.02em]">
+		<!-- div, not h1: the Hero above already carries the page's single h1 -->
+		<div class="bdv-display text-[44px] font-bold leading-[1.05] tracking-[-0.02em]">
 			{t(lang, 'home.title')}
-		</h1>
+		</div>
 		<p class="mt-3 max-w-2xl text-[14px] text-muted-foreground">{t(lang, 'home.subtitle')}</p>
 	</div>
 

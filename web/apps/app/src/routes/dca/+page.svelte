@@ -368,7 +368,12 @@
 	});
 </script>
 
-<svelte:head><title>{t(lang, 'dca.title')}</title></svelte:head>
+<svelte:head>
+	<title>{t(lang, 'dca.title')}</title>
+	<meta name="description" content="Smart DCA：基于恐贪指数的智能定投，每一笔触发、金额与时间全部公开可查。" />
+	<meta property="og:title" content={t(lang, 'dca.title')} />
+	<meta property="og:description" content="Smart DCA：基于恐贪指数的智能定投，每一笔触发、金额与时间全部公开可查。" />
+</svelte:head>
 
 <main class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8">
 	<header class="mb-8">
