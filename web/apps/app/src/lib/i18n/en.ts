@@ -11,6 +11,7 @@ export default {
 	'nav.live': 'Live',
 	'nav.nautilus': 'Engine',
 	'nav.semis': 'Semis',
+	'nav.commodities': 'Commodities',
 	'nav.strategies': 'Strategies',
 	'nav.backtest': 'Backtest',
 	'nav.dca': 'DCA',
