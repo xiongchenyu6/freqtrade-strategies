@@ -79,7 +79,11 @@ def _validate_honest_trend(params: dict) -> dict:
 def _validate_accumulator(params: dict) -> dict:
     asset = str(params.get("asset", "")).upper()
     if asset not in CRYPTO_ASSETS:
-        raise ValueError(f"asset must be one of {list(CRYPTO_ASSETS)}")
+        # Non-crypto DCA path: commodities (GC/CL/...) and any US stock/ETF run on the
+        # generic daily-close engine (findata data, smart = double below the 200d SMA).
+        import findata
+        if asset not in findata.COMMODITIES and not findata.is_us_symbol(asset):
+            raise ValueError(f"unknown asset {asset!r} — crypto majors, commodities, or US tickers")
     mode = str(params.get("mode", "smart")).lower()
     if mode not in ("smart", "naive"):
         raise ValueError("mode must be 'smart' or 'naive'")
@@ -108,6 +112,63 @@ def _validate_donchian(params: dict) -> dict:
         raise ValueError("risk_frac must be in [0.01, 1.0]")
     return {"asset": asset, "entry_lb": entry_lb, "exit_lb": exit_lb, "risk_frac": risk_frac,
             "period_years": _validate_period_years(params)}
+
+
+def _run_dca_generic(p: dict) -> dict:
+    """DCA on commodities / US stocks from findata daily closes. Transparent arithmetic —
+    buys at the daily close every interval_bars days; mode 'smart' doubles the buy when the
+    close sits below its 200-day SMA (低位加倍 — the honest non-crypto analogue of the FNG
+    boost; sentiment indices don't exist for gold/oil). Never sells; headline = ROI on
+    invested capital, mirroring the crypto accumulator's metric definitions."""
+    import findata
+    from datetime import datetime, timezone
+
+    asset = p["asset"]
+    closes = (findata.closes_commodity(asset, min_bars=4000, max_pages=14)
+              if asset in findata.COMMODITIES else
+              findata.closes_us(asset, min_bars=4000, max_pages=14))
+    if not closes:
+        raise ValueError(f"no daily data for {asset!r} (budget exhausted? try again tomorrow)")
+    if p["period_years"]:
+        cutoff = closes[-1][0] - int(p["period_years"] * 365.25 * 86400 * 1000)
+        closes = [c for c in closes if c[0] >= cutoff]
+    if len(closes) < 220:
+        raise ValueError(f"{asset}: only {len(closes)} daily bars — need ≥220 (200d SMA warmup)")
+
+    base, interval, mode = p["base_buy_usd"], p["interval_bars"], p["mode"]
+    invested = units = 0.0
+    buys = boosted = 0
+    curve = []
+    window: list[float] = []
+    for i, (ts, px) in enumerate(closes):
+        window.append(px)
+        if len(window) > 200:
+            window.pop(0)
+        if i % interval == 0 and len(window) == 200:
+            amt = base
+            if mode == "smart" and px < sum(window) / 200:
+                amt *= 2
+                boosted += 1
+            invested += amt
+            units += amt / px
+            buys += 1
+        curve.append(round(units * px, 2))
+    if invested <= 0:
+        raise ValueError(f"{asset}: window too short — no buys executed")
+    final = units * closes[-1][1]
+    roi = final / invested - 1
+    d = lambda ms: datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date()
+    return {
+        "total_profit_pct": round(roi * 100, 2),
+        "max_drawdown_pct": None, "calmar": None, "sharpe": None,
+        "win_rate_pct": None, "total_trades": buys,
+        "params": {"base_buy_usd": base, "interval_bars": interval, "mode": mode,
+                   "boosted_buys": boosted, "invested_usd": round(invested, 0),
+                   "units": round(units, 6)},
+        "instruments": [asset],
+        "curve": curve,
+        "period_start": str(d(closes[0][0])), "period_end": str(d(closes[-1][0])),
+    }
 
 
 # --------------------------------------------------------------------------- strategy dispatch
@@ -162,9 +223,12 @@ def run_accumulator(params: dict) -> dict:
     (Sharpe/Calmar/maxDD) don't apply — the honest headline is ROI on invested capital, which
     we surface as `return_pct`. `trades` = number of DCA buys."""
     p = _validate_accumulator(params)
-    from backtest_stats import run_accumulator as _run  # proven engine (EquityRecorder-free DCA)
-    r = _run(p["asset"], base_buy_usd=p["base_buy_usd"], interval_bars=p["interval_bars"],
-             mode=p["mode"], since_years=p["period_years"])
+    if p["asset"] not in CRYPTO_ASSETS:
+        r = _run_dca_generic(p)
+    else:
+        from backtest_stats import run_accumulator as _run  # proven engine (EquityRecorder-free DCA)
+        r = _run(p["asset"], base_buy_usd=p["base_buy_usd"], interval_bars=p["interval_bars"],
+                 mode=p["mode"], since_years=p["period_years"])
     pr = r.get("params", {})
     return {
         "return_pct": r["total_profit_pct"],   # ROI on invested capital

@@ -39,7 +39,7 @@ export interface BacktestResult {
 
 // Predefined strategies + their param domains — keep in lockstep with backtest_runner.py.
 // The UI renders forms from this; the runner re-validates server-side (never trust the client).
-const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
+export const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
 
 // Commodity continuous futures (10y daily history, '1d' ONLY) — accepted by honest_trend
 // backtests and the ema_cross/donchian_breakout signals. Suggestions for the UI; the
@@ -109,23 +109,31 @@ export const STRATEGIES = {
 			risk_frac: { min: 0.01, max: 1, default: 0.2, step: 0.01 } // equity fraction deployed per entry
 		}
 	},
-	// Fear-driven smart DCA — crypto accumulation, real Binance 1d bars. Never sells, so
-	// return_pct is ROI on invested capital; max_dd/sharpe/calmar are null (round-trip metrics N/A).
+	// Low-buying smart DCA — crypto majors run on the Nautilus engine (FNG smart boost);
+	// commodities + any US ticker run on the generic daily engine (smart = double the buy
+	// when close < 200d SMA). Always '1d'. Never sells, so return_pct is ROI on invested
+	// capital; max_dd/sharpe/calmar are null (round-trip metrics N/A).
 	accumulator: {
-		label: 'Smart DCA accumulator (crypto)',
+		label: 'Smart DCA accumulator',
 		name: ['恐慌加仓定投', 'Fear-boosted DCA'] as const,
 		tech: 'Smart DCA',
 		explain: [
-			'固定周期买入,市场恐慌(恐惧贪婪指数低)时自动加倍 —— 只买不卖,赌的是长期向上 + 恐慌时的便宜筹码。',
-			'Scheduled buys, doubled in fear — never sells. Bets on long-term upside + cheap panic chips.'
+			'固定周期买入。smart 模式低位加倍 —— 加密看恐惧贪婪指数,商品/美股看是否跌破 200 日均线。只买不卖,赌的是长期向上。',
+			'Scheduled buys. Smart mode doubles at the lows — crypto reads the Fear & Greed index, commodities/US stocks check a close below the 200-day SMA. Never sells; bets on long-term upside.'
 		] as const,
 		paramHints: {
 			base_buy_usd: ['每次定投金额', 'USD per buy'],
 			interval_bars: ['每隔多少天买一次', 'days between buys'],
-			mode: ['smart=恐慌加倍 / naive=固定金额', 'smart doubles in fear / naive fixed']
+			mode: [
+				'smart=低位加倍(币:恐慌;商品/美股:跌破200日线) / naive=固定金额',
+				'smart = double at lows (crypto: fear; commodities/stocks: below 200d SMA) / naive = fixed'
+			]
 		},
-		blurb: ['恐惧贪婪指数驱动的定投，越跌越买，只买不卖', 'Fear & Greed-driven DCA — buys more on dips, never sells'] as const,
+		blurb: ['定投，越跌越买，只买不卖 —— 加密按恐慌加倍，黄金/美股按 200 日均线加倍', 'DCA that buys more at the lows, never sells — crypto doubles on fear, gold/US stocks double below the 200d SMA'] as const,
+		// Suggestions only — anyAsset opens the field to any commodity sym (GC/SI/CL/…)
+		// or US ticker; the runner validates server-side.
 		assets: CRYPTO_ASSETS,
+		anyAsset: true,
 		timeframes: ['1d'],
 		params: {
 			base_buy_usd: { min: 10, max: 100000, default: 500 }, // USD per scheduled buy
