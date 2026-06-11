@@ -182,6 +182,20 @@ def eval_vix(p: dict) -> dict | None:
 
 # ---------- sweep ----------
 
+def _is_commodity(asset: str) -> bool:
+    try:
+        import findata
+        return asset in findata.COMMODITIES
+    except Exception:
+        return False
+
+
+def commodity_closes(asset: str) -> list[tuple[int, float]]:
+    """Daily closes for a continuous commodity future via findata (no Yahoo fallback)."""
+    import findata
+    return findata.closes_commodity(asset, min_bars=600)
+
+
 def _is_us_symbol(asset: str) -> bool:
     try:
         import findata
@@ -231,6 +245,8 @@ def sweep(conn) -> int:
                 if ck not in cache:
                     if asset in CRYPTO:
                         cache[ck] = crypto_closes(asset, tf)
+                    elif _is_commodity(asset):
+                        cache[ck] = commodity_closes(asset)
                     elif asset in equities or _is_us_symbol(asset):
                         # equities set (semi universe) is the fast path; any other US
                         # ticker is accepted after a findata symbol-list check.

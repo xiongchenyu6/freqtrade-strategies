@@ -7,6 +7,11 @@
 import { writable } from 'svelte/store';
 import { CONFIG } from './config';
 import { getToken } from './auth';
+import { COMMODITY_ASSETS } from './backtests';
+
+// Commodity continuous futures (single source of truth: backtests.ts) — ema_cross /
+// donchian_breakout accept them at 1d only; the evaluator never fires unknown symbols.
+export { COMMODITY_ASSETS };
 
 export type SignalKind = 'ema_cross' | 'donchian_breakout' | 'fng_threshold' | 'vix_threshold';
 export type SignalStatus = 'active' | 'paused';
@@ -97,13 +102,19 @@ export function isCryptoAsset(a: string): boolean {
 	return (CRYPTO_ASSETS as readonly string[]).includes(a);
 }
 
+export function isCommodityAsset(a: string): boolean {
+	return COMMODITY_ASSETS.some((c) => c.sym === a);
+}
+
 /**
- * Allowed timeframes for a kind+asset: crypto majors get 1h or 1d; anything else
- * (EQUITY_ASSETS or any free-text alphanumeric ticker — assumed US equity) is 1d
- * only; FNG/VIX fixed 1d. The evaluator skips symbols it can't resolve server-side.
+ * Allowed timeframes for a kind+asset: crypto majors get 1h or 1d; commodities
+ * (continuous futures) are 1d only; anything else (EQUITY_ASSETS or any free-text
+ * alphanumeric ticker — assumed US equity) is 1d only; FNG/VIX fixed 1d. The
+ * evaluator skips symbols it can't resolve server-side.
  */
 export function timeframesFor(kind: SignalKind, asset: string): string[] {
 	if (kind === 'fng_threshold' || kind === 'vix_threshold') return ['1d'];
+	if (isCommodityAsset(asset)) return ['1d'];
 	return isCryptoAsset(asset) ? ['1h', '1d'] : ['1d'];
 }
 

@@ -41,6 +41,24 @@ export interface BacktestResult {
 // The UI renders forms from this; the runner re-validates server-side (never trust the client).
 const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
 
+// Commodity continuous futures (10y daily history, '1d' ONLY) — accepted by honest_trend
+// backtests and the ema_cross/donchian_breakout signals. Suggestions for the UI; the
+// runner/evaluator validate server-side (unknown symbols error / never fire).
+export const COMMODITY_ASSETS = [
+	{ sym: 'GC', zh: '黄金', en: 'Gold' },
+	{ sym: 'SI', zh: '白银', en: 'Silver' },
+	{ sym: 'CL', zh: '原油(WTI)', en: 'Crude WTI' },
+	{ sym: 'BZ', zh: '布伦特原油', en: 'Brent' },
+	{ sym: 'HG', zh: '铜', en: 'Copper' },
+	{ sym: 'NG', zh: '天然气', en: 'NatGas' },
+	{ sym: 'PL', zh: '铂金', en: 'Platinum' },
+	{ sym: 'PA', zh: '钯金', en: 'Palladium' },
+	{ sym: 'KT', zh: '咖啡', en: 'Coffee' },
+	{ sym: 'ZW', zh: '小麦', en: 'Wheat' },
+	{ sym: 'ZS', zh: '大豆', en: 'Soybeans' },
+	{ sym: 'ZC', zh: '玉米', en: 'Corn' }
+] as const;
+
 // Display metadata per strategy (plain-language layer — keys/params are the runner contract
 // and stay unchanged): `name` is the 白话名, `tech` the technical label, `explain` a one-
 // paragraph honest description, `paramHints` one-liners rendered under each param input.
@@ -57,13 +75,14 @@ export const STRATEGIES = {
 			ema_fast: ['短期均线长度 — 越小越灵敏、信号越多', 'short EMA length — smaller = more sensitive'],
 			ema_slow: ['长期均线长度 — 定义"趋势"的尺度', 'long EMA — defines the trend scale']
 		},
-		blurb: ['EMA 金叉/死叉趋势跟随，支持任意美股代码（日线 10 年历史），NVDA/AMD/QQQ 另有小时线', 'EMA cross trend-following — any US ticker (10y daily history); hourly for NVDA/AMD/QQQ'] as const,
-		// `assets` are SUGGESTIONS only — anyUsSymbol opens the field to any US ticker.
-		// The runner validates against its ~9.5k US-symbol list server-side; hourly bars
-		// exist only for the suggested trio, everything else is daily.
+		blurb: ['EMA 金叉/死叉趋势跟随，支持任意美股代码及商品（黄金/原油等，日线 10 年历史），NVDA/AMD/QQQ 另有小时线', 'EMA cross trend-following — any US ticker plus commodities (gold/oil etc., 10y daily history); hourly for NVDA/AMD/QQQ'] as const,
+		// `assets` are SUGGESTIONS only — anyUsSymbol opens the field to any US ticker;
+		// COMMODITY_ASSETS adds continuous futures. The runner validates against its ~9.5k
+		// US-symbol list + the commodity set server-side; hourly bars exist only for the
+		// suggested trio, everything else is daily.
 		assets: ['NVDA', 'AMD', 'QQQ'],
 		anyUsSymbol: true,
-		note: ['非目录股票仅支持日线（10 年历史）', 'Non-catalog tickers: daily only (10y history)'] as const,
+		note: ['非目录股票及商品（黄金/原油等）仅支持日线（10 年历史）', 'Non-catalog tickers and commodities (gold/oil etc.): daily only (10y history)'] as const,
 		timeframes: ['1h', '1d'],
 		params: { ema_fast: { min: 5, max: 400, default: 50 }, ema_slow: { min: 5, max: 400, default: 100 } }
 	},

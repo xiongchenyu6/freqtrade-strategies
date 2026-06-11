@@ -63,8 +63,9 @@ def _validate_honest_trend(params: dict) -> dict:
         # Any-US-stock path (financialdata.net daily bars): validate the ticker and
         # force daily — hourly history only exists for the IB-catalog trio.
         import findata
-        if not findata.is_us_symbol(asset):
-            raise ValueError(f"unknown US symbol {asset!r} (catalog assets: {sorted(EQUITY_ASSETS)})")
+        if asset not in findata.COMMODITIES and not findata.is_us_symbol(asset):
+            raise ValueError(f"unknown symbol {asset!r} — US stocks/ETFs or commodities "
+                             f"({', '.join(sorted(findata.COMMODITIES))})")
         if tf != "1d":
             raise ValueError(f"{asset}: only '1d' supported (hourly data exists only for {sorted(EQUITY_ASSETS)})")
     fast = int(params.get("ema_fast", 50))

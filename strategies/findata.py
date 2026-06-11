@@ -74,6 +74,12 @@ def _get(path: str, **params) -> list | None:
         return None
 
 
+# COMEX/NYMEX/CME/CBOT continuous futures available on the free tier (verified 2026-06-11).
+# zh labels live in the web layer; this set gates evaluator/runner symbol routing.
+COMMODITIES = {"GC", "SI", "CL", "BZ", "HG", "NG", "HO", "RB", "PL", "PA", "KT", "CJ", "CT",
+               "ZC", "ZW", "ZS", "ZL", "ZM", "ZO", "ZR", "LE", "GF", "HE", "DC", "KE", "LBR", "YO"}
+
+
 def closes_us(symbol: str, min_bars: int = 600, max_pages: int = 10) -> list[tuple[int, float]]:
     """[(unix_ms, close), ...] oldest→newest for a US stock/ETF, today's session excluded
     if still open (rows are end-of-day; the API only lists completed sessions, but we
@@ -83,7 +89,19 @@ def closes_us(symbol: str, min_bars: int = 600, max_pages: int = 10) -> list[tup
     symbol = symbol.upper().strip()
     if not symbol.isalnum():
         return []
-    cache = _CACHE_DIR / f"{symbol}_1d.json"
+    return _closes(symbol, "stock-prices", f"{symbol}_1d.json", min_bars, max_pages)
+
+
+def closes_commodity(symbol: str, min_bars: int = 600, max_pages: int = 10) -> list[tuple[int, float]]:
+    """Daily closes for a continuous commodity future (GC gold, CL crude, ...)."""
+    symbol = symbol.upper().strip()
+    if symbol not in COMMODITIES:
+        return []
+    return _closes(symbol, "commodity-prices", f"CMD_{symbol}_1d.json", min_bars, max_pages)
+
+
+def _closes(symbol: str, endpoint: str, cache_name: str, min_bars: int, max_pages: int) -> list[tuple[int, float]]:
+    cache = _CACHE_DIR / cache_name
     try:
         c = json.loads(cache.read_text())
         if c.get("date") == _today() and len(c.get("bars", [])) >= min(min_bars, len(c.get("bars", []))):
@@ -96,7 +114,7 @@ def closes_us(symbol: str, min_bars: int = 600, max_pages: int = 10) -> list[tup
     rows: list[dict] = []
     complete = False
     for page in range(max_pages):
-        batch = _get("stock-prices", identifier=symbol, offset=page * 300)
+        batch = _get(endpoint, identifier=symbol, offset=page * 300)
         if batch is None:  # budget/key/network — serve stale cache if any
             try:
                 c = json.loads(cache.read_text())
@@ -135,7 +153,19 @@ def ohlcv_us(symbol: str, min_bars: int = 2600, max_pages: int = 10) -> list[dic
     symbol = symbol.upper().strip()
     if not symbol.isalnum():
         return []
-    cache = _CACHE_DIR / f"{symbol}_ohlcv.json"
+    return _ohlcv(symbol, "stock-prices", f"{symbol}_ohlcv.json", min_bars, max_pages)
+
+
+def ohlcv_commodity(symbol: str, min_bars: int = 2600, max_pages: int = 10) -> list[dict]:
+    """Full OHLCV for a continuous commodity future (for backtests)."""
+    symbol = symbol.upper().strip()
+    if symbol not in COMMODITIES:
+        return []
+    return _ohlcv(symbol, "commodity-prices", f"CMD_{symbol}_ohlcv.json", min_bars, max_pages)
+
+
+def _ohlcv(symbol: str, endpoint: str, cache_name: str, min_bars: int, max_pages: int) -> list[dict]:
+    cache = _CACHE_DIR / cache_name
     try:
         c = json.loads(cache.read_text())
         if c.get("date") == _today():
@@ -144,7 +174,7 @@ def ohlcv_us(symbol: str, min_bars: int = 2600, max_pages: int = 10) -> list[dic
         pass
     rows: list[dict] = []
     for page in range(max_pages):
-        batch = _get("stock-prices", identifier=symbol, offset=page * 300)
+        batch = _get(endpoint, identifier=symbol, offset=page * 300)
         if batch is None:
             try:
                 c = json.loads(cache.read_text())
