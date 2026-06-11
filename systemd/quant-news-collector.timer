@@ -1,0 +1,9 @@
+[Unit]
+Description=News collection every 20 minutes
+
+[Timer]
+OnCalendar=*:04/20
+Persistent=true
+
+[Install]
+WantedBy=timers.target

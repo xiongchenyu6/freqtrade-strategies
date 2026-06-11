@@ -201,6 +201,15 @@ export interface EventDcaTrigger {
 	mode: string | null;
 }
 
+// Curated market-news headlines (quant.news_items — English originals, reposted verbatim)
+export interface NewsItem {
+	published_at: string;
+	source: string;
+	category: 'crypto' | 'macro' | 'equity' | string;
+	title: string;
+	link: string;
+}
+
 // Supabase-side events
 export interface KolEvent {
 	id: number;

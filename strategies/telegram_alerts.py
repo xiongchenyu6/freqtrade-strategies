@@ -549,6 +549,33 @@ def send_daily_report():
         except Exception as e:
             logger.warning(f"growth query failed: {e}")
 
+    # Top headlines from the news ingest (quant.news_items) — macro/official
+    # sources (Fed/SEC/ECB) first, then the freshest of the last 24h.
+    news = ""
+    if psycopg2 is not None and timescale_url:
+        try:
+            conn = psycopg2.connect(timescale_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT source, title
+                        FROM quant.news_items
+                        WHERE published_at >= now() - interval '24 hours'
+                        ORDER BY CASE WHEN source IN ('Fed','SEC','ECB') THEN 0 ELSE 1 END,
+                                 published_at DESC
+                        LIMIT 5
+                    """)
+                    rows = cur.fetchall()
+            finally:
+                conn.close()
+            if rows:
+                lines = "\n".join(
+                    f"  • [{src}] {(title or '')[:80]}" for src, title in rows
+                )
+                news = f"\n*Market wire (24h):*\n{lines}"
+        except Exception as e:
+            logger.warning(f"news query failed: {e}")
+
     # Build the message line-by-line. Previous version chained f-strings inside
     # parentheses with a `... if btc else ""` ternary on one of them — that
     # binds the conditional at the PYTHON expression level (not string level),
@@ -565,7 +592,7 @@ def send_daily_report():
         f"  Sentiment: {score:+.2f}",
         f"  KOL Activity: {kol:+.2f} ({kol_n} mentions)",
     ])
-    message = "\n".join(parts) + history_str + bot_status + growth + format_kelly_report()
+    message = "\n".join(parts) + history_str + bot_status + growth + news + format_kelly_report()
 
     # Snapshot the structured Kelly status alongside the Telegram send so
     # dashboards / monitoring can read the same numbers without re-running
