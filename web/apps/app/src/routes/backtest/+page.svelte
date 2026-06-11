@@ -138,6 +138,21 @@
 		const c = m.config as { weights?: Record<string, number> } | undefined;
 		return c?.weights ?? null;
 	}
+	// Component asset-class label for one ticker ('美股大盘'); '' for unknown tickers.
+	function componentName(sym: string): string {
+		const l = PORTFOLIO_COMPONENTS[sym];
+		return l ? (en ? l[1] : l[0]) : '';
+	}
+	// 份额: up to 6dp with trailing zeros trimmed ('12.340000' → '12.34', '7.000000' → '7').
+	function fmtUnits(u: number): string {
+		return u.toFixed(6).replace(/\.?0+$/, '');
+	}
+	function fmtUsd(v: number): string {
+		return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+	}
+	function fmtPrice(p: number): string {
+		return p.toLocaleString('en-US', { maximumFractionDigits: 2 });
+	}
 
 	// Plain-language one-liner for a param input (from STRATEGIES.paramHints); null when none.
 	function paramHint(k: string): string | null {
@@ -156,6 +171,9 @@
 	let jobs = $state<BacktestJob[]>([]);
 	let results = $state<Record<string, BacktestResult>>({});
 	let openId = $state<string | null>(null);
+	// Trade-log expansion (master_portfolio): render only the latest 24 events until
+	// the user asks for all (~181 cards would jank mobile). Reset on panel toggle.
+	let showAllTrades = $state(false);
 
 	// Build SVG polyline points for a compact equity sparkline (normalized min→max).
 	function spark(curve: number[] | null, w = 96, h = 24): string {
@@ -372,6 +390,7 @@
 
 	function toggle(id: string) {
 		openId = openId === id ? null : id;
+		showAllTrades = false; // trade-log expansion is per opened panel
 	}
 
 	// ── One-click "turn this backtest into a live signal" ─────────────────────
@@ -881,6 +900,110 @@
 											{en ? 'Unofficial replica · public recipe · trading costs not modeled' : '非官方复刻 · 公开配方 · 未计交易成本'}
 										</p>
 									</div>
+								{/if}
+
+								<!-- master_portfolio detail: final holdings + rebalance journal. The runner
+								     emits both since 2026-06; legacy rows get a "re-run" hint instead. -->
+								{#if j.strategy === 'master_portfolio'}
+									{@const holdings = m.holdings ?? []}
+									{@const tradeLog = m.trade_log ?? []}
+									{#if holdings.length === 0 && tradeLog.length === 0}
+										<p class="mt-4 text-[11px] text-muted-foreground">
+											{en
+												? 'This run predates the detail log — re-run it once to get holdings + the trade journal.'
+												: '旧回测无明细 —— 重跑一次即可。'}
+										</p>
+									{/if}
+
+									{#if holdings.length > 0}
+										<div class="mt-4">
+											<div class="text-xs font-medium text-muted-foreground">{en ? 'Final holdings' : '期末持仓'}</div>
+											<div class="mt-1 overflow-x-auto">
+												<div class="min-w-[440px] divide-y divide-border/60 rounded border border-border/60 text-xs">
+													<div class="grid grid-cols-[minmax(9rem,1.4fr)_1fr_1fr_1.2fr] gap-x-3 px-2 py-1 text-[10px] text-muted-foreground">
+														<span>{en ? 'Asset' : '标的'}</span>
+														<span class="text-right">{en ? 'Units' : '份额'}</span>
+														<span class="text-right">{en ? 'Value' : '市值'}</span>
+														<span class="text-right">{en ? 'Weight / target' : '权重 / 目标'}</span>
+													</div>
+													{#each holdings as hld (hld.sym)}
+														{@const target = weights?.[hld.sym]}
+														{@const over = target != null && hld.weight_pct > target}
+														{@const under = target != null && hld.weight_pct < target}
+														<div class="grid grid-cols-[minmax(9rem,1.4fr)_1fr_1fr_1.2fr] items-baseline gap-x-3 px-2 py-1.5">
+															<span class="font-medium text-foreground">
+																{hld.sym}<span class="ml-1 font-normal text-muted-foreground">{componentName(hld.sym)}</span>
+															</span>
+															<span class="text-right font-mono">{fmtUnits(hld.units)}</span>
+															<span class="text-right font-mono">${fmtUsd(hld.value)}</span>
+															<span class="text-right font-mono {over ? 'text-red-600/80' : under ? 'text-emerald-600/80' : ''}">
+																{hld.weight_pct.toFixed(1)}%{#if target != null}<span class="text-muted-foreground"> / {target}%</span>{/if}
+															</span>
+														</div>
+													{/each}
+												</div>
+											</div>
+										</div>
+									{/if}
+
+									{#if tradeLog.length > 0}
+										{@const events = [...tradeLog].reverse()}
+										{@const shown = showAllTrades ? events : events.slice(0, 24)}
+										<details class="mt-4">
+											<summary class="cursor-pointer select-none text-xs font-medium text-muted-foreground hover:text-foreground">
+												{en ? 'Trade log (rebalance journal)' : '成交明细（再平衡日志）'} · {tradeLog.length}
+												{en ? 'events' : '次'}
+											</summary>
+											<!-- The reason, stated ONCE — every event below is the same mechanical rule. -->
+											<p class="mt-2 text-[11px] text-muted-foreground">
+												{en
+													? 'Why each trade: back to target weights — mechanical sell-high / buy-low. The "drift → target" on each line is the entire reason for that rebalance.'
+													: '换仓理由：回到目标权重 —— 机械化高抛低吸，涨多了的卖、跌多了的买。每行的"偏离→目标"就是那次换仓的全部理由。'}
+											</p>
+											<div class="mt-2 space-y-2 overflow-x-auto">
+												{#each shown as ev (ev.date + ev.kind)}
+													{@const legs = ev.legs.filter((l) => Math.abs(l.delta_usd) >= 1)}
+													<div class="min-w-[440px] rounded border border-border/60 p-2 text-xs">
+														<div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+															<span class="font-mono font-medium text-foreground">{ev.date}</span>
+															<span class="text-muted-foreground">{en ? 'total' : '总值'} ${fmtUsd(ev.total)}</span>
+															<span class="rounded border px-1 py-px text-[10px] {ev.kind === 'initial' ? 'border-sky-500/50 text-sky-600' : 'border-border text-muted-foreground'}">
+																{ev.kind === 'initial' ? (en ? 'initial' : '建仓') : en ? 'rebalance' : '再平衡'}
+															</span>
+														</div>
+														{#if legs.length > 0}
+															<div class="mt-1.5 space-y-1">
+																{#each legs as l (l.sym)}
+																	<div class="grid min-w-[420px] grid-cols-[3.5rem_7.5rem_1fr_auto] items-baseline gap-x-2 font-mono text-[11px]">
+																		<span class="text-foreground">{l.sym}</span>
+																		<!-- red = drifted above target (selling high); green = below (buying low) -->
+																		<span class={l.w_before > l.w_target ? 'text-red-600' : l.w_before < l.w_target ? 'text-emerald-600' : 'text-muted-foreground'}>
+																			{l.w_before.toFixed(1)}%→{l.w_target.toFixed(1)}%
+																		</span>
+																		<span class="text-muted-foreground">
+																			{l.delta_usd < 0 ? (en ? 'sell' : '卖出') : en ? 'buy' : '买入'} ${fmtUsd(Math.abs(l.delta_usd))}
+																			<span class="opacity-70">@ {fmtPrice(l.price)}</span>
+																		</span>
+																		<span class="text-muted-foreground">{en ? 'after' : '期后'} {fmtUnits(l.units_after)} {en ? 'units' : '份'}</span>
+																	</div>
+																{/each}
+															</div>
+														{:else}
+															<p class="mt-1 text-[11px] text-muted-foreground">
+																{en ? 'all drifts under $1 — nothing material traded' : '偏离都不到 $1 —— 无实质换仓'}
+															</p>
+														{/if}
+													</div>
+												{/each}
+											</div>
+											{#if !showAllTrades && events.length > 24}
+												<button type="button" onclick={() => (showAllTrades = true)}
+													class="mt-2 rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted/30">
+													{en ? `Show all ${events.length} events` : `展开全部 ${events.length} 次`}
+												</button>
+											{/if}
+										</details>
+									{/if}
 								{/if}
 
 								<!-- Full config -->

@@ -19,6 +19,29 @@ export interface BacktestJob {
 	updated_at: string;
 }
 
+// master_portfolio detail payloads (the runner emits both since 2026-06; legacy result
+// rows lack them — the UI shows a "re-run for details" hint instead).
+export interface PortfolioHolding {
+	sym: string;
+	units: number; // ETF shares held at the end (份额)
+	value: number; // USD market value at the end
+	weight_pct: number; // actual final weight — compare against the target in config.weights
+}
+export interface PortfolioTradeLeg {
+	sym: string;
+	w_before: number; // drifted weight before the trade (%)
+	w_target: number; // target weight (%) — the whole reason for the trade
+	delta_usd: number; // signed trade size: > 0 buy, < 0 sell
+	price: number; // execution price used
+	units_after: number; // shares held after the trade
+}
+export interface PortfolioTradeEvent {
+	date: string; // ISO date of the rebalance bar
+	kind: 'initial' | 'rebalance';
+	total: number; // portfolio value on that date (USD)
+	legs: PortfolioTradeLeg[];
+}
+
 export interface BacktestResult {
 	job_id: string;
 	user_id: string;
@@ -31,6 +54,9 @@ export interface BacktestResult {
 		// Data window the run actually covered (ISO dates). Legacy rows lack these.
 		period_start?: string | null;
 		period_end?: string | null;
+		// master_portfolio only: final holdings + the full rebalance journal.
+		holdings?: PortfolioHolding[];
+		trade_log?: PortfolioTradeEvent[];
 		[k: string]: unknown;
 	};
 	equity_curve: number[] | null; // downsampled equity values (~80 pts) for a sparkline
