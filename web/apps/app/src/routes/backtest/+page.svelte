@@ -373,6 +373,15 @@
 
 	let timer: ReturnType<typeof setInterval>;
 	onMount(() => {
+		// Deep-link prefill (e.g. /backtest?strategy=honest_trend&asset=GC from
+		// /commodities): fill the form only — never auto-submit. Strategy first
+		// (it re-seeds asset/tf/params), then asset; the tf-forcing $effect above
+		// snaps tf to 1d for non-catalog assets on its own.
+		const sp = $page.url.searchParams;
+		const s = sp.get('strategy');
+		if (s && s in STRATEGIES) onStrategyChange(s as StratKey);
+		const a = sp.get('asset');
+		if (a) asset = a.toUpperCase().trim();
 		refresh();
 		timer = setInterval(refresh, 4000); // poll while jobs are queued/running
 	});

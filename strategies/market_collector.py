@@ -22,6 +22,15 @@ import requests
 
 ASSETS = {"BTC": "BTCUSDT", "ETH": "ETHUSDT"}
 
+# Commodities surfaced on /commodities (findata continuous futures, daily closes).
+# (sym, zh, en) — keep in lockstep with web COMMODITY_ASSETS.
+COMMODITY_LIST = [
+    ("GC", "黄金", "Gold"), ("SI", "白银", "Silver"), ("CL", "原油(WTI)", "Crude WTI"),
+    ("BZ", "布伦特原油", "Brent"), ("HG", "铜", "Copper"), ("NG", "天然气", "NatGas"),
+    ("PL", "铂金", "Platinum"), ("PA", "钯金", "Palladium"), ("KT", "咖啡", "Coffee"),
+    ("ZW", "小麦", "Wheat"), ("ZS", "大豆", "Soybeans"), ("ZC", "玉米", "Corn"),
+]
+
 
 def log(m: str) -> None:
     print(f"[{datetime.now(timezone.utc).isoformat(timespec='seconds')}] {m}", flush=True)
@@ -58,6 +67,38 @@ def collect(symbol: str) -> dict:
     return out
 
 
+def collect_commodities(conn) -> int:
+    """Daily closes per commodity via findata (cached, budget-aware) → one snapshot row
+    each (asset=sym, payload {kind, zh, en, closes:[[ms,close],...]})."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import findata
+    except Exception as e:
+        log(f"findata unavailable: {e!r}")
+        return 0
+    ok = 0
+    for sym, zh, en in COMMODITY_LIST:
+        try:
+            closes = findata.closes_commodity(sym, min_bars=400)
+        except Exception as e:
+            log(f"{sym} closes failed: {e!r}")
+            continue
+        if not closes:
+            log(f"{sym}: no data (budget/feed) — keeping previous")
+            continue
+        payload = {"kind": "commodity", "zh": zh, "en": en, "closes": closes[-400:]}
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO quant.market_snapshots (asset, ts, payload)
+                   VALUES (%s, now(), %s)
+                   ON CONFLICT (asset) DO UPDATE SET ts = now(), payload = EXCLUDED.payload""",
+                (sym, json.dumps(payload)),
+            )
+        ok += 1
+    log(f"commodities: {ok}/{len(COMMODITY_LIST)} snapshots stored")
+    return ok
+
+
 def main() -> int:
     dsn = os.environ.get("TIMESCALE_URL", "")
     if not dsn:
@@ -81,6 +122,7 @@ def main() -> int:
             )
         ok += 1
         log(f"{asset}: snapshot stored ({len(json.dumps(payload))} bytes)")
+    collect_commodities(conn)
     conn.close()
     return 0 if ok else 1
 

@@ -11,6 +11,7 @@ export default {
 	'nav.live': 'Live',
 	'nav.nautilus': '执行引擎',
 	'nav.semis': '半导体',
+	'nav.commodities': '商品',
 	'nav.strategies': '策略',
 	'nav.backtest': '回测',
 	'nav.dca': 'DCA',
