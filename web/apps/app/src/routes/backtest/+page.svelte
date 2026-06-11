@@ -84,6 +84,18 @@
 		return k.replace(/_/g, ' ');
 	}
 
+	// Plain-language one-liner for a param input (from STRATEGIES.paramHints); null when none.
+	function paramHint(k: string): string | null {
+		const h = (cfg.paramHints as Record<string, readonly [string, string]>)[k];
+		return h ? (en ? h[1] : h[0]) : null;
+	}
+
+	// 白话 strategy name for display ('突破追涨'); falls back to the raw key.
+	function strategyName(s: string): string {
+		const c = (STRATEGIES as Record<string, (typeof STRATEGIES)[StratKey]>)[s];
+		return c ? (en ? c.name[1] : c.name[0]) : s;
+	}
+
 	let busy = $state(false);
 	let err = $state('');
 	let jobs = $state<BacktestJob[]>([]);
@@ -191,9 +203,9 @@
 		overrides?: Record<string, number | string>;
 	};
 	const PRESETS: Preset[] = [
-		{ zh: 'BTC 智能定投 (推荐新手)', en: 'BTC smart DCA (beginner pick)', strategy: 'accumulator', asset: 'BTC', tf: '1d' },
-		{ zh: 'NVDA 趋势跟随', en: 'NVDA trend following', strategy: 'honest_trend', asset: 'NVDA', tf: '1d', overrides: { ema_fast: 20, ema_slow: 50 } },
-		{ zh: 'ETH 突破策略', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' }
+		{ zh: 'BTC 恐慌加仓定投 (推荐新手)', en: 'BTC fear-boosted DCA (beginner pick)', strategy: 'accumulator', asset: 'BTC', tf: '1d' },
+		{ zh: 'NVDA 美股趋势跟随', en: 'NVDA US trend following', strategy: 'honest_trend', asset: 'NVDA', tf: '1d', overrides: { ema_fast: 20, ema_slow: 50 } },
+		{ zh: 'ETH 突破追涨', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' }
 	];
 
 	async function runPreset(p: Preset) {
@@ -215,15 +227,47 @@
 		);
 	}
 
-	// Short one-line summary of a job's params for the collapsed row.
-	function jobSummary(j: BacktestJob): string {
+	// Plain-language title line for a job: '突破追涨 · BTC · 1h' ('—' when a field is absent).
+	function jobTitle(j: BacktestJob): string {
 		const p = j.params;
-		const head = `${p.asset ?? '?'} · ${p.tf ?? '?'}`;
-		const rest = Object.entries(p)
+		return `${strategyName(j.strategy)} · ${p.asset || '—'} · ${p.tf || '—'}`;
+	}
+
+	// Raw config string — kept for precision, demoted to a small mono sub-line.
+	function jobConfig(j: BacktestJob): string {
+		const rest = Object.entries(j.params)
 			.filter(([k]) => k !== 'asset' && k !== 'tf')
 			.map(([k, v]) => `${k}=${v}`)
 			.join(' ');
-		return rest ? `${head} · ${rest}` : head;
+		return rest ? `${j.strategy} · ${rest}` : j.strategy;
+	}
+
+	// '2023-06 → 2026-06' → 3 (years, 1 decimal); null when period is missing/unparseable.
+	function periodYears(period: unknown): number | null {
+		if (typeof period !== 'string') return null;
+		const m = period.match(/(\d{4})-(\d{2}).*?(\d{4})-(\d{2})/);
+		if (!m) return null;
+		const months = (+m[3] - +m[1]) * 12 + (+m[4] - +m[2]);
+		return months > 0 ? Math.round((months / 12) * 10) / 10 : null;
+	}
+
+	// Generated honest one-liner from the metrics — descriptive only, no advice wording.
+	function honestLine(m: BacktestResult['metrics']): string {
+		if (m.return_pct < 0)
+			return en
+				? 'This config lost money historically — the whole point of a backtest is telling you in advance.'
+				: '这个配置在历史上亏钱 —— 回测的价值就是提前告诉你。';
+		const yrs = periodYears(m.period);
+		const zhSpan = yrs != null ? `${yrs} 年` : '';
+		const enSpan = yrs != null ? ` over ${yrs} years` : '';
+		const dd = m.max_dd_pct as number | null; // accumulator runs have null DD
+		if (dd == null)
+			return en
+				? `+${m.return_pct}% cumulative${enSpan} — backtest ≠ live.`
+				: `${zhSpan}累计 +${m.return_pct}% —— 回测 ≠ 实盘。`;
+		return en
+			? `+${m.return_pct}% cumulative${enSpan}, but the deepest dip on the way was ${Math.abs(dd)}% — could you have held on? Backtest ≠ live.`
+			: `${zhSpan}累计 +${m.return_pct}%,但路上最深跌过 ${Math.abs(dd)}% —— 你能拿住吗?回测 ≠ 实盘。`;
 	}
 
 	// Format a possibly-null metric (crypto accumulator has null DD/Sharpe/Calmar).
@@ -338,7 +382,10 @@
 			{#each Object.keys(STRATEGIES) as s}
 				{@const c = STRATEGIES[s as StratKey]}
 				<div class="rounded-md border border-border p-4">
-					<div class="text-sm font-medium text-foreground">{c.label}</div>
+					<div class="text-sm font-medium text-foreground">
+						{en ? c.name[1] : c.name[0]}
+						<span class="font-normal text-muted-foreground">· {c.tech}</span>
+					</div>
 					<p class="mt-1.5 text-xs text-muted-foreground">{en ? c.blurb[1] : c.blurb[0]}</p>
 					<div class="mt-2 flex flex-wrap gap-1">
 						{#each c.assets.slice(0, 4) as a}
@@ -426,66 +473,75 @@
 			</div>
 		</div>
 
-		<!-- Form -->
-		<div class="mt-4 grid grid-cols-2 gap-4 rounded-md border border-border p-4 sm:grid-cols-4">
-			<label class="text-xs">
+		<!-- Form: strategy row + plain-language explainer, then the asset/tf/params grid -->
+		<div class="mt-4 rounded-md border border-border p-4">
+			<label class="block text-xs">
 				<span class="text-muted-foreground">{en ? 'Strategy' : '策略'}</span>
 				<select
 					value={strategy}
 					onchange={(e) => onStrategyChange((e.currentTarget as HTMLSelectElement).value as StratKey)}
 					class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
 					{#each Object.keys(STRATEGIES) as s}
-						<option value={s}>{STRATEGIES[s as StratKey].label}</option>
+						{@const c = STRATEGIES[s as StratKey]}
+						<option value={s}>{en ? c.name[1] : c.name[0]} · {c.tech}</option>
 					{/each}
 				</select>
 			</label>
-			<label class="text-xs">
-				<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
-				{#if strategy === 'honest_trend'}
-					<!-- Combo: free-text US ticker + suggested trio via datalist (uppercase-normalized). -->
-					<input
-						type="text"
-						list="honest-trend-assets"
-						value={asset}
-						oninput={(e) => (asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
-						placeholder={en ? 'Any US ticker e.g. TSLA' : '任意美股代码，如 TSLA'}
-						maxlength="6"
-						autocomplete="off"
-						spellcheck="false"
-						class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
-					<datalist id="honest-trend-assets">
-						{#each STRATEGIES.honest_trend.assets as a}<option value={a}></option>{/each}
-					</datalist>
-					{#if asset && !isCatalogAsset}
-						<p class="mt-1 text-[11px] text-muted-foreground">
-							{en ? STRATEGIES.honest_trend.note[1] : STRATEGIES.honest_trend.note[0]}
-						</p>
-					{/if}
-				{:else}
-					<select bind:value={asset} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-						{#each cfg.assets as a}<option value={a}>{a}</option>{/each}
-					</select>
-				{/if}
-			</label>
-			<label class="text-xs">
-				<span class="text-muted-foreground">{en ? 'Timeframe' : '周期'}</span>
-				<select bind:value={tf} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-					{#each tfChoices as f}<option value={f}>{f}</option>{/each}
-				</select>
-			</label>
-			{#each Object.entries(cfg.params as Record<string, AnyParam>) as [k, p]}
+			<!-- Explainer strip — what the selected strategy actually does, in plain language. -->
+			<div class="mt-2 rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+				📖 {en ? cfg.explain[1] : cfg.explain[0]}
+			</div>
+			<div class="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
 				<label class="text-xs">
-					<span class="text-muted-foreground">{paramLabel(k)}</span>
-					{#if isChoice(p)}
-						<select bind:value={params[k]} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-							{#each p.choices as c}<option value={c}>{c}</option>{/each}
-						</select>
-					{:else}
-						<input type="number" bind:value={params[k]} min={p.min} max={p.max} step={p.step ?? 1}
+					<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
+					{#if strategy === 'honest_trend'}
+						<!-- Combo: free-text US ticker + suggested trio via datalist (uppercase-normalized). -->
+						<input
+							type="text"
+							list="honest-trend-assets"
+							value={asset}
+							oninput={(e) => (asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
+							placeholder={en ? 'Any US ticker e.g. TSLA' : '任意美股代码，如 TSLA'}
+							maxlength="6"
+							autocomplete="off"
+							spellcheck="false"
 							class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+						<datalist id="honest-trend-assets">
+							{#each STRATEGIES.honest_trend.assets as a}<option value={a}></option>{/each}
+						</datalist>
+						{#if asset && !isCatalogAsset}
+							<p class="mt-1 text-[11px] text-muted-foreground">
+								{en ? STRATEGIES.honest_trend.note[1] : STRATEGIES.honest_trend.note[0]}
+							</p>
+						{/if}
+					{:else}
+						<select bind:value={asset} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+							{#each cfg.assets as a}<option value={a}>{a}</option>{/each}
+						</select>
 					{/if}
 				</label>
-			{/each}
+				<label class="text-xs">
+					<span class="text-muted-foreground">{en ? 'Timeframe' : '周期'}</span>
+					<select bind:value={tf} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+						{#each tfChoices as f}<option value={f}>{f}</option>{/each}
+					</select>
+				</label>
+				{#each Object.entries(cfg.params as Record<string, AnyParam>) as [k, p]}
+					{@const hint = paramHint(k)}
+					<label class="text-xs">
+						<span class="text-muted-foreground">{paramLabel(k)}</span>
+						{#if isChoice(p)}
+							<select bind:value={params[k]} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+								{#each p.choices as c}<option value={c}>{c}</option>{/each}
+							</select>
+						{:else}
+							<input type="number" bind:value={params[k]} min={p.min} max={p.max} step={p.step ?? 1}
+								class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+						{/if}
+						{#if hint}<p class="mt-1 text-[10px] text-muted-foreground">{hint}</p>{/if}
+					</label>
+				{/each}
+			</div>
 		</div>
 
 		<button type="button" onclick={submit} disabled={busy}
@@ -508,7 +564,10 @@
 						<!-- Collapsed row -->
 						<button type="button" onclick={() => done && toggle(j.id)}
 							class="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-left {done ? 'cursor-pointer hover:bg-muted/30' : 'cursor-default'}">
-							<span class="font-mono text-xs">{j.strategy} · {jobSummary(j)}</span>
+							<span class="flex min-w-0 flex-col">
+								<span class="text-xs font-medium text-foreground">{jobTitle(j)}</span>
+								<span class="font-mono text-[10px] text-muted-foreground">{jobConfig(j)}</span>
+							</span>
 							<span class="rounded border px-1.5 py-0.5 text-[10px] {badge(j.status)}">{j.status}</span>
 							{#if done}
 								{@const m = r.metrics}
@@ -530,6 +589,9 @@
 							{@const m = r.metrics}
 							{@const chart = bigChart(r.equity_curve)}
 							<div class="border-t border-border bg-muted/20 px-3 py-4">
+								<!-- Title + generated honest summary — descriptive only, never advice. -->
+								<div class="text-sm font-medium text-foreground">{jobTitle(j)}</div>
+								<p class="mb-3 mt-1 text-xs text-muted-foreground">{honestLine(r.metrics)}</p>
 								{#if chart}
 									<svg viewBox="0 0 {chart.w} {chart.h}" width="100%" height={chart.h} class="max-w-[480px]" role="img"
 										aria-label={en ? 'Equity curve' : '权益曲线'}>
@@ -557,22 +619,27 @@
 									<div>
 										<dt class="text-muted-foreground">{en ? 'Return' : '收益'}</dt>
 										<dd class="font-mono {m.return_pct >= 0 ? 'text-emerald-600' : 'text-red-600'}">{m.return_pct >= 0 ? '+' : ''}{m.return_pct}%</dd>
+										<p class="text-[10px] text-muted-foreground">{en ? 'cumulative over the backtest' : '回测期累计'}</p>
 									</div>
 									<div>
 										<dt class="text-muted-foreground">{en ? 'Max drawdown' : '最大回撤'}</dt>
 										<dd class="font-mono">{num(m.max_dd_pct, '%')}</dd>
+										<p class="text-[10px] text-muted-foreground">{en ? 'deepest dip — ask if you could hold' : '最深浮亏 — 问自己能否拿住'}</p>
 									</div>
 									<div>
 										<dt class="text-muted-foreground">Sharpe</dt>
 										<dd class="font-mono">{num(m.sharpe)}</dd>
+										<p class="text-[10px] text-muted-foreground">{en ? 'risk-adjusted return; >1 is decent' : '风险调整后收益,>1 算不错'}</p>
 									</div>
 									<div>
 										<dt class="text-muted-foreground">Calmar</dt>
 										<dd class="font-mono">{num(m.calmar)}</dd>
+										<p class="text-[10px] text-muted-foreground">{en ? 'annual return ÷ max DD; higher = steadier' : '年化收益 ÷ 最大回撤,越高越稳'}</p>
 									</div>
 									<div>
 										<dt class="text-muted-foreground">{en ? 'Trades' : '成交笔数'}</dt>
 										<dd class="font-mono">{num(m.trades)}</dd>
+										<p class="text-[10px] text-muted-foreground">{en ? 'too few = weak statistics' : '太少则统计意义有限'}</p>
 									</div>
 									{#if m.win_rate != null}
 										<div>
@@ -594,7 +661,7 @@
 									<dl class="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-xs sm:grid-cols-3">
 										<div>
 											<dt class="text-muted-foreground">{en ? 'Strategy' : '策略'}</dt>
-											<dd class="font-mono">{j.strategy}</dd>
+											<dd>{strategyName(j.strategy)} <span class="font-mono text-[10px] text-muted-foreground">{j.strategy}</span></dd>
 										</div>
 										{#each Object.entries(j.params) as [k, v]}
 											<div>

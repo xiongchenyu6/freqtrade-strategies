@@ -38,9 +38,22 @@ export interface BacktestResult {
 // The UI renders forms from this; the runner re-validates server-side (never trust the client).
 const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK'] as const;
 
+// Display metadata per strategy (plain-language layer — keys/params are the runner contract
+// and stay unchanged): `name` is the 白话名, `tech` the technical label, `explain` a one-
+// paragraph honest description, `paramHints` one-liners rendered under each param input.
 export const STRATEGIES = {
 	honest_trend: {
 		label: 'HonestTrend (US equity)',
+		name: ['美股趋势跟随', 'US trend following'] as const,
+		tech: 'HonestTrend',
+		explain: [
+			'均线金叉买入、死叉卖出,顺势而为。涨势里拿得住,震荡市会反复止损。适合验证"长期趋势"想法。',
+			'Buy the golden cross, sell the death cross. Rides trends; chops sideways. For testing long-trend ideas.'
+		] as const,
+		paramHints: {
+			ema_fast: ['短期均线长度 — 越小越灵敏、信号越多', 'short EMA length — smaller = more sensitive'],
+			ema_slow: ['长期均线长度 — 定义"趋势"的尺度', 'long EMA — defines the trend scale']
+		},
 		blurb: ['EMA 金叉/死叉趋势跟随，支持任意美股代码（日线 10 年历史），NVDA/AMD/QQQ 另有小时线', 'EMA cross trend-following — any US ticker (10y daily history); hourly for NVDA/AMD/QQQ'] as const,
 		// `assets` are SUGGESTIONS only — anyUsSymbol opens the field to any US ticker.
 		// The runner validates against its ~9.5k US-symbol list server-side; hourly bars
@@ -54,6 +67,17 @@ export const STRATEGIES = {
 	// Donchian breakout — crypto trend, real Binance 1h bars. Honest equity-curve maxDD.
 	donchian: {
 		label: 'Donchian breakout (crypto trend)',
+		name: ['突破追涨', 'Breakout'] as const,
+		tech: 'Donchian breakout',
+		explain: [
+			'价格创出过去 N 根 K 线的新高就买入,跌破过去 M 根的新低就卖出。趋势行情吃肉,震荡行情挨打 —— 用回测看它在这个币上到底行不行。',
+			'Buy fresh N-bar highs, exit on M-bar lows. Feasts in trends, bleeds in chop — backtest tells you which.'
+		] as const,
+		paramHints: {
+			entry_lb: ['突破窗口:过去多少根 K 线的最高点算"新高"(168 根 1h ≈ 7 天)', 'breakout window in bars (168×1h ≈ 7 days)'],
+			exit_lb: ['离场窗口:跌破多少根 K 线的最低点就卖', 'exit window in bars'],
+			risk_frac: ['每次入场动用资金的比例', 'fraction of equity per entry']
+		},
 		blurb: ['唐奇安通道突破做多，真实币安 1h K 线，诚实净值回撤', 'Donchian channel breakout long, real Binance 1h bars, honest drawdown'] as const,
 		assets: CRYPTO_ASSETS,
 		timeframes: ['1h'],
@@ -67,6 +91,17 @@ export const STRATEGIES = {
 	// return_pct is ROI on invested capital; max_dd/sharpe/calmar are null (round-trip metrics N/A).
 	accumulator: {
 		label: 'Smart DCA accumulator (crypto)',
+		name: ['恐慌加仓定投', 'Fear-boosted DCA'] as const,
+		tech: 'Smart DCA',
+		explain: [
+			'固定周期买入,市场恐慌(恐惧贪婪指数低)时自动加倍 —— 只买不卖,赌的是长期向上 + 恐慌时的便宜筹码。',
+			'Scheduled buys, doubled in fear — never sells. Bets on long-term upside + cheap panic chips.'
+		] as const,
+		paramHints: {
+			base_buy_usd: ['每次定投金额', 'USD per buy'],
+			interval_bars: ['每隔多少天买一次', 'days between buys'],
+			mode: ['smart=恐慌加倍 / naive=固定金额', 'smart doubles in fear / naive fixed']
+		},
 		blurb: ['恐惧贪婪指数驱动的定投，越跌越买，只买不卖', 'Fear & Greed-driven DCA — buys more on dips, never sells'] as const,
 		assets: CRYPTO_ASSETS,
 		timeframes: ['1d'],
