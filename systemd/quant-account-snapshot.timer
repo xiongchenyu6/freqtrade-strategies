@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily account snapshot at 09:07 SGT (after the US close)
+
+[Timer]
+OnCalendar=*-*-* 01:07:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
