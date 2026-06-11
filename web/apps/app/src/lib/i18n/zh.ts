@@ -22,6 +22,7 @@ export default {
 	'nav.market': '研究',
 	'nav.hyperopt': 'Hyperopt',
 	'nav.factors': '因子分析',
+	'nav.graveyard': '策略墓地',
 	'nav.more': '更多',
 	'nav.docs': '文档',
 	'topbar.login': '登录',

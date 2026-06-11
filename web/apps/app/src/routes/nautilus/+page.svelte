@@ -43,7 +43,12 @@
 	}
 </script>
 
-<svelte:head><title>{tr('Nautilus 执行引擎', 'Nautilus engine')}</title></svelte:head>
+<svelte:head>
+	<title>{tr('Nautilus 执行引擎', 'Nautilus engine')}</title>
+	<meta name="description" content="公开账本：实时持仓与不可伪造的每日净值。" />
+	<meta property="og:title" content={tr('Nautilus 执行引擎', 'Nautilus engine')} />
+	<meta property="og:description" content="公开账本：实时持仓与不可伪造的每日净值。" />
+</svelte:head>
 
 <div class="mx-auto max-w-5xl px-4 py-6">
 	<div class="mb-4 flex items-center gap-3">
