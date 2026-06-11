@@ -8,6 +8,7 @@
 	import {
 		STRATEGIES,
 		COMMODITY_ASSETS,
+		CRYPTO_ASSETS,
 		submitBacktest,
 		myJobs,
 		jobResult,
@@ -162,11 +163,14 @@
 
 	// Per-strategy client-side validation (the runner re-validates server-side).
 	function validate(): string | null {
-		if (strategy === 'honest_trend') {
+		// Free-text asset strategies (honest_trend + accumulator): basic symbol shape only.
+		if (strategy === 'honest_trend' || strategy === 'accumulator') {
 			if (!/^[A-Z0-9]{1,6}$/.test(asset))
 				return en
-					? 'Ticker must be 1-6 letters/digits, e.g. TSLA.'
-					: '股票代码须为 1-6 位字母/数字，如 TSLA。';
+					? 'Symbol must be 1-6 letters/digits, e.g. TSLA or GC.'
+					: '标的代码须为 1-6 位字母/数字，如 TSLA 或 GC。';
+		}
+		if (strategy === 'honest_trend') {
 			if (!((params.ema_fast as number) < (params.ema_slow as number)))
 				return en ? 'Fast EMA must be < slow EMA.' : '快线 EMA 必须小于慢线。';
 		}
@@ -344,15 +348,26 @@
 				params: { entry_lb: e, exit_lb: x, side: 'both' }
 			};
 		}
-		// accumulator — fear-driven DCA; the live equivalent is a market-wide FNG alert,
-		// so don't embed the backtest's asset/tf in the name (the signal isn't per-asset).
+		// accumulator — the live analogue depends on the asset class: crypto's smart boost
+		// is FNG (market-wide), while commodities/US stocks boost below the 200d SMA, whose
+		// closest live alert is a 50/200 cross on that asset.
+		if (CRYPTO_ASSETS.includes(asset as (typeof CRYPTO_ASSETS)[number])) {
+			return {
+				user_id: userId,
+				name: en ? 'FNG<25 market fear alert' : 'FNG<25 全市场恐慌提醒',
+				kind: 'fng_threshold',
+				asset: '*',
+				timeframe: '1d',
+				params: { below: 25 }
+			};
+		}
 		return {
 			user_id: userId,
-			name: en ? 'FNG<25 market fear alert' : 'FNG<25 全市场恐慌提醒',
-			kind: 'fng_threshold',
-			asset: '*',
+			name: en ? `${asset} 50/200 cross alert` : `${asset} 200日均线金叉死叉`,
+			kind: 'ema_cross',
+			asset,
 			timeframe: '1d',
-			params: { below: 25 }
+			params: { ema_fast: 50, ema_slow: 200, direction: 'both' }
 		};
 	}
 
@@ -562,6 +577,29 @@
 								{en ? STRATEGIES.honest_trend.note[1] : STRATEGIES.honest_trend.note[0]}
 							</p>
 						{/if}
+					{:else if strategy === 'accumulator'}
+						<!-- Combo: free-text — crypto majors (FNG smart boost) + any commodity sym or
+						     US ticker (200d-SMA smart boost) — with suggestions via datalist. -->
+						<input
+							type="text"
+							list="accumulator-assets"
+							value={asset}
+							oninput={(e) => (asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
+							placeholder={en ? 'BTC, GC (gold) or any US ticker' : 'BTC、GC（黄金）或任意美股代码'}
+							maxlength="6"
+							autocomplete="off"
+							spellcheck="false"
+							class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+						<datalist id="accumulator-assets">
+							{#each CRYPTO_ASSETS as a}<option value={a}></option>{/each}
+							{#each COMMODITY_ASSETS as c (c.sym)}<option value={c.sym}>{c.sym} — {en ? c.en : c.zh}</option>{/each}
+							{#each STRATEGIES.honest_trend.assets as a}<option value={a}></option>{/each}
+						</datalist>
+						<p class="mt-1 text-[11px] text-muted-foreground">
+							{en
+								? 'Crypto doubles on the Fear & Greed index; gold/US stocks double below the 200-day SMA — same discipline, different fear thermometer'
+								: '币按恐慌指数加倍;黄金/美股按 200 日均线加倍 —— 同一纪律,不同恐慌温度计'}
+						</p>
 					{:else}
 						<select bind:value={asset} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
 							{#each cfg.assets as a}<option value={a}>{a}</option>{/each}
