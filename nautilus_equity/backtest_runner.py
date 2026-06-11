@@ -223,6 +223,18 @@ def run_master_portfolio(params: dict) -> dict:
     curve = []
     rebalances = 0
     last_reb_month = None
+    # Trade log — the "成交明细": the initial allocation, then one entry per rebalance
+    # showing per-component drift (weight before → target) and the buy/sell that fixes it.
+    # The "reason" for every trade IS the drift: rebalancing sells what ran up and buys
+    # what fell (mechanical 高抛低吸 back to target weights).
+    d8 = lambda ms: datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date().isoformat()
+    trade_log = [{
+        "date": d8(common[0]), "kind": "initial", "total": start_cash,
+        "legs": [{"sym": sym, "w_before": w, "w_target": w,
+                  "delta_usd": round(start_cash * w / 100, 2),
+                  "price": round(series[sym][common[0]], 4),
+                  "units_after": round(units[sym], 6)} for sym, w in weights.items()],
+    }]
     for ts in common:
         dt = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
         value = sum(units[sym] * series[sym][ts] for sym in weights)
@@ -230,7 +242,21 @@ def run_master_portfolio(params: dict) -> dict:
         if last_reb_month is None:
             last_reb_month = month_idx
         elif month_idx - last_reb_month >= p["rebalance_months"]:
-            units = {sym: (value * w / 100) / series[sym][ts] for sym, w in weights.items()}
+            legs = []
+            for sym, w in weights.items():
+                px = series[sym][ts]
+                before_val = units[sym] * px
+                w_before = 100 * before_val / value if value else 0.0
+                target_val = value * w / 100
+                new_units = target_val / px
+                legs.append({"sym": sym,
+                             "w_before": round(w_before, 2), "w_target": w,
+                             "delta_usd": round(target_val - before_val, 2),
+                             "price": round(px, 4),
+                             "units_after": round(new_units, 6)})
+                units[sym] = new_units
+            trade_log.append({"date": d8(ts), "kind": "rebalance",
+                              "total": round(value, 2), "legs": legs})
             rebalances += 1
             last_reb_month = month_idx
         curve.append(round(value, 2))
@@ -259,6 +285,12 @@ def run_master_portfolio(params: dict) -> dict:
         "period_start": d(common[0]), "period_end": d(common[-1]),
         "config": {**p, "weights": weights},
         "equity_curve": _downsample(curve),
+        # Final holdings (期末份额) + the full trade log for the UI's 成交明细 table.
+        "holdings": [{"sym": sym, "units": round(u, 6),
+                      "value": round(u * series[sym][common[-1]], 2),
+                      "weight_pct": round(100 * u * series[sym][common[-1]] / final, 2)}
+                     for sym, u in units.items()],
+        "trade_log": trade_log,
     }
 
 
