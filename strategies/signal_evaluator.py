@@ -68,8 +68,15 @@ def crypto_closes(asset: str, timeframe: str, limit: int = 1100) -> list[tuple[i
 
 
 def equity_closes(asset: str) -> list[tuple[int, float]]:
-    """Daily closes from Yahoo (same source as semi_analysis). Last bar dropped if today
-    (US session may still be open)."""
+    """Daily closes for ANY US stock/ETF: financialdata.net first (10y history, on-disk
+    daily cache, budget-guarded — see findata.py), Yahoo fallback (2y, no SLA)."""
+    try:
+        import findata
+        bars = findata.closes_us(asset, min_bars=600)
+        if bars:
+            return bars
+    except Exception:
+        pass
     r = requests.get(_YF.format(sym=asset), headers=_HDRS, timeout=15)
     r.raise_for_status()
     res = r.json()["chart"]["result"][0]
@@ -175,6 +182,14 @@ def eval_vix(p: dict) -> dict | None:
 
 # ---------- sweep ----------
 
+def _is_us_symbol(asset: str) -> bool:
+    try:
+        import findata
+        return findata.is_us_symbol(asset)
+    except Exception:
+        return False
+
+
 def equity_allowed(conn) -> set[str]:
     """Core equities + the semi-universe tickers (tracks the DB; cheap query)."""
     try:
@@ -216,7 +231,9 @@ def sweep(conn) -> int:
                 if ck not in cache:
                     if asset in CRYPTO:
                         cache[ck] = crypto_closes(asset, tf)
-                    elif asset in equities:
+                    elif asset in equities or _is_us_symbol(asset):
+                        # equities set (semi universe) is the fast path; any other US
+                        # ticker is accepted after a findata symbol-list check.
                         cache[ck] = equity_closes(asset)
                     else:
                         log(f"unknown asset {asset!r} (signal {s['id']}) — skipping")

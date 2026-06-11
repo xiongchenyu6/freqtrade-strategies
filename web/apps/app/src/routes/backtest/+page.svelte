@@ -14,7 +14,7 @@
 		type BacktestJob,
 		type BacktestResult
 	} from '$lib/backtests';
-	import { createSignal, signalsVersion, isEquityAsset, type NewSignal } from '$lib/signals';
+	import { createSignal, signalsVersion, type NewSignal } from '$lib/signals';
 	import { onMount, onDestroy } from 'svelte';
 	import AlertSubscribe from '$lib/components/alert-subscribe.svelte';
 	import MySignals from '$lib/components/my-signals.svelte';
@@ -39,6 +39,16 @@
 	let asset = $state<string>(STRATEGIES.honest_trend.assets[0]);
 	let tf = $state<string>(STRATEGIES.honest_trend.timeframes[0]);
 	let params = $state<Record<string, number | string>>(seedParams('honest_trend'));
+
+	// honest_trend accepts ANY US ticker (runner validates against its ~9.5k-symbol list
+	// server-side); the suggested trio additionally has hourly bars, everything else is 1d.
+	const HONEST_SUGGESTED = STRATEGIES.honest_trend.assets as readonly string[];
+	const isCatalogAsset = $derived(strategy !== 'honest_trend' || HONEST_SUGGESTED.includes(asset));
+	const tfChoices = $derived<readonly string[]>(isCatalogAsset ? cfg.timeframes : ['1d']);
+	// Force tf back into range when a non-catalog ticker (1d only) is typed.
+	$effect(() => {
+		if (!tfChoices.includes(tf)) tf = tfChoices[0];
+	});
 
 	function seedParams(s: StratKey): Record<string, number | string> {
 		const out: Record<string, number | string> = {};
@@ -136,6 +146,10 @@
 	// Per-strategy client-side validation (the runner re-validates server-side).
 	function validate(): string | null {
 		if (strategy === 'honest_trend') {
+			if (!/^[A-Z0-9]{1,6}$/.test(asset))
+				return en
+					? 'Ticker must be 1-6 letters/digits, e.g. TSLA.'
+					: '股票代码须为 1-6 位字母/数字，如 TSLA。';
 			if (!((params.ema_fast as number) < (params.ema_slow as number)))
 				return en ? 'Fast EMA must be < slow EMA.' : '快线 EMA 必须小于慢线。';
 		}
@@ -236,7 +250,7 @@
 		if (j.strategy === 'honest_trend') {
 			const f = Number(p.ema_fast);
 			const s = Number(p.ema_slow);
-			const sigTf = isEquityAsset(asset) ? '1d' : tf; // equity signals are 1d-only
+			const sigTf = '1d'; // honest_trend assets are all US equity — equity signals are 1d-only
 			return {
 				user_id: userId,
 				name: `${asset} ${sigTf} EMA${f}/${s} ${en ? 'cross' : '金叉死叉'}`,
@@ -427,14 +441,36 @@
 			</label>
 			<label class="text-xs">
 				<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
-				<select bind:value={asset} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-					{#each cfg.assets as a}<option value={a}>{a}</option>{/each}
-				</select>
+				{#if strategy === 'honest_trend'}
+					<!-- Combo: free-text US ticker + suggested trio via datalist (uppercase-normalized). -->
+					<input
+						type="text"
+						list="honest-trend-assets"
+						value={asset}
+						oninput={(e) => (asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
+						placeholder={en ? 'Any US ticker e.g. TSLA' : '任意美股代码，如 TSLA'}
+						maxlength="6"
+						autocomplete="off"
+						spellcheck="false"
+						class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
+					<datalist id="honest-trend-assets">
+						{#each STRATEGIES.honest_trend.assets as a}<option value={a}></option>{/each}
+					</datalist>
+					{#if asset && !isCatalogAsset}
+						<p class="mt-1 text-[11px] text-muted-foreground">
+							{en ? STRATEGIES.honest_trend.note[1] : STRATEGIES.honest_trend.note[0]}
+						</p>
+					{/if}
+				{:else}
+					<select bind:value={asset} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+						{#each cfg.assets as a}<option value={a}>{a}</option>{/each}
+					</select>
+				{/if}
 			</label>
 			<label class="text-xs">
 				<span class="text-muted-foreground">{en ? 'Timeframe' : '周期'}</span>
 				<select bind:value={tf} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-					{#each cfg.timeframes as f}<option value={f}>{f}</option>{/each}
+					{#each tfChoices as f}<option value={f}>{f}</option>{/each}
 				</select>
 			</label>
 			{#each Object.entries(cfg.params as Record<string, AnyParam>) as [k, p]}

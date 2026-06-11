@@ -149,6 +149,13 @@
 
 	// ── Create ────────────────────────────────────────────────────────────────
 	function validate(): string | null {
+		if (
+			(kind === 'ema_cross' || kind === 'donchian_breakout') &&
+			!/^[A-Z0-9]{1,6}$/.test(asset)
+		)
+			return en
+				? 'Asset must be 1-6 letters/digits, e.g. TSLA.'
+				: '标的须为 1-6 位字母/数字，如 TSLA。';
 		if (kind === 'ema_cross' && !((params.ema_fast as number) < (params.ema_slow as number)))
 			return en ? 'Fast EMA must be < slow EMA.' : '快线 EMA 必须小于慢线。';
 		if (
@@ -293,17 +300,28 @@
 					{#if kind !== 'fng_threshold' && kind !== 'vix_threshold'}
 						<label class="text-xs">
 							<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
-							<select
-								bind:value={asset}
+							<!-- Combo: free text (any US ticker, uppercase-normalized) + suggestions. -->
+							<input
+								type="text"
+								list="signal-assets"
+								value={asset}
+								oninput={(e) =>
+									(asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
+								placeholder={en ? 'BTC / NVDA / any US ticker' : 'BTC / NVDA / 任意美股代码'}
+								maxlength="6"
+								autocomplete="off"
+								spellcheck="false"
 								class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-							>
-								<optgroup label={en ? 'Crypto' : '加密货币'}>
-									{#each CRYPTO_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
-								</optgroup>
-								<optgroup label={en ? 'US equity (1d only)' : '美股（仅 1d）'}>
-									{#each EQUITY_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
-								</optgroup>
-							</select>
+							/>
+							<datalist id="signal-assets">
+								{#each CRYPTO_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
+								{#each EQUITY_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
+							</datalist>
+							<p class="mt-1 text-[11px] text-muted-foreground">
+								{en
+									? 'US: any ticker (daily); crypto: 8 majors. Invalid symbols never fire.'
+									: '美股支持任意代码（日线）；加密限 8 大币种；无效代码不会触发。'}
+							</p>
 						</label>
 						<label class="text-xs">
 							<span class="text-muted-foreground">{en ? 'Timeframe' : '周期'}</span>

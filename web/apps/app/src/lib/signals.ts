@@ -93,10 +93,18 @@ export function isEquityAsset(a: string): boolean {
 	return (EQUITY_ASSETS as readonly string[]).includes(a);
 }
 
-/** Allowed timeframes for a kind+asset: equity is 1d only; crypto 1h or 1d; FNG fixed 1d. */
+export function isCryptoAsset(a: string): boolean {
+	return (CRYPTO_ASSETS as readonly string[]).includes(a);
+}
+
+/**
+ * Allowed timeframes for a kind+asset: crypto majors get 1h or 1d; anything else
+ * (EQUITY_ASSETS or any free-text alphanumeric ticker — assumed US equity) is 1d
+ * only; FNG/VIX fixed 1d. The evaluator skips symbols it can't resolve server-side.
+ */
 export function timeframesFor(kind: SignalKind, asset: string): string[] {
-	if (kind === 'fng_threshold' || kind === 'vix_threshold' || isEquityAsset(asset)) return ['1d'];
-	return ['1h', '1d'];
+	if (kind === 'fng_threshold' || kind === 'vix_threshold') return ['1d'];
+	return isCryptoAsset(asset) ? ['1h', '1d'] : ['1d'];
 }
 
 /** Bump to make <MySignals /> re-fetch (e.g. after creating a signal from a backtest row). */

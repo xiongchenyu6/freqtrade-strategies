@@ -41,8 +41,13 @@ const CRYPTO_ASSETS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'LINK']
 export const STRATEGIES = {
 	honest_trend: {
 		label: 'HonestTrend (US equity)',
-		blurb: ['EMA 金叉/死叉趋势跟随，真实复权美股日/小时线', 'EMA cross trend-following on real split-adjusted US equities'] as const,
+		blurb: ['EMA 金叉/死叉趋势跟随，支持任意美股代码（日线 10 年历史），NVDA/AMD/QQQ 另有小时线', 'EMA cross trend-following — any US ticker (10y daily history); hourly for NVDA/AMD/QQQ'] as const,
+		// `assets` are SUGGESTIONS only — anyUsSymbol opens the field to any US ticker.
+		// The runner validates against its ~9.5k US-symbol list server-side; hourly bars
+		// exist only for the suggested trio, everything else is daily.
 		assets: ['NVDA', 'AMD', 'QQQ'],
+		anyUsSymbol: true,
+		note: ['非目录股票仅支持日线（10 年历史）', 'Non-catalog tickers: daily only (10y history)'] as const,
 		timeframes: ['1h', '1d'],
 		params: { ema_fast: { min: 5, max: 400, default: 50 }, ema_slow: { min: 5, max: 400, default: 100 } }
 	},

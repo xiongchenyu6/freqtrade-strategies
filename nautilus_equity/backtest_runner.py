@@ -29,6 +29,7 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 # The crypto engines live in ../nautilus_crypto and import their siblings flat.
 sys.path.insert(0, str(_HERE.parent / "nautilus_crypto"))
+sys.path.insert(0, str(_HERE.parent / "strategies"))  # findata (any-US-stock daily data)
 
 # --------------------------------------------------------------------------- param validation
 # Predefined strategies + the param domains a user may choose. Anything outside → reject.
@@ -44,16 +45,22 @@ CRYPTO_ASSETS = ("BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "LINK")
 
 def _validate_honest_trend(params: dict) -> dict:
     asset = str(params.get("asset", "")).upper()
-    if asset not in EQUITY_ASSETS:
-        raise ValueError(f"asset must be one of {sorted(EQUITY_ASSETS)}")
     tf = str(params.get("tf", "1h")).lower()
     if tf not in TF_TO_BARS:
         raise ValueError("tf must be '1h' or '1d'")
+    if asset not in EQUITY_ASSETS:
+        # Any-US-stock path (financialdata.net daily bars): validate the ticker and
+        # force daily — hourly history only exists for the IB-catalog trio.
+        import findata
+        if not findata.is_us_symbol(asset):
+            raise ValueError(f"unknown US symbol {asset!r} (catalog assets: {sorted(EQUITY_ASSETS)})")
+        if tf != "1d":
+            raise ValueError(f"{asset}: only '1d' supported (hourly data exists only for {sorted(EQUITY_ASSETS)})")
     fast = int(params.get("ema_fast", 50))
     slow = int(params.get("ema_slow", 100))
     if not (EMA_MIN <= fast < slow <= EMA_MAX):
         raise ValueError(f"need {EMA_MIN} <= ema_fast < ema_slow <= {EMA_MAX}")
-    return {"asset": asset, "venue": EQUITY_ASSETS[asset], "tf": tf,
+    return {"asset": asset, "venue": EQUITY_ASSETS.get(asset, "NASDAQ"), "tf": tf,
             "ema_fast": fast, "ema_slow": slow}
 
 
@@ -114,10 +121,14 @@ def _downsample(curve: list, n: int = 80) -> list:
 
 def run_honest_trend(params: dict) -> dict:
     p = _validate_honest_trend(params)
-    from grid_honest_equity_real import run_one  # reuse the validated backtest path
-    bar_suffix, ppy = TF_TO_BARS[p["tf"]]
-    r = run_one(_catalog(), p["asset"], p["venue"], p["ema_fast"], p["ema_slow"],
-                bar_suffix, ppy)
+    if p["asset"] in EQUITY_ASSETS:
+        from grid_honest_equity_real import run_one  # IB-catalog path (1h + 1d)
+        bar_suffix, ppy = TF_TO_BARS[p["tf"]]
+        r = run_one(_catalog(), p["asset"], p["venue"], p["ema_fast"], p["ema_slow"],
+                    bar_suffix, ppy)
+    else:
+        from anystock_backtest import run_any  # any US ticker, findata daily bars
+        r = run_any(p["asset"], p["ema_fast"], p["ema_slow"])
     return {
         "return_pct": round(r["ret_pct"], 2),
         "max_dd_pct": round(r["mdd_pct"], 2),
