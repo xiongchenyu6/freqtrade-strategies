@@ -109,6 +109,13 @@
 		return '平稳';
 	}
 
+	function fmtSnapshotTime(iso: string): string {
+		const d = new Date(iso);
+		const hh = String(d.getUTCHours()).padStart(2, '0');
+		const mm = String(d.getUTCMinutes()).padStart(2, '0');
+		return `${hh}:${mm}`;
+	}
+
 	// Derived signals — recomputed whenever asset changes
 	const signals = $derived(
 		asset
@@ -137,6 +144,13 @@
 				{t(lang, 'market.title')}
 			</h1>
 			<p class="mt-1 text-sm text-muted-foreground">{t(lang, 'market.subtitle')}</p>
+			{#if asset?.snapshotTs}
+				<p class="mt-1 text-xs text-muted-foreground">
+					{lang === 'en'
+						? `Data updated ${fmtSnapshotTime(asset.snapshotTs)} UTC · auto-collected every 30 min`
+						: `数据更新于 ${fmtSnapshotTime(asset.snapshotTs)} UTC · 每 30 分钟自动采集`}
+				</p>
+			{/if}
 		</div>
 
 		<!-- Asset tab switcher -->
