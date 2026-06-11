@@ -43,6 +43,17 @@ EMA_MIN, EMA_MAX = 5, 400
 CRYPTO_ASSETS = ("BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "LINK")
 
 
+def _validate_period_years(params: dict):
+    """Optional playground data-window: trailing N years. None = full history."""
+    v = params.get("period_years")
+    if v in (None, "", 0):
+        return None
+    y = int(v)
+    if y not in (1, 2, 3, 5):
+        raise ValueError("period_years must be one of 1, 2, 3, 5")
+    return y
+
+
 def _validate_honest_trend(params: dict) -> dict:
     asset = str(params.get("asset", "")).upper()
     tf = str(params.get("tf", "1h")).lower()
@@ -61,7 +72,7 @@ def _validate_honest_trend(params: dict) -> dict:
     if not (EMA_MIN <= fast < slow <= EMA_MAX):
         raise ValueError(f"need {EMA_MIN} <= ema_fast < ema_slow <= {EMA_MAX}")
     return {"asset": asset, "venue": EQUITY_ASSETS.get(asset, "NASDAQ"), "tf": tf,
-            "ema_fast": fast, "ema_slow": slow}
+            "ema_fast": fast, "ema_slow": slow, "period_years": _validate_period_years(params)}
 
 
 def _validate_accumulator(params: dict) -> dict:
@@ -78,7 +89,7 @@ def _validate_accumulator(params: dict) -> dict:
     if not (1 <= interval_bars <= 90):
         raise ValueError("interval_bars must be in [1, 90]")
     return {"asset": asset, "mode": mode, "base_buy_usd": base_buy_usd,
-            "interval_bars": interval_bars}
+            "interval_bars": interval_bars, "period_years": _validate_period_years(params)}
 
 
 def _validate_donchian(params: dict) -> dict:
@@ -94,7 +105,8 @@ def _validate_donchian(params: dict) -> dict:
     risk_frac = float(params.get("risk_frac", 0.20))  # fraction of equity deployed on entry
     if not (0.01 <= risk_frac <= 1.0):
         raise ValueError("risk_frac must be in [0.01, 1.0]")
-    return {"asset": asset, "entry_lb": entry_lb, "exit_lb": exit_lb, "risk_frac": risk_frac}
+    return {"asset": asset, "entry_lb": entry_lb, "exit_lb": exit_lb, "risk_frac": risk_frac,
+            "period_years": _validate_period_years(params)}
 
 
 # --------------------------------------------------------------------------- strategy dispatch
@@ -125,10 +137,10 @@ def run_honest_trend(params: dict) -> dict:
         from grid_honest_equity_real import run_one  # IB-catalog path (1h + 1d)
         bar_suffix, ppy = TF_TO_BARS[p["tf"]]
         r = run_one(_catalog(), p["asset"], p["venue"], p["ema_fast"], p["ema_slow"],
-                    bar_suffix, ppy)
+                    bar_suffix, ppy, since_years=p["period_years"])
     else:
         from anystock_backtest import run_any  # any US ticker, findata daily bars
-        r = run_any(p["asset"], p["ema_fast"], p["ema_slow"])
+        r = run_any(p["asset"], p["ema_fast"], p["ema_slow"], since_years=p["period_years"])
     return {
         "return_pct": round(r["ret_pct"], 2),
         "max_dd_pct": round(r["mdd_pct"], 2),
@@ -137,6 +149,8 @@ def run_honest_trend(params: dict) -> dict:
         "trades": r["fills"],
         "entries": r["entries"],
         "bars": r["bars"],
+        "period_start": r.get("period_start"),
+        "period_end": r.get("period_end"),
         "config": p,
         "equity_curve": _downsample(r.get("curve", [])),  # popped out + stored in its own column
     }
@@ -149,7 +163,7 @@ def run_accumulator(params: dict) -> dict:
     p = _validate_accumulator(params)
     from backtest_stats import run_accumulator as _run  # proven engine (EquityRecorder-free DCA)
     r = _run(p["asset"], base_buy_usd=p["base_buy_usd"], interval_bars=p["interval_bars"],
-             mode=p["mode"])
+             mode=p["mode"], since_years=p["period_years"])
     pr = r.get("params", {})
     return {
         "return_pct": r["total_profit_pct"],   # ROI on invested capital
@@ -173,7 +187,7 @@ def run_donchian(params: dict) -> dict:
     p = _validate_donchian(params)
     from backtest_stats import run_donchian_portfolio as _run  # proven engine
     r = _run([p["asset"]], entry_lb=p["entry_lb"], exit_lb=p["exit_lb"],
-             risk_frac=p["risk_frac"])
+             risk_frac=p["risk_frac"], since_years=p["period_years"])
     return {
         "return_pct": r["total_profit_pct"],
         "max_dd_pct": (None if r["max_drawdown_pct"] is None else abs(r["max_drawdown_pct"])),

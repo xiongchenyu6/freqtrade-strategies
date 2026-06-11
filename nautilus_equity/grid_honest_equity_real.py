@@ -80,11 +80,15 @@ def _sharpe(rets: list[float], periods_per_year: int) -> float:
 
 
 def run_one(catalog, symbol, venue_name, ema_fast, ema_slow,
-            bar_suffix, periods_per_year) -> dict:
+            bar_suffix, periods_per_year, since_years: float | None = None) -> dict:
     iid_str = f"{symbol}.{venue_name}"
     instrument = next(i for i in catalog.instruments() if str(i.id) == iid_str)
     bar_type = BarType.from_str(f"{instrument.id}-{bar_suffix}")
     bars = catalog.bars(bar_types=[str(bar_type)])
+    if since_years and bars:
+        # Playground data-window: trailing N years anchored to the last bar.
+        cutoff = bars[-1].ts_event - int(since_years * 365.25 * 86400 * 1e9)
+        bars = [b for b in bars if b.ts_event >= cutoff]
 
     engine = BacktestEngine(
         config=BacktestEngineConfig(logging=LoggingConfig(bypass_logging=True)),
@@ -157,6 +161,8 @@ def run_one(catalog, symbol, venue_name, ema_fast, ema_slow,
         "sharpe": sharpe,
         "calmar": calmar,
         "curve": curve,  # daily realized-cash equity series (for playground charting)
+        "period_start": (str(sorted(bal_by_day)[0]) if bal_by_day else None),
+        "period_end": (str(sorted(bal_by_day)[-1]) if bal_by_day else None),
     }
     engine.dispose()
     return result

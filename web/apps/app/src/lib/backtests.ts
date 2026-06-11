@@ -28,6 +28,9 @@ export interface BacktestResult {
 		sharpe: number;
 		calmar: number | null;
 		trades: number;
+		// Data window the run actually covered (ISO dates). Legacy rows lack these.
+		period_start?: string | null;
+		period_end?: string | null;
 		[k: string]: unknown;
 	};
 	equity_curve: number[] | null; // downsampled equity values (~80 pts) for a sparkline
@@ -119,7 +122,11 @@ function authHeaders(): HeadersInit {
 	return { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json', Accept: 'application/json' };
 }
 
-/** Enqueue a backtest. user_id must equal the JWT sub (RLS enforces it). Returns the queued job. */
+/**
+ * Enqueue a backtest. user_id must equal the JWT sub (RLS enforces it). Returns the queued job.
+ * params may include period_years: 1|2|3|5 to limit the data window — omit the key entirely
+ * for full history (the runner treats absence as "all available data").
+ */
 export async function submitBacktest(
 	strategy: Strategy,
 	params: Record<string, unknown>,

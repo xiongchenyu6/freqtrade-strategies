@@ -68,11 +68,16 @@ _ASSETS = {
 }
 
 
-def _bars_for(inst, pair_file, bar_type, recent_half: bool):
+def _bars_for(inst, pair_file, bar_type, recent_half: bool, since_years: float | None = None):
     bars = load_bars(inst, pair_file, bar_type)
     if recent_half and bars:
         mid = bars[len(bars) // 2].ts_event  # split at the median timestamp
         bars = [b for b in bars if b.ts_event >= mid]
+    if since_years and bars:
+        # Playground data-window: keep only the trailing N years (anchored to the LAST bar,
+        # so a stale feather still yields a full window rather than a short one).
+        cutoff = bars[-1].ts_event - int(since_years * 365.25 * 86400 * 1e9)
+        bars = [b for b in bars if b.ts_event >= cutoff]
     return bars
 
 
@@ -125,7 +130,7 @@ def _extract_stats(engine: BacktestEngine, rec: EquityRecorder) -> dict:
 
 
 def run_donchian_portfolio(bases, *, entry_lb=168, exit_lb=72, risk_frac=0.0667,
-                           recent_half=False) -> dict:
+                           recent_half=False, since_years: float | None = None) -> dict:
     eng = _new_engine()
     insts = []
     period = (None, None)
@@ -133,7 +138,7 @@ def run_donchian_portfolio(bases, *, entry_lb=168, exit_lb=72, risk_frac=0.0667,
         factory, prefix = _ASSETS[base]
         inst = factory()
         bt = BarType.from_str(f"{inst.id}-1-HOUR-LAST-EXTERNAL")
-        bars = _bars_for(inst, f"{prefix}-1h", bt, recent_half)
+        bars = _bars_for(inst, f"{prefix}-1h", bt, recent_half, since_years)
         eng.add_instrument(inst)
         eng.add_data(bars)
         eng.add_strategy(DonchianBreakout(DonchianBreakoutConfig(
@@ -155,14 +160,15 @@ def run_donchian_portfolio(bases, *, entry_lb=168, exit_lb=72, risk_frac=0.0667,
     return stats
 
 
-def run_accumulator(base="BTC", *, base_buy_usd=500.0, interval_bars=7, mode="smart") -> dict:
+def run_accumulator(base="BTC", *, base_buy_usd=500.0, interval_bars=7, mode="smart",
+                    since_years: float | None = None) -> dict:
     # Large starting balance so the DCA never hits a cash wall (it invests ~$0.5M over the
     # full history; a small float would truncate accumulation and distort ROI).
     eng = _new_engine(start_cash=5_000_000)
     factory, _ = _ASSETS[base]
     inst = factory()
     bt = BarType.from_str(f"{inst.id}-1-DAY-LAST-EXTERNAL")
-    bars = load_bars(inst, f"{base}_USDT-1d", bt)
+    bars = _bars_for(inst, f"{base}_USDT-1d", bt, recent_half=False, since_years=since_years)
     eng.add_instrument(inst)
     eng.add_data(bars)
     strat = Accumulator(AccumulatorConfig(
