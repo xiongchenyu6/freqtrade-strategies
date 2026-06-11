@@ -12,6 +12,7 @@
 		SIGNAL_KINDS,
 		CRYPTO_ASSETS,
 		EQUITY_ASSETS,
+		COMMODITY_ASSETS,
 		timeframesFor,
 		mySignals,
 		createSignal,
@@ -316,11 +317,12 @@
 							<datalist id="signal-assets">
 								{#each CRYPTO_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
 								{#each EQUITY_ASSETS as a (a)}<option value={a}>{a}</option>{/each}
+								{#each COMMODITY_ASSETS as c (c.sym)}<option value={c.sym}>{c.sym} — {en ? c.en : c.zh}</option>{/each}
 							</datalist>
 							<p class="mt-1 text-[11px] text-muted-foreground">
 								{en
-									? 'US: any ticker (daily); crypto: 8 majors. Invalid symbols never fire.'
-									: '美股支持任意代码（日线）；加密限 8 大币种；无效代码不会触发。'}
+									? 'US: any ticker (daily); crypto: 8 majors; commodities (gold/oil etc.): daily. Invalid symbols never fire.'
+									: '美股支持任意代码（日线）；加密限 8 大币种；商品（黄金/原油等）仅日线；无效代码不会触发。'}
 							</p>
 						</label>
 						<label class="text-xs">

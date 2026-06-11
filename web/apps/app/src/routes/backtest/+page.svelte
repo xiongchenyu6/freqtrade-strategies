@@ -7,6 +7,7 @@
 	import { type Lang } from '$lib/i18n';
 	import {
 		STRATEGIES,
+		COMMODITY_ASSETS,
 		submitBacktest,
 		myJobs,
 		jobResult,
@@ -43,11 +44,13 @@
 	let periodSel = $state(0);
 
 	// honest_trend accepts ANY US ticker (runner validates against its ~9.5k-symbol list
-	// server-side); the suggested trio additionally has hourly bars, everything else is 1d.
+	// server-side) plus the commodity continuous futures; the suggested trio additionally
+	// has hourly bars, everything else — commodities included — is 1d only.
 	const HONEST_SUGGESTED = STRATEGIES.honest_trend.assets as readonly string[];
+	const commodity = $derived(COMMODITY_ASSETS.find((c) => c.sym === asset));
 	const isCatalogAsset = $derived(strategy !== 'honest_trend' || HONEST_SUGGESTED.includes(asset));
 	const tfChoices = $derived<readonly string[]>(isCatalogAsset ? cfg.timeframes : ['1d']);
-	// Force tf back into range when a non-catalog ticker (1d only) is typed.
+	// Force tf back into range when a non-catalog ticker or commodity (1d only) is typed.
 	$effect(() => {
 		if (!tfChoices.includes(tf)) tf = tfChoices[0];
 	});
@@ -212,7 +215,9 @@
 	const PRESETS: Preset[] = [
 		{ zh: 'BTC 恐慌加仓定投 (推荐新手)', en: 'BTC fear-boosted DCA (beginner pick)', strategy: 'accumulator', asset: 'BTC', tf: '1d' },
 		{ zh: 'NVDA 美股趋势跟随', en: 'NVDA US trend following', strategy: 'honest_trend', asset: 'NVDA', tf: '1d', overrides: { ema_fast: 20, ema_slow: 50 } },
-		{ zh: 'ETH 突破追涨', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' }
+		{ zh: 'ETH 突破追涨', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' },
+		// Long EMAs suit gold's slow macro trends (50/200 = the classic golden-cross pair).
+		{ zh: 'GC 黄金趋势', en: 'Gold trend', strategy: 'honest_trend', asset: 'GC', tf: '1d', overrides: { ema_fast: 50, ema_slow: 200 } }
 	];
 
 	async function runPreset(p: Preset) {
@@ -235,10 +240,17 @@
 		);
 	}
 
+	// Asset for display: commodities get their name — '黄金(GC)' — others stay as-is.
+	function assetLabel(a: unknown): string {
+		if (!a) return '—';
+		const c = COMMODITY_ASSETS.find((x) => x.sym === a);
+		return c ? `${en ? c.en : c.zh}(${c.sym})` : String(a);
+	}
+
 	// Plain-language title line for a job: '突破追涨 · BTC · 1h' ('—' when a field is absent).
 	function jobTitle(j: BacktestJob): string {
 		const p = j.params;
-		return `${strategyName(j.strategy)} · ${p.asset || '—'} · ${p.tf || '—'}`;
+		return `${strategyName(j.strategy)} · ${assetLabel(p.asset)} · ${p.tf || '—'}`;
 	}
 
 	// Raw config string — kept for precision, demoted to a small mono sub-line.
@@ -310,7 +322,7 @@
 		if (j.strategy === 'honest_trend') {
 			const f = Number(p.ema_fast);
 			const s = Number(p.ema_slow);
-			const sigTf = '1d'; // honest_trend assets are all US equity — equity signals are 1d-only
+			const sigTf = '1d'; // honest_trend assets (US equity + commodities) signal at 1d only
 			return {
 				user_id: userId,
 				name: `${asset} ${sigTf} EMA${f}/${s} ${en ? 'cross' : '金叉死叉'}`,
@@ -478,7 +490,7 @@
 		<!-- One-click presets: fill the form with a recommended config and submit immediately. -->
 		<div class="mt-6">
 			<div class="text-xs font-medium text-muted-foreground">{en ? 'Recommended configs — one-click backtest' : '推荐配置 一键回测'}</div>
-			<div class="mt-2 grid gap-2 sm:grid-cols-3">
+			<div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
 				{#each PRESETS as p}
 					<button type="button" onclick={() => runPreset(p)} disabled={busy}
 						class="rounded-md border border-border p-3 text-left hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50">
@@ -511,21 +523,27 @@
 				<label class="text-xs">
 					<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
 					{#if strategy === 'honest_trend'}
-						<!-- Combo: free-text US ticker + suggested trio via datalist (uppercase-normalized). -->
+						<!-- Combo: free-text US ticker + suggested trio + commodities via datalist
+						     (uppercase-normalized). -->
 						<input
 							type="text"
 							list="honest-trend-assets"
 							value={asset}
 							oninput={(e) => (asset = (e.currentTarget as HTMLInputElement).value.toUpperCase().trim())}
-							placeholder={en ? 'Any US ticker e.g. TSLA' : '任意美股代码，如 TSLA'}
+							placeholder={en ? 'Any US ticker e.g. TSLA, or GC' : '任意美股代码（如 TSLA）或商品（如 GC）'}
 							maxlength="6"
 							autocomplete="off"
 							spellcheck="false"
 							class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm" />
 						<datalist id="honest-trend-assets">
 							{#each STRATEGIES.honest_trend.assets as a}<option value={a}></option>{/each}
+							{#each COMMODITY_ASSETS as c (c.sym)}<option value={c.sym}>{c.sym} — {en ? c.en : c.zh}</option>{/each}
 						</datalist>
-						{#if asset && !isCatalogAsset}
+						{#if commodity}
+							<p class="mt-1 text-[11px] text-muted-foreground">
+								{en ? 'Commodity continuous futures · daily only · 10y history' : '商品期货连续合约 · 仅日线 · 10 年历史'}
+							</p>
+						{:else if asset && !isCatalogAsset}
 							<p class="mt-1 text-[11px] text-muted-foreground">
 								{en ? STRATEGIES.honest_trend.note[1] : STRATEGIES.honest_trend.note[0]}
 							</p>

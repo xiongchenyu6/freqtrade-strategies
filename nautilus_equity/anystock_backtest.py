@@ -42,7 +42,10 @@ def run_any(symbol: str, ema_fast: int, ema_slow: int, since_years: float | None
     missing/short data (the runner surfaces the message to the user)."""
     import findata
 
-    rows = findata.ohlcv_us(symbol, min_bars=2600)
+    if symbol in findata.COMMODITIES:
+        rows = findata.ohlcv_commodity(symbol, min_bars=2600)
+    else:
+        rows = findata.ohlcv_us(symbol, min_bars=2600)
     if not rows:
         raise ValueError(f"no daily data for {symbol!r} (unknown symbol or data budget exhausted — try again tomorrow)")
     if len(rows) < ema_slow + 50:
@@ -51,6 +54,11 @@ def run_any(symbol: str, ema_fast: int, ema_slow: int, since_years: float | None
     df = pd.DataFrame(rows)
     df["timestamp"] = pd.to_datetime(df["date"], utc=True)
     df = df.set_index("timestamp")[["open", "high", "low", "close", "volume"]].astype(float)
+    # Sanitize OHLC consistency — the commodity feed occasionally ships high < close etc.,
+    # which Nautilus (correctly) rejects. Clamp to the row's true extremes.
+    df["high"] = df[["open", "high", "low", "close"]].max(axis=1)
+    df["low"] = df[["open", "high", "low", "close"]].min(axis=1)
+    df["volume"] = df["volume"].clip(lower=0)
     if since_years:
         # Trailing N-year window anchored to the last bar.
         df = df[df.index >= df.index[-1] - pd.Timedelta(days=since_years * 365.25)]
