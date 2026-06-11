@@ -4,6 +4,7 @@
 	// (no stock picks, no managed money). Static bilingual content; no server load.
 	import { page } from '$app/stores';
 	import { type Lang } from '$lib/i18n';
+	import { tourOpen } from '$lib/tour';
 	const lang = $derived<Lang>($page.data.lang ?? 'zh');
 	const en = $derived(lang === 'en');
 </script>
@@ -12,9 +13,18 @@
 
 <main class="mx-auto mt-12 max-w-3xl px-5 pb-16">
 	<!-- H1 + honest opening -->
-	<h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
-		{en ? 'This site in 3 minutes' : '三分钟搞懂这个站'}
-	</h1>
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
+			{en ? 'This site in 3 minutes' : '三分钟搞懂这个站'}
+		</h1>
+		<button
+			type="button"
+			onclick={() => tourOpen.set(true)}
+			class="rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+		>
+			👋 {en ? 'Replay the tour' : '重新看新手引导'}
+		</button>
+	</div>
 	<p class="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
 		{en
 			? 'Let’s be clear up front: no stock picks, no trade-copying, no managing money for you. This is an open, transparent quant research site — you can see the real performance of real strategies (losses included), and verify everything yourself.'

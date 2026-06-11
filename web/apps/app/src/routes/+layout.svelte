@@ -5,6 +5,7 @@
 	import { afterNavigate } from '$app/navigation';
 	import Topbar from '$lib/components/topbar.svelte';
 	import Sidebar from '$lib/components/sidebar.svelte';
+	import OnboardingTour from '$lib/components/onboarding-tour.svelte';
 	import { track } from '$lib/track';
 
 	let { children } = $props();
@@ -25,3 +26,4 @@
 		{@render children()}
 	</div>
 </div>
+<OnboardingTour />
