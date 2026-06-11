@@ -9,12 +9,15 @@
 		STRATEGIES,
 		COMMODITY_ASSETS,
 		CRYPTO_ASSETS,
+		PORTFOLIO_PRESETS,
+		PORTFOLIO_COMPONENTS,
 		submitBacktest,
 		myJobs,
 		jobResult,
 		type Strategy,
 		type BacktestJob,
-		type BacktestResult
+		type BacktestResult,
+		type PortfolioPresetKey
 	} from '$lib/backtests';
 	import { createSignal, signalsVersion, type NewSignal } from '$lib/signals';
 	import { onMount, onDestroy } from 'svelte';
@@ -50,10 +53,13 @@
 	const HONEST_SUGGESTED = STRATEGIES.honest_trend.assets as readonly string[];
 	const commodity = $derived(COMMODITY_ASSETS.find((c) => c.sym === asset));
 	const isCatalogAsset = $derived(strategy !== 'honest_trend' || HONEST_SUGGESTED.includes(asset));
-	const tfChoices = $derived<readonly string[]>(isCatalogAsset ? cfg.timeframes : ['1d']);
+	// master_portfolio has no timeframes (multi-asset daily) — empty list, controls hidden.
+	const tfChoices = $derived<readonly string[]>(
+		'timeframes' in cfg ? (isCatalogAsset ? cfg.timeframes : ['1d']) : []
+	);
 	// Force tf back into range when a non-catalog ticker or commodity (1d only) is typed.
 	$effect(() => {
-		if (!tfChoices.includes(tf)) tf = tfChoices[0];
+		if (tfChoices.length > 0 && !tfChoices.includes(tf)) tf = tfChoices[0];
 	});
 
 	function seedParams(s: StratKey): Record<string, number | string> {
@@ -67,8 +73,10 @@
 	function onStrategyChange(s: StratKey) {
 		strategy = s;
 		const c = STRATEGIES[s];
-		asset = c.assets[0];
-		tf = c.timeframes[0];
+		if ('assets' in c) {
+			asset = c.assets[0];
+			tf = c.timeframes[0];
+		}
 		params = seedParams(s);
 		err = '';
 	}
@@ -82,12 +90,53 @@
 		risk_frac: ['风险比例', 'Risk fraction'],
 		base_buy_usd: ['每次买入 (USD)', 'Base buy (USD)'],
 		interval_bars: ['间隔 (天)', 'Interval (days)'],
-		mode: ['模式', 'Mode']
+		mode: ['模式', 'Mode'],
+		preset: ['配方', 'Recipe'],
+		rebalance_months: ['再平衡', 'Rebalance']
 	};
 	function paramLabel(k: string): string {
 		const l = PARAM_LABELS[k];
 		if (l) return en ? l[1] : l[0];
 		return k.replace(/_/g, ' ');
+	}
+
+	// Display label for a choice-param option: preset keys → recipe names, rebalance
+	// months → 每月/每季/每年; everything else (e.g. mode smart/naive) stays raw.
+	const REBALANCE_LABELS: Record<string, [zh: string, en: string]> = {
+		'1': ['每月', 'Monthly'],
+		'3': ['每季', 'Quarterly'],
+		'12': ['每年', 'Yearly']
+	};
+	function choiceLabel(k: string, c: string): string {
+		if (k === 'preset') {
+			const p = PORTFOLIO_PRESETS[c as PortfolioPresetKey];
+			if (p) return en ? p.en : p.zh;
+		}
+		if (k === 'rebalance_months') {
+			const m = REBALANCE_LABELS[c];
+			if (m) return en ? m[1] : m[0];
+		}
+		return c;
+	}
+
+	// ── master_portfolio display helpers ──────────────────────────────────────
+	// Weight chips: 'SPY 美股大盘 30%' per component (unknown tickers fall back to raw).
+	function weightChips(weights: Record<string, number>): string[] {
+		return Object.entries(weights).map(([sym, w]) => {
+			const l = PORTFOLIO_COMPONENTS[sym];
+			return l ? `${sym} ${en ? l[1] : l[0]} ${w}%` : `${sym} ${w}%`;
+		});
+	}
+	// Recipe of the preset currently picked in the form (undefined for other strategies).
+	const selectedPreset = $derived(
+		strategy === 'master_portfolio'
+			? PORTFOLIO_PRESETS[params.preset as PortfolioPresetKey]
+			: undefined
+	);
+	// metrics.config.weights for a finished master_portfolio run; null on other rows.
+	function portfolioWeights(m: BacktestResult['metrics']): Record<string, number> | null {
+		const c = m.config as { weights?: Record<string, number> } | undefined;
+		return c?.weights ?? null;
 	}
 
 	// Plain-language one-liner for a param input (from STRATEGIES.paramHints); null when none.
@@ -178,6 +227,7 @@
 			if (!((params.exit_lb as number) <= (params.entry_lb as number)))
 				return en ? 'Exit lookback must be ≤ entry lookback.' : '离场回看必须 ≤ 入场回看。';
 		}
+		// master_portfolio: both params are fixed-choice selects — always valid client-side.
 		return null;
 	}
 
@@ -192,9 +242,14 @@
 		err = '';
 		try {
 			// period_years goes in ONLY for a trailing window — 全部历史 omits the key entirely.
+			// master_portfolio is multi-asset daily: NO asset/tf keys, rebalance as a number.
+			const payload =
+				strategy === 'master_portfolio'
+					? { preset: params.preset, rebalance_months: Number(params.rebalance_months) }
+					: { asset, tf, ...params };
 			await submitBacktest(
 				strategy as Strategy,
-				{ asset, tf, ...params, ...(periodSel > 0 ? { period_years: periodSel } : {}) },
+				{ ...payload, ...(periodSel > 0 ? { period_years: periodSel } : {}) },
 				$user.sub
 			);
 			track('backtest_submit');
@@ -212,8 +267,8 @@
 		zh: string;
 		en: string;
 		strategy: StratKey;
-		asset: string;
-		tf: string;
+		asset?: string; // absent for no-asset strategies (master_portfolio)
+		tf?: string;
 		overrides?: Record<string, number | string>;
 	};
 	const PRESETS: Preset[] = [
@@ -221,13 +276,14 @@
 		{ zh: 'NVDA 美股趋势跟随', en: 'NVDA US trend following', strategy: 'honest_trend', asset: 'NVDA', tf: '1d', overrides: { ema_fast: 20, ema_slow: 50 } },
 		{ zh: 'ETH 突破追涨', en: 'ETH breakout', strategy: 'donchian', asset: 'ETH', tf: '1h' },
 		// Long EMAs suit gold's slow macro trends (50/200 = the classic golden-cross pair).
-		{ zh: 'GC 黄金趋势', en: 'Gold trend', strategy: 'honest_trend', asset: 'GC', tf: '1d', overrides: { ema_fast: 50, ema_slow: 200 } }
+		{ zh: 'GC 黄金趋势', en: 'Gold trend', strategy: 'honest_trend', asset: 'GC', tf: '1d', overrides: { ema_fast: 50, ema_slow: 200 } },
+		{ zh: '全天候组合', en: 'All Weather', strategy: 'master_portfolio', overrides: { preset: 'all_weather', rebalance_months: '3' } }
 	];
 
 	async function runPreset(p: Preset) {
 		onStrategyChange(p.strategy);
-		asset = p.asset;
-		tf = p.tf;
+		if (p.asset) asset = p.asset;
+		if (p.tf) tf = p.tf;
 		periodSel = 0; // presets always run full history (no period_years)
 		if (p.overrides) params = { ...params, ...p.overrides };
 		await submit();
@@ -251,9 +307,15 @@
 		return c ? `${en ? c.en : c.zh}(${c.sym})` : String(a);
 	}
 
-	// Plain-language title line for a job: '突破追涨 · BTC · 1h' ('—' when a field is absent).
+	// Plain-language title line for a job: '突破追涨 · BTC · 1h' ('—' when a field is absent);
+	// master_portfolio has no asset/tf → recipe name instead: '全天候(桥水风格) · 组合'.
 	function jobTitle(j: BacktestJob): string {
 		const p = j.params;
+		if (j.strategy === 'master_portfolio') {
+			const pp = PORTFOLIO_PRESETS[String(p.preset) as PortfolioPresetKey];
+			const name = pp ? (en ? pp.en : pp.zh) : String(p.preset ?? '—');
+			return `${name} · ${en ? 'portfolio' : '组合'}`;
+		}
 		return `${strategyName(j.strategy)} · ${assetLabel(p.asset)} · ${p.tf || '—'}`;
 	}
 
@@ -435,7 +497,7 @@
 		</div>
 
 		<!-- Read-only strategy preview so logged-out visitors see what's on offer. -->
-		<div class="mt-4 grid gap-3 sm:grid-cols-3">
+		<div class="mt-4 grid gap-3 sm:grid-cols-2">
 			{#each Object.keys(STRATEGIES) as s}
 				{@const c = STRATEGIES[s as StratKey]}
 				<div class="rounded-md border border-border p-4">
@@ -445,11 +507,19 @@
 					</div>
 					<p class="mt-1.5 text-xs text-muted-foreground">{en ? c.blurb[1] : c.blurb[0]}</p>
 					<div class="mt-2 flex flex-wrap gap-1">
-						{#each c.assets.slice(0, 4) as a}
-							<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{a}</span>
-						{/each}
-						{#if c.assets.length > 4}
-							<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+{c.assets.length - 4}</span>
+						{#if 'assets' in c}
+							{#each c.assets.slice(0, 4) as a}
+								<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{a}</span>
+							{/each}
+							{#if c.assets.length > 4}
+								<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+{c.assets.length - 4}</span>
+							{/if}
+						{:else}
+							<!-- master_portfolio: recipe names instead of tickers -->
+							{#each Object.values(PORTFOLIO_PRESETS).slice(0, 3) as pp (pp.zh)}
+								<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{en ? pp.en : pp.zh}</span>
+							{/each}
+							<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+2</span>
 						{/if}
 					</div>
 				</div>
@@ -519,7 +589,7 @@
 		<!-- One-click presets: fill the form with a recommended config and submit immediately. -->
 		<div class="mt-6">
 			<div class="text-xs font-medium text-muted-foreground">{en ? 'Recommended configs — one-click backtest' : '推荐配置 一键回测'}</div>
-			<div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+			<div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
 				{#each PRESETS as p}
 					<button type="button" onclick={() => runPreset(p)} disabled={busy}
 						class="rounded-md border border-border p-3 text-left hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50">
@@ -549,6 +619,7 @@
 				📖 {en ? cfg.explain[1] : cfg.explain[0]}
 			</div>
 			<div class="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+				{#if 'assets' in cfg}
 				<label class="text-xs">
 					<span class="text-muted-foreground">{en ? 'Asset' : '标的'}</span>
 					{#if strategy === 'honest_trend'}
@@ -612,6 +683,7 @@
 						{#each tfChoices as f}<option value={f}>{f}</option>{/each}
 					</select>
 				</label>
+				{/if}
 				<label class="text-xs">
 					<span class="text-muted-foreground">{en ? 'Data window' : '数据周期'}</span>
 					<select bind:value={periodSel} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
@@ -633,7 +705,7 @@
 						<span class="text-muted-foreground">{paramLabel(k)}</span>
 						{#if isChoice(p)}
 							<select bind:value={params[k]} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-								{#each p.choices as c}<option value={c}>{c}</option>{/each}
+								{#each p.choices as c}<option value={c}>{choiceLabel(k, c)}</option>{/each}
 							</select>
 						{:else}
 							<input type="number" bind:value={params[k]} min={p.min} max={p.max} step={p.step ?? 1}
@@ -642,6 +714,19 @@
 						{#if hint}<p class="mt-1 text-[10px] text-muted-foreground">{hint}</p>{/if}
 					</label>
 				{/each}
+				{#if selectedPreset}
+					<!-- Weights of the chosen recipe + honesty note (full-width row under the preset select). -->
+					<div class="col-span-2 sm:col-span-4">
+						<div class="flex flex-wrap gap-1">
+							{#each weightChips(selectedPreset.weights) as chip (chip)}
+								<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{chip}</span>
+							{/each}
+						</div>
+						<p class="mt-1 text-[10px] text-muted-foreground">
+							{en ? 'Unofficial replica · public recipe · trading costs not modeled' : '非官方复刻 · 公开配方 · 未计交易成本'}
+						</p>
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -691,6 +776,7 @@
 						{#if done && openId === j.id}
 							{@const m = r.metrics}
 							{@const chart = bigChart(r.equity_curve)}
+							{@const weights = portfolioWeights(m)}
 							<div class="border-t border-border bg-muted/20 px-3 py-4">
 								<!-- Title + generated honest summary — descriptive only, never advice. -->
 								<div class="text-sm font-medium text-foreground">{jobTitle(j)}</div>
@@ -739,11 +825,26 @@
 										<dd class="font-mono">{num(m.calmar)}</dd>
 										<p class="text-[10px] text-muted-foreground">{en ? 'annual return ÷ max DD; higher = steadier' : '年化收益 ÷ 最大回撤,越高越稳'}</p>
 									</div>
-									<div>
-										<dt class="text-muted-foreground">{en ? 'Trades' : '成交笔数'}</dt>
-										<dd class="font-mono">{num(m.trades)}</dd>
-										<p class="text-[10px] text-muted-foreground">{en ? 'too few = weak statistics' : '太少则统计意义有限'}</p>
-									</div>
+									{#if m.cagr_pct != null}
+										<div>
+											<dt class="text-muted-foreground">CAGR</dt>
+											<dd class="font-mono">{num(m.cagr_pct, '%')}</dd>
+											<p class="text-[10px] text-muted-foreground">{en ? 'compound annual growth' : '年化复合收益'}</p>
+										</div>
+									{/if}
+									{#if j.strategy === 'master_portfolio'}
+										<div>
+											<dt class="text-muted-foreground">{en ? 'Rebalances' : '再平衡次数'}</dt>
+											<dd class="font-mono">{num(m.trades)}</dd>
+											<p class="text-[10px] text-muted-foreground">{en ? 'times weights were reset to target' : '把比例调回目标的次数'}</p>
+										</div>
+									{:else}
+										<div>
+											<dt class="text-muted-foreground">{en ? 'Trades' : '成交笔数'}</dt>
+											<dd class="font-mono">{num(m.trades)}</dd>
+											<p class="text-[10px] text-muted-foreground">{en ? 'too few = weak statistics' : '太少则统计意义有限'}</p>
+										</div>
+									{/if}
 									{#if m.win_rate != null}
 										<div>
 											<dt class="text-muted-foreground">{en ? 'Win rate' : '胜率'}</dt>
@@ -767,6 +868,21 @@
 									{/if}
 								</dl>
 
+								<!-- Portfolio weights (master_portfolio rows: metrics.config.weights) -->
+								{#if weights}
+									<div class="mt-4">
+										<div class="text-xs font-medium text-muted-foreground">{en ? 'Weights' : '权重'}</div>
+										<div class="mt-1 flex flex-wrap gap-1">
+											{#each weightChips(weights) as chip (chip)}
+												<span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{chip}</span>
+											{/each}
+										</div>
+										<p class="mt-1 text-[10px] text-muted-foreground">
+											{en ? 'Unofficial replica · public recipe · trading costs not modeled' : '非官方复刻 · 公开配方 · 未计交易成本'}
+										</p>
+									</div>
+								{/if}
+
 								<!-- Full config -->
 								<div class="mt-4">
 									<div class="text-xs font-medium text-muted-foreground">{en ? 'Config' : '配置'}</div>
@@ -784,16 +900,19 @@
 									</dl>
 								</div>
 
-								<!-- Turn this exact config into a live signal alert -->
-								<div class="mt-4 flex flex-wrap items-center gap-3">
-									<button type="button" onclick={() => toSignal(j)} disabled={sigBusy === j.id}
-										class="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted/30 disabled:opacity-50">
-										🔔 {en ? 'Turn into a live signal' : '变成实时信号'}
-									</button>
-									{#if sigMsg[j.id]}
-										<span class="text-xs {sigMsg[j.id].ok ? 'text-emerald-600' : 'text-red-600'}">{sigMsg[j.id].text}</span>
-									{/if}
-								</div>
+								<!-- Turn this exact config into a live signal alert. master_portfolio has no
+								     sensible signal mapping (fixed-weight, no entries/exits) — button hidden. -->
+								{#if j.strategy !== 'master_portfolio'}
+									<div class="mt-4 flex flex-wrap items-center gap-3">
+										<button type="button" onclick={() => toSignal(j)} disabled={sigBusy === j.id}
+											class="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted/30 disabled:opacity-50">
+											🔔 {en ? 'Turn into a live signal' : '变成实时信号'}
+										</button>
+										{#if sigMsg[j.id]}
+											<span class="text-xs {sigMsg[j.id].ok ? 'text-emerald-600' : 'text-red-600'}">{sigMsg[j.id].text}</span>
+										{/if}
+									</div>
+								{/if}
 							</div>
 						{/if}
 					</div>

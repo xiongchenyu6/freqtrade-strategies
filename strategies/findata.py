@@ -230,3 +230,53 @@ def _symbol_set() -> set[str] | None:
         _SYMBOLS_CACHE.write_text(json.dumps({"ts": time.time(), "symbols": syms}))
         return set(syms)
     return None
+
+
+# ---------- Yahoo fallback channel (ETFs: findata's free tier has no /etf-prices) ----------
+_YAHOO = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=15y&interval=1d"
+_YHDRS = {"User-Agent": "Mozilla/5.0 (quant portfolio engine)"}
+
+
+def closes_yahoo(symbol: str) -> list[tuple[int, float]]:
+    """[(unix_ms, close)] oldest→newest from Yahoo (15y daily) — used for ETFs (SPY/TLT/...)
+    which the findata free tier doesn't serve. Daily disk cache, same shape as closes_us."""
+    symbol = symbol.upper().strip()
+    if not symbol.isalnum():
+        return []
+    cache = _CACHE_DIR / f"YF_{symbol}_1d.json"
+    try:
+        c = json.loads(cache.read_text())
+        if c.get("date") == _today():
+            return [tuple(x) for x in c["bars"]]
+    except Exception:
+        pass
+    try:
+        r = requests.get(_YAHOO.format(sym=symbol), headers=_YHDRS, timeout=20)
+        r.raise_for_status()
+        res = r.json()["chart"]["result"][0]
+        ts, close = res["timestamp"], res["indicators"]["quote"][0]["close"]
+        out = sorted((int(t) * 1000, float(c)) for t, c in zip(ts, close) if c is not None)
+    except Exception:
+        try:
+            c = json.loads(cache.read_text())
+            return [tuple(x) for x in c.get("bars", [])]
+        except Exception:
+            return []
+    now = datetime.now(timezone.utc)
+    if out and out[-1][0] >= int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000) and now.hour < 21:
+        out = out[:-1]
+    if out:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps({"date": _today(), "bars": out}))
+    return out
+
+
+def closes_any(symbol: str, min_bars: int = 600) -> list[tuple[int, float]]:
+    """Best-source daily closes: findata stocks → findata commodities → Yahoo (ETFs)."""
+    symbol = symbol.upper().strip()
+    if symbol in COMMODITIES:
+        return closes_commodity(symbol, min_bars=min_bars)
+    bars = closes_us(symbol, min_bars=min_bars)
+    if bars:
+        return bars
+    return closes_yahoo(symbol)
