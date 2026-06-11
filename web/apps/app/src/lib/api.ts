@@ -16,7 +16,8 @@ import type {
 	PublicStats,
 	NautilusBacktest,
 	SemiTicker,
-	SemiGroup
+	SemiGroup,
+	AccountSnapshot
 } from './types';
 import { getToken } from './auth';
 
@@ -65,6 +66,11 @@ export const vps = {
 		req<SemiTicker[]>(CONFIG.API_BASE, '/semi_universe', { order: 'ret_3m.desc.nullslast' }, f),
 	semiGroups: (f: Fetch = fetch) =>
 		req<SemiGroup[]>(CONFIG.API_BASE, '/semi_groups', {}, f),
+
+	// Daily NetLiq snapshots of our own paper/testnet accounts (public — the verifiable
+	// equity-curve artifact; see migration 022 + strategies/account_snapshot.py).
+	accountSnapshots: (f: Fetch = fetch) =>
+		req<AccountSnapshot[]>(CONFIG.API_BASE, '/account_snapshots', { order: 'snap_date.asc' }, f),
 
 	publicOhlcDaily: (
 		f: Fetch = fetch,

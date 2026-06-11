@@ -164,6 +164,18 @@ export interface SemiGroup {
 	updated_at: string;
 }
 
+// Daily NetLiq snapshot of our own paper/testnet accounts (api.account_snapshots —
+// public, the verifiable equity-curve artifact).
+export interface AccountSnapshot {
+	snap_date: string;
+	account: string;
+	asset_class: 'equity' | 'crypto';
+	environment: string;
+	net_liq: number;
+	currency: string;
+	ts: string;
+}
+
 export interface WfResult {
 	id: number;
 	run_date: string;
