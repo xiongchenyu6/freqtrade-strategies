@@ -1,0 +1,13 @@
+[Unit]
+# Daily NetLiq snapshot of our real (paper/testnet) accounts → quant.account_snapshots.
+# Read-only IB client id 9; the public api.account_snapshots view feeds the dashboard's
+# verifiable equity curve. Runs on the nautilus venv (ibapi + psycopg2).
+Description=Quant daily account NetLiq snapshot (verifiable equity curve)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/freeman.xiong/Documents/github/public/quant
+EnvironmentFile=%h/.config/quant/backtest-runner.env
+Environment=PATH=/run/current-system/sw/bin:/usr/bin:/bin
+ExecStart=/home/freeman.xiong/Documents/github/public/quant/nautilus_equity/.venv/bin/python strategies/account_snapshot.py
