@@ -5,7 +5,7 @@
 import { CONFIG } from './config';
 import { getToken } from './auth';
 
-export type Strategy = 'honest_trend' | 'accumulator' | 'donchian';
+export type Strategy = 'honest_trend' | 'accumulator' | 'donchian' | 'master_portfolio';
 export type JobStatus = 'queued' | 'running' | 'done' | 'error';
 
 export interface BacktestJob {
@@ -58,6 +58,41 @@ export const COMMODITY_ASSETS = [
 	{ sym: 'ZS', zh: '大豆', en: 'Soybeans' },
 	{ sym: 'ZC', zh: '玉米', en: 'Corn' }
 ] as const;
+
+// Master-portfolio preset display data. The weights are PUBLIC recipes (books/whitepapers) —
+// unofficial replicas (非官方复刻); keep in lockstep with the runner's preset table.
+export const PORTFOLIO_PRESETS = {
+	all_weather: {
+		zh: '全天候(桥水风格)',
+		en: 'All Weather (Bridgewater-style)',
+		weights: { SPY: 30, TLT: 40, IEF: 15, GLD: 7.5, DBC: 7.5 }
+	},
+	permanent: {
+		zh: '永久组合(Harry Browne)',
+		en: 'Permanent (Harry Browne)',
+		weights: { SPY: 25, TLT: 25, GLD: 25, BIL: 25 }
+	},
+	sixty_forty: { zh: '经典 60/40', en: 'Classic 60/40', weights: { SPY: 60, TLT: 40 } },
+	buffett_90_10: { zh: '巴菲特 90/10', en: 'Buffett 90/10', weights: { SPY: 90, BIL: 10 } },
+	golden_butterfly: {
+		zh: '金蝴蝶',
+		en: 'Golden Butterfly',
+		weights: { SPY: 20, IWN: 20, TLT: 20, SHY: 20, GLD: 20 }
+	}
+} as const;
+export type PortfolioPresetKey = keyof typeof PORTFOLIO_PRESETS;
+
+// ETF → asset-class label for the weight chips ('SPY 美股大盘 30%').
+export const PORTFOLIO_COMPONENTS: Record<string, readonly [zh: string, en: string]> = {
+	SPY: ['美股大盘', 'US equities'],
+	TLT: ['长期美债', 'Long-term Treasuries'],
+	IEF: ['中期美债', 'Intermediate Treasuries'],
+	GLD: ['黄金', 'Gold'],
+	DBC: ['商品', 'Commodities'],
+	BIL: ['现金类', 'Cash-like'],
+	SHY: ['短债', 'Short-term Treasuries'],
+	IWN: ['小盘价值', 'Small-cap value']
+};
 
 // Display metadata per strategy (plain-language layer — keys/params are the runner contract
 // and stay unchanged): `name` is the 白话名, `tech` the technical label, `explain` a one-
@@ -139,6 +174,34 @@ export const STRATEGIES = {
 			base_buy_usd: { min: 10, max: 100000, default: 500 }, // USD per scheduled buy
 			interval_bars: { min: 1, max: 90, default: 7 }, // days between buys (1d bars)
 			mode: { choices: ['smart', 'naive'], default: 'smart' } // smart = fear+dip boosted
+		}
+	},
+	// Hedge-fund-style fixed-weight allocations (All Weather / Permanent / 60-40 / 90-10 /
+	// Golden Butterfly). Multi-asset daily — no asset/tf params (noAsset); results carry
+	// config.weights + cagr_pct, and `trades` is the rebalance count.
+	master_portfolio: {
+		label: 'Master portfolios (asset allocation)',
+		name: ['大师组合复刻', 'Master allocations'] as const,
+		tech: 'Asset Allocation',
+		explain: [
+			'把钱按固定比例分到股/债/金/商品,定期再平衡。桥水全天候等大师配方的公开版本复刻(非官方)。它不追求暴利 —— 看点是回撤:2022 股债双杀这种年份谁还活着。',
+			'Fixed weights across stocks/bonds/gold/commodities, rebalanced periodically. Unofficial replicas of public recipes; the point is drawdown behavior, not moonshots.'
+		] as const,
+		paramHints: {
+			preset: ['选一个公开配方,下方显示权重', 'pick a public recipe'],
+			rebalance_months: ['每隔几个月把比例调回目标(1/3/12)', 'months between rebalances']
+		},
+		blurb: [
+			'全天候、永久组合、60/40 等公开配方的忠实复刻 —— 不择时,赚"资产互补"的钱',
+			'Faithful replicas of public allocation recipes — no timing, diversification does the work'
+		] as const,
+		noAsset: true, // portfolio is multi-asset daily — the form hides asset/tf controls
+		params: {
+			preset: {
+				choices: ['all_weather', 'permanent', 'sixty_forty', 'buffett_90_10', 'golden_butterfly'],
+				default: 'all_weather'
+			},
+			rebalance_months: { choices: ['1', '3', '12'], default: '3' }
 		}
 	}
 } as const;

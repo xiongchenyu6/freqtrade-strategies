@@ -171,6 +171,97 @@ def _run_dca_generic(p: dict) -> dict:
     }
 
 
+# Classic public allocation recipes — faithful UNOFFICIAL replicas (weights are public
+# knowledge; commodities legs use liquid ETF proxies). Keep in lockstep with web STRATEGIES.
+PORTFOLIO_PRESETS = {
+    "all_weather":      {"zh": "全天候(桥水风格)",   "weights": {"SPY": 30, "TLT": 40, "IEF": 15, "GLD": 7.5, "DBC": 7.5}},
+    "permanent":        {"zh": "永久组合(Browne)",   "weights": {"SPY": 25, "TLT": 25, "GLD": 25, "BIL": 25}},
+    "sixty_forty":      {"zh": "经典 60/40",          "weights": {"SPY": 60, "TLT": 40}},
+    "buffett_90_10":    {"zh": "巴菲特 90/10",        "weights": {"SPY": 90, "BIL": 10}},
+    "golden_butterfly": {"zh": "金蝴蝶",              "weights": {"SPY": 20, "IWN": 20, "TLT": 20, "SHY": 20, "GLD": 20}},
+}
+
+
+def _validate_portfolio(params: dict) -> dict:
+    preset = str(params.get("preset", "all_weather"))
+    if preset not in PORTFOLIO_PRESETS:
+        raise ValueError(f"preset must be one of {sorted(PORTFOLIO_PRESETS)}")
+    reb = int(params.get("rebalance_months", 3))
+    if reb not in (1, 3, 12):
+        raise ValueError("rebalance_months must be 1, 3 or 12")
+    return {"preset": preset, "rebalance_months": reb,
+            "period_years": _validate_period_years(params)}
+
+
+def run_master_portfolio(params: dict) -> dict:
+    """Fixed-weight multi-asset portfolio with periodic rebalancing — transparent
+    arithmetic on daily closes (findata + Yahoo ETF channel). No timing, no costs
+    (stated in the UI); metrics mirror the single-asset engines."""
+    import math
+    from datetime import datetime, timezone
+
+    import findata
+
+    p = _validate_portfolio(params)
+    weights = PORTFOLIO_PRESETS[p["preset"]]["weights"]
+
+    series = {}
+    for sym in weights:
+        bars = findata.closes_any(sym, min_bars=4000)
+        if not bars:
+            raise ValueError(f"missing data for component {sym}")
+        series[sym] = dict(bars)
+    common = sorted(set.intersection(*(set(s.keys()) for s in series.values())))
+    if p["period_years"]:
+        cutoff = common[-1] - int(p["period_years"] * 365.25 * 86400 * 1000)
+        common = [t for t in common if t >= cutoff]
+    if len(common) < 252:
+        raise ValueError("window too short — need at least ~1 year of overlapping data")
+
+    start_cash = 100_000.0
+    units = {sym: (start_cash * w / 100) / series[sym][common[0]] for sym, w in weights.items()}
+    curve = []
+    rebalances = 0
+    last_reb_month = None
+    for ts in common:
+        dt = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+        value = sum(units[sym] * series[sym][ts] for sym in weights)
+        month_idx = dt.year * 12 + dt.month
+        if last_reb_month is None:
+            last_reb_month = month_idx
+        elif month_idx - last_reb_month >= p["rebalance_months"]:
+            units = {sym: (value * w / 100) / series[sym][ts] for sym, w in weights.items()}
+            rebalances += 1
+            last_reb_month = month_idx
+        curve.append(round(value, 2))
+
+    final = curve[-1]
+    ret = final / start_cash - 1
+    peak = curve[0]; mdd = 0.0
+    for v in curve:
+        peak = max(peak, v)
+        mdd = max(mdd, (peak - v) / peak if peak > 0 else 0.0)
+    rets = [curve[i] / curve[i - 1] - 1 for i in range(1, len(curve)) if curve[i - 1] > 0]
+    mean = sum(rets) / len(rets)
+    sd = math.sqrt(sum((r - mean) ** 2 for r in rets) / (len(rets) - 1)) if len(rets) > 1 else 0.0
+    sharpe = (mean / sd) * math.sqrt(252) if sd else 0.0
+    years = max((common[-1] - common[0]) / (365.25 * 86400 * 1000), 1e-9)
+    cagr = (final / start_cash) ** (1 / years) - 1 if final > 0 else -1.0
+    calmar = cagr / mdd if mdd > 0 else None
+    d = lambda ms: str(datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date())
+    return {
+        "return_pct": round(ret * 100, 2),
+        "max_dd_pct": round(mdd * 100, 2),
+        "sharpe": round(sharpe, 2),
+        "calmar": (round(calmar, 2) if calmar is not None else None),
+        "trades": rebalances,
+        "cagr_pct": round(cagr * 100, 2),
+        "period_start": d(common[0]), "period_end": d(common[-1]),
+        "config": {**p, "weights": weights},
+        "equity_curve": _downsample(curve),
+    }
+
+
 # --------------------------------------------------------------------------- strategy dispatch
 _CATALOG = None  # lazy ParquetDataCatalog
 
@@ -269,6 +360,7 @@ def run_donchian(params: dict) -> dict:
 
 DISPATCH = {
     "honest_trend": run_honest_trend,
+    "master_portfolio": run_master_portfolio,
     "accumulator": run_accumulator,
     "donchian": run_donchian,
 }
