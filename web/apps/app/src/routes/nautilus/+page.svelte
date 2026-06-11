@@ -1,12 +1,37 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { NautilusTrade } from '$lib/types';
+	import type { NautilusTrade, AccountSnapshot } from '$lib/types';
 	import { fmtPct, fmtTime, fmtUSD } from '$lib/utils';
 	import type { Lang } from '$lib/i18n';
 
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>((data as { lang?: Lang }).lang ?? 'zh');
 	const trades = $derived<NautilusTrade[]>(data.trades ?? []);
+	const snapshots = $derived<AccountSnapshot[]>(
+		(data as { snapshots?: AccountSnapshot[] }).snapshots ?? []
+	);
+	// One curve per account; render once >=2 points exist, else an honest "accumulating" note.
+	const snapByAccount = $derived.by(() => {
+		const m = new Map<string, AccountSnapshot[]>();
+		for (const s of snapshots) {
+			if (!m.has(s.account)) m.set(s.account, []);
+			m.get(s.account)!.push(s);
+		}
+		return [...m.entries()];
+	});
+	function curvePath(pts: AccountSnapshot[], w = 560, h = 90, pad = 8): string {
+		const vals = pts.map((p) => p.net_liq);
+		const lo = Math.min(...vals);
+		const hi = Math.max(...vals);
+		const span = hi - lo || 1;
+		return pts
+			.map((p, i) => {
+				const x = pad + (i / Math.max(1, pts.length - 1)) * (w - pad * 2);
+				const y = pad + (1 - (p.net_liq - lo) / span) * (h - pad * 2);
+				return `${x.toFixed(1)},${y.toFixed(1)}`;
+			})
+			.join(' ');
+	}
 	const open = $derived(trades.filter((t) => !t.close_date));
 	const closed = $derived(trades.filter((t) => t.close_date));
 
@@ -36,6 +61,62 @@
 			'Live positions from the NautilusTrader engine (accumulator + Donchian trend), separate from the freqtrade feed.'
 		)}
 	</p>
+
+	<!-- Verifiable real-account equity curve: daily NetLiq snapshots, platform-recorded
+	     (screenshots can be faked; this series cannot). -->
+	<section class="mb-6 rounded-xl border bg-card p-4">
+		<div class="mb-1 flex items-baseline justify-between">
+			<h2 class="text-sm font-semibold text-foreground">
+				{tr('真实账户净值(每日快照)', 'Real account NetLiq (daily snapshots)')}
+			</h2>
+			<span class="text-[10px] uppercase text-muted-foreground">
+				{tr('平台自动记录 · 不可伪造', 'platform-recorded · unfakeable')}
+			</span>
+		</div>
+		{#if snapshots.length === 0}
+			<p class="text-xs text-muted-foreground">
+				{tr('快照服务已启动,首个数据点今晚记录。', 'Snapshot service armed; first point lands tonight.')}
+			</p>
+		{:else}
+			{#each snapByAccount as [account, pts]}
+				<div class="mt-2">
+					<div class="flex items-baseline justify-between text-xs">
+						<span class="font-mono text-muted-foreground">{account} · {pts[0].environment}</span>
+						<span class="font-mono tabular-nums text-foreground">
+							{pts[pts.length - 1].net_liq.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+							{pts[pts.length - 1].currency}
+							{#if pts.length >= 2}
+								{@const chg = (pts[pts.length - 1].net_liq / pts[0].net_liq - 1) * 100}
+								<span class={chg >= 0 ? 'text-green-400' : 'text-red-400'}>
+									({chg >= 0 ? '+' : ''}{chg.toFixed(2)}%)
+								</span>
+							{/if}
+						</span>
+					</div>
+					{#if pts.length >= 2}
+						<svg viewBox="0 0 560 90" class="mt-1 h-[90px] w-full">
+							<polyline
+								points={curvePath(pts)}
+								fill="none"
+								stroke={pts[pts.length - 1].net_liq >= pts[0].net_liq ? 'rgb(74 222 128)' : 'rgb(248 113 113)'}
+								stroke-width="1.5"
+							/>
+						</svg>
+						<div class="flex justify-between text-[10px] text-muted-foreground">
+							<span>{pts[0].snap_date}</span><span>{pts[pts.length - 1].snap_date}</span>
+						</div>
+					{:else}
+						<p class="mt-1 text-xs text-muted-foreground">
+							{tr(
+								`第 1 天 · 每天 09:07 自动记录,攒够两个点就出曲线。起点 ${pts[0].net_liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${pts[0].currency}(${pts[0].snap_date})。`,
+								`Day 1 · recorded daily at 09:07 SGT; the curve appears at two points. Start ${pts[0].net_liq.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${pts[0].currency} (${pts[0].snap_date}).`
+							)}
+						</p>
+					{/if}
+				</div>
+			{/each}
+		{/if}
+	</section>
 
 	{#if trades.length === 0}
 		<div class="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
