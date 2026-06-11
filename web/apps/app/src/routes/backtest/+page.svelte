@@ -39,6 +39,8 @@
 	let asset = $state<string>(STRATEGIES.honest_trend.assets[0]);
 	let tf = $state<string>(STRATEGIES.honest_trend.timeframes[0]);
 	let params = $state<Record<string, number | string>>(seedParams('honest_trend'));
+	// Data window: 0 = 全部历史 (omit period_years from the payload); 1/2/3/5 = trailing years.
+	let periodSel = $state(0);
 
 	// honest_trend accepts ANY US ticker (runner validates against its ~9.5k-symbol list
 	// server-side); the suggested trio additionally has hourly bars, everything else is 1d.
@@ -182,7 +184,12 @@
 		busy = true;
 		err = '';
 		try {
-			await submitBacktest(strategy as Strategy, { asset, tf, ...params }, $user.sub);
+			// period_years goes in ONLY for a trailing window — 全部历史 omits the key entirely.
+			await submitBacktest(
+				strategy as Strategy,
+				{ asset, tf, ...params, ...(periodSel > 0 ? { period_years: periodSel } : {}) },
+				$user.sub
+			);
 			track('backtest_submit');
 			await refresh();
 		} catch (e) {
@@ -212,6 +219,7 @@
 		onStrategyChange(p.strategy);
 		asset = p.asset;
 		tf = p.tf;
+		periodSel = 0; // presets always run full history (no period_years)
 		if (p.overrides) params = { ...params, ...p.overrides };
 		await submit();
 	}
@@ -240,6 +248,14 @@
 			.map(([k, v]) => `${k}=${v}`)
 			.join(' ');
 		return rest ? `${j.strategy} · ${rest}` : j.strategy;
+	}
+
+	// Collapsed-row data window: '2017-08→2026-06' from metrics.period_start/_end;
+	// null when either bound is missing (legacy rows — the runner only added them later).
+	function periodRange(m: BacktestResult['metrics']): string | null {
+		return m.period_start && m.period_end
+			? `${m.period_start.slice(0, 7)}→${m.period_end.slice(0, 7)}`
+			: null;
 	}
 
 	// '2023-06 → 2026-06' → 3 (years, 1 decimal); null when period is missing/unparseable.
@@ -526,6 +542,21 @@
 						{#each tfChoices as f}<option value={f}>{f}</option>{/each}
 					</select>
 				</label>
+				<label class="text-xs">
+					<span class="text-muted-foreground">{en ? 'Data window' : '数据周期'}</span>
+					<select bind:value={periodSel} class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+						<option value={0}>{en ? 'Full history' : '全部历史'}</option>
+						<option value={5}>{en ? 'Last 5 years' : '最近 5 年'}</option>
+						<option value={3}>{en ? 'Last 3 years' : '最近 3 年'}</option>
+						<option value={2}>{en ? 'Last 2 years' : '最近 2 年'}</option>
+						<option value={1}>{en ? 'Last 1 year' : '最近 1 年'}</option>
+					</select>
+					<p class="mt-1 text-[10px] text-muted-foreground">
+						{en
+							? 'Short windows show recent fit; long windows span bull AND bear.'
+							: '回测覆盖的历史范围 —— 短窗口看近况,长窗口看穿牛熊'}
+					</p>
+				</label>
 				{#each Object.entries(cfg.params as Record<string, AnyParam>) as [k, p]}
 					{@const hint = paramHint(k)}
 					<label class="text-xs">
@@ -565,7 +596,9 @@
 						<button type="button" onclick={() => done && toggle(j.id)}
 							class="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-left {done ? 'cursor-pointer hover:bg-muted/30' : 'cursor-default'}">
 							<span class="flex min-w-0 flex-col">
-								<span class="text-xs font-medium text-foreground">{jobTitle(j)}</span>
+								<span class="text-xs font-medium text-foreground">
+									{jobTitle(j)}{#if done}{@const prange = periodRange(r.metrics)}{#if prange}<span class="font-normal text-muted-foreground"> · {prange}</span>{/if}{/if}
+								</span>
 								<span class="font-mono text-[10px] text-muted-foreground">{jobConfig(j)}</span>
 							</span>
 							<span class="rounded border px-1.5 py-0.5 text-[10px] {badge(j.status)}">{j.status}</span>
@@ -647,7 +680,16 @@
 											<dd class="font-mono">{num(m.win_rate, '%')}</dd>
 										</div>
 									{/if}
-									{#if m.period != null}
+									{#if m.period_start && m.period_end}
+										<div class="col-span-2">
+											<dt class="text-muted-foreground">{en ? 'Period' : '区间'}</dt>
+											<dd class="font-mono">{m.period_start} → {m.period_end}</dd>
+											<p class="text-[10px] text-muted-foreground">
+												{en ? "spans bull and bear or it doesn't count" : '数据起止 —— 跨越牛熊才算数'}
+											</p>
+										</div>
+									{:else if m.period != null}
+										<!-- Legacy rows: only the coarse month-level period string exists. -->
 										<div class="col-span-2">
 											<dt class="text-muted-foreground">{en ? 'Period' : '区间'}</dt>
 											<dd class="font-mono">{m.period}</dd>

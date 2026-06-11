@@ -37,7 +37,7 @@ _START_BALANCE = 100_000
 _VIX_CSV = _HERE.parent / "data" / "vix_history.csv"
 
 
-def run_any(symbol: str, ema_fast: int, ema_slow: int) -> dict:
+def run_any(symbol: str, ema_fast: int, ema_slow: int, since_years: float | None = None) -> dict:
     """Daily-bar HonestTrend backtest for an arbitrary US symbol. Raises ValueError on
     missing/short data (the runner surfaces the message to the user)."""
     import findata
@@ -51,6 +51,11 @@ def run_any(symbol: str, ema_fast: int, ema_slow: int) -> dict:
     df = pd.DataFrame(rows)
     df["timestamp"] = pd.to_datetime(df["date"], utc=True)
     df = df.set_index("timestamp")[["open", "high", "low", "close", "volume"]].astype(float)
+    if since_years:
+        # Trailing N-year window anchored to the last bar.
+        df = df[df.index >= df.index[-1] - pd.Timedelta(days=since_years * 365.25)]
+        if len(df) < ema_slow + 50:
+            raise ValueError(f"{symbol}: window too short for ema_slow={ema_slow} — pick a longer 数据周期")
 
     instrument = TestInstrumentProvider.equity(symbol=symbol, venue="NASDAQ")
     engine = BacktestEngine(config=BacktestEngineConfig(logging=LoggingConfig(bypass_logging=True)))
@@ -118,6 +123,8 @@ def run_any(symbol: str, ema_fast: int, ema_slow: int) -> dict:
         "calmar": calmar,
         "curve": curve,
         "period": f"{df.index[0].date()} → {df.index[-1].date()}",
+        "period_start": str(df.index[0].date()),
+        "period_end": str(df.index[-1].date()),
     }
     engine.dispose()
     return result
