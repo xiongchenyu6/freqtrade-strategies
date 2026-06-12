@@ -7,6 +7,30 @@
 	let { data }: { data: PageData } = $props();
 	const lang = $derived<Lang>(data.lang ?? 'zh');
 
+	// --- 市场压力指数 (explainable composite; see strategies/stress_index.py) ---
+	const stress = $derived(data.stress);
+	let stressOpen = $state(false);
+
+	const STRESS_LABEL_EN: Record<string, string> = {
+		平静: 'Calm',
+		正常: 'Normal',
+		紧张: 'Tense',
+		高压: 'High stress'
+	};
+	const STRESS_COMP_NAME: Record<string, { zh: string; en: string }> = {
+		fng: { zh: '恐惧贪婪指数', en: 'Fear & Greed' },
+		vix: { zh: 'VIX 恐慌指数', en: 'VIX' },
+		funding: { zh: 'BTC 资金费率', en: 'BTC funding' },
+		breadth: { zh: '美股宽度', en: 'US breadth' }
+	};
+
+	function stressColor(score: number): string {
+		if (score < 25) return 'var(--profit)';
+		if (score < 50) return 'var(--dawn-500)';
+		if (score < 75) return 'var(--warn)';
+		return 'var(--loss)';
+	}
+
 	type TabSymbol = 'BTC' | 'ETH';
 	let activeTab = $state<TabSymbol>('BTC');
 
@@ -152,6 +176,71 @@
 				</p>
 			{/if}
 		</div>
+
+		<!-- 市场压力指数 — explainable composite, never a black box -->
+		{#if stress}
+			<div class="mb-6 rounded-xl border border-border bg-card px-6 py-4">
+				<div class="flex flex-wrap items-center justify-between gap-3">
+					<div class="flex items-center gap-4">
+						<div>
+							<span class="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+								{lang === 'en' ? 'Market stress index' : '市场压力指数'}
+							</span>
+							<div class="mt-1 flex items-baseline gap-2">
+								<span class="text-3xl font-bold" style="color: {stressColor(stress.stress_score)}">
+									{stress.stress_score.toFixed(0)}
+								</span>
+								<span class="text-sm font-semibold" style="color: {stressColor(stress.stress_score)}">
+									{lang === 'en' ? (STRESS_LABEL_EN[stress.label] ?? stress.label) : stress.label}
+								</span>
+							</div>
+						</div>
+						<div class="hidden h-2 w-40 overflow-hidden rounded-full bg-secondary sm:block">
+							<div
+								class="h-full rounded-full transition-all"
+								style="width: {stress.stress_score}%; background: {stressColor(stress.stress_score)}"
+							></div>
+						</div>
+					</div>
+					<button
+						type="button"
+						class="text-xs text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
+						onclick={() => (stressOpen = !stressOpen)}
+					>
+						{stressOpen
+							? lang === 'en'
+								? 'Hide how it’s computed'
+								: '收起计算明细'
+							: lang === 'en'
+								? 'How is this computed?'
+								: '这个数怎么算的？'}
+					</button>
+				</div>
+				{#if stressOpen}
+					<div class="mt-4 grid gap-2 sm:grid-cols-2">
+						{#each Object.entries(stress.components) as [key, c] (key)}
+							<div class="rounded-lg border border-border bg-secondary/40 px-3 py-2 text-xs">
+								<div class="flex items-center justify-between">
+									<span class="font-semibold text-foreground">
+										{lang === 'en' ? (STRESS_COMP_NAME[key]?.en ?? key) : (STRESS_COMP_NAME[key]?.zh ?? key)}
+									</span>
+									<span class="text-muted-foreground">
+										{lang === 'en' ? 'raw' : '原始值'} {c.raw} →
+										<span class="font-semibold" style="color: {stressColor(c.score)}">{c.score.toFixed(0)}</span>
+									</span>
+								</div>
+								<p class="mt-1 text-muted-foreground">{c.note}</p>
+							</div>
+						{/each}
+					</div>
+					<p class="mt-3 text-xs text-muted-foreground">
+						{lang === 'en'
+							? `Composite = plain mean of available sub-scores (0 = calm, 100 = high stress). Hourly. Updated ${fmtSnapshotTime(stress.ts)} UTC. Not investment advice.`
+							: `综合分 = 各分项的简单平均（0=平静，100=高压），每小时更新，最近一次 ${fmtSnapshotTime(stress.ts)} UTC。仅为数据汇总，不构成投资建议。`}
+					</p>
+				{/if}
+			</div>
+		{/if}
 
 		<!-- Asset tab switcher -->
 		<div class="mb-8 flex gap-2">

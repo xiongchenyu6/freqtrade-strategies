@@ -18,7 +18,8 @@ import type {
 	SemiTicker,
 	SemiGroup,
 	AccountSnapshot,
-	NewsItem
+	NewsItem,
+	MarketStress
 } from './types';
 import { getToken } from './auth';
 
@@ -94,6 +95,11 @@ export const vps = {
 		if (category) params.category = `eq.${category}`;
 		return req<NewsItem[]>(CONFIG.API_BASE, '/news_items', params, f);
 	},
+
+	// 市场压力指数 — hourly explainable composite (anon-accessible; view is ts DESC,
+	// 90-day window). limit=1 → latest reading; larger limit → recent history.
+	marketStress: (f: Fetch = fetch, { limit = 1 }: { limit?: number } = {}) =>
+		req<MarketStress[]>(CONFIG.API_BASE, '/market_stress', { limit }, f),
 
 	publicEventTriggers: (f: Fetch = fetch, { limit = 500 }: { limit?: number } = {}) =>
 		req<EventDcaTrigger[]>(

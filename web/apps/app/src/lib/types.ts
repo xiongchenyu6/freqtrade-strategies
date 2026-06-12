@@ -210,6 +210,15 @@ export interface NewsItem {
 	link: string;
 }
 
+// 市场压力指数 (api.market_stress) — explainable composite; components carries every
+// input's raw value, 0-100 subscore and the mapping note (never a black box).
+export interface MarketStress {
+	ts: string;
+	stress_score: number;
+	label: '平静' | '正常' | '紧张' | '高压' | string;
+	components: Record<string, { raw: number; score: number; note: string }>;
+}
+
 // Supabase-side events
 export interface KolEvent {
 	id: number;
