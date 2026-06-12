@@ -26,6 +26,34 @@
 		return news.filter((n) => SOURCE_HQ[n.source] === c.city).slice(0, 12);
 	});
 
+	function selectCity(c: NewsCity | null) {
+		selectedCity = c;
+		// The result lands in the side panel — below the fold on mobile. Bring it
+		// into view so the click visibly does something.
+		if (c) {
+			requestAnimationFrame(() =>
+				document.getElementById('globe-city-news')?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest'
+				})
+			);
+		}
+	}
+
+	// Clicking an exchange pin flashes its row in the sessions list.
+	let highlightedExchange = $state<string | null>(null);
+	let highlightTimer: ReturnType<typeof setTimeout> | undefined;
+	function selectExchange(id: string) {
+		highlightedExchange = id;
+		clearTimeout(highlightTimer);
+		highlightTimer = setTimeout(() => (highlightedExchange = null), 2500);
+		requestAnimationFrame(() =>
+			document
+				.getElementById(`globe-ex-${id}`)
+				?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+		);
+	}
+
 	function newsAgo(iso: string): string {
 		const t = new Date(iso).getTime();
 		if (!Number.isFinite(t)) return iso?.slice(0, 10) ?? '';
@@ -68,9 +96,27 @@
 		     WebGL canvas (inserted at window.innerWidth before being resized) would otherwise
 		     blow the 1fr column past the viewport and push the side panel off-screen. -->
 		<div
-			class="h-[420px] min-w-0 overflow-hidden rounded-xl border border-border bg-card sm:h-[560px]"
+			class="relative h-[420px] min-w-0 overflow-hidden rounded-xl border border-border bg-card sm:h-[560px]"
 		>
-			<MarketGlobe {news} {lang} onselectcity={(c) => (selectedCity = c)} />
+			<MarketGlobe {news} {lang} onselectcity={selectCity} onselectexchange={selectExchange} />
+			<!-- Legend: tells users the pins are clickable and what colors mean -->
+			<div
+				class="pointer-events-none absolute bottom-3 left-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border/60 bg-card/80 px-2.5 py-1.5 text-[10px] text-muted-foreground backdrop-blur-sm"
+			>
+				<span class="inline-flex items-center gap-1">
+					<span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+					{tr('开市', 'Open')}
+				</span>
+				<span class="inline-flex items-center gap-1">
+					<span class="inline-block h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+					{tr('休市', 'Closed')}
+				</span>
+				<span class="inline-flex items-center gap-1">
+					<span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+					{tr('快讯来源', 'News source')}
+				</span>
+				<span class="text-muted-foreground/70">{tr('点击标记查看详情', 'Click a pin')}</span>
+			</div>
 		</div>
 
 		<!-- Side panel -->
@@ -81,7 +127,13 @@
 					{#each EXCHANGES as ex (ex.id)}
 						{@const open = isOpen(ex, now)}
 						{@const clock = localClock(ex.tz, now)}
-						<li class="flex items-center gap-3 py-2 text-sm">
+						<li
+							id="globe-ex-{ex.id}"
+							class="flex items-center gap-3 rounded-md py-2 text-sm transition-colors duration-300 {highlightedExchange ===
+							ex.id
+								? 'bg-[color-mix(in_oklab,var(--dawn-500)_14%,transparent)] px-2'
+								: ''}"
+						>
 							<span
 								class="inline-block h-2 w-2 shrink-0 rounded-full {open
 									? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,.6)]'
@@ -127,7 +179,7 @@
 			</section>
 
 			{#if selectedCity}
-				<section class="rounded-xl border border-amber-900/40 bg-card p-4">
+				<section id="globe-city-news" class="rounded-xl border border-amber-900/40 bg-card p-4">
 					<div class="mb-2 flex items-center justify-between gap-2">
 						<h2 class="text-sm font-semibold">
 							📰 {lang === 'zh' ? selectedCity.cityZh : selectedCity.city}
