@@ -1,0 +1,9 @@
+[Unit]
+Description=Market stress index hourly
+
+[Timer]
+OnCalendar=*:31
+Persistent=true
+
+[Install]
+WantedBy=timers.target
