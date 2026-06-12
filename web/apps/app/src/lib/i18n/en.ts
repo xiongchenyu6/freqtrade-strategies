@@ -12,6 +12,7 @@ export default {
 	'nav.nautilus': 'Engine',
 	'nav.semis': 'Semis',
 	'nav.commodities': 'Commodities',
+	'nav.globe': 'Global Markets',
 	'nav.strategies': 'Strategies',
 	'nav.backtest': 'Backtest',
 	'nav.dca': 'DCA',

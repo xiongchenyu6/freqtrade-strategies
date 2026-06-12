@@ -322,7 +322,12 @@
 	{#if data.news.length > 0}
 		<section class="mb-6 rounded-xl border border-border bg-card p-4">
 			<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-				<h2 class="text-sm font-semibold">📰 市场快讯 / Market wire</h2>
+				<h2 class="text-sm font-semibold">
+					📰 市场快讯 / Market wire
+					<a href="/globe" class="ml-2 text-[11px] font-normal text-muted-foreground hover:text-primary hover:underline"
+						>🌍 {lang === 'zh' ? '上球看' : 'On the globe'}</a
+					>
+				</h2>
 				<div class="flex gap-2">
 					{#each NEWS_CATS as c (c.cat)}
 						<button
