@@ -39,7 +39,8 @@
 </script>
 
 <svelte:head>
-	<title>{tr('全球市场 · 交易时段与快讯地球', 'Global Markets · trading hours & news globe')}</title>
+	<title>{tr('全球市场 · 交易时段与快讯地球', 'Global Markets · trading hours & news globe')}</title
+	>
 	<meta
 		name="description"
 		content={tr(
@@ -63,8 +64,12 @@
 	</header>
 
 	<div class="grid gap-6 lg:grid-cols-[1fr_360px]">
-		<!-- Globe -->
-		<div class="h-[420px] rounded-xl border border-border bg-card sm:h-[560px]">
+		<!-- Globe. min-w-0 + overflow-hidden: a grid item defaults to min-width:auto, so the
+		     WebGL canvas (inserted at window.innerWidth before being resized) would otherwise
+		     blow the 1fr column past the viewport and push the side panel off-screen. -->
+		<div
+			class="h-[420px] min-w-0 overflow-hidden rounded-xl border border-border bg-card sm:h-[560px]"
+		>
 			<MarketGlobe {news} {lang} onselectcity={(c) => (selectedCity = c)} />
 		</div>
 
@@ -106,7 +111,7 @@
 					<!-- Crypto trades 24/7 with no single venue/HQ — shown here, never pinned on the globe. -->
 					<li class="flex items-center gap-3 py-2 text-sm">
 						<span
-							class="inline-block h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,.6)] animate-pulse"
+							class="inline-block h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,.6)]"
 							aria-hidden="true"
 						></span>
 						<span class="min-w-0 flex-1">
