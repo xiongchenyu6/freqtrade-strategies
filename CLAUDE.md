@@ -46,6 +46,9 @@ Web dashboard (`cd web/apps/app`, pnpm):
 - Live crypto runs as **system services on oracle-arm-002**: `nautilus-accumulator`, `nautilus-trend`,
   `nautilus-signal` (all testnet/data-only). Packaged in `github:xiongchenyu6/nur-packages`
   (`modules/nautilus-*`, `pkgs/nautilus-trader`), wired in `dotfiles/nixos-configurations/oracle-arm-002/nautilus.nix`.
+- Also on arm-002: `quant-news-collector` + `quant-stress-index` timers (nur `modules/quant-collectors`,
+  vendored copies of `strategies/news_collector.py`/`stress_index.py` — keep both copies in sync when
+  editing). Moved off the game box 2026-06-12 so 快讯/压力指数 run 7×24 next to the DB.
 - Module changes need: commit+push nur-packages → `nix flake update xiongchenyu6` in dotfiles →
   `NIXPKGS_ALLOW_INSECURE=1 nixos-rebuild switch --flake .#oracle-arm-002 --build-host root@oracle-arm-002 --target-host root@oracle-arm-002 --impure`.
 - The nur overlay is NOT global on hosts → reference packages as
