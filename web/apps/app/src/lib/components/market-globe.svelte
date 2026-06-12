@@ -55,13 +55,7 @@
 
 	function markerLabel(m: Marker): string {
 		if (m.kind === 'exchange') {
-			const status = m.open
-				? lang === 'zh'
-					? '开市'
-					: 'Open'
-				: lang === 'zh'
-					? '休市'
-					: 'Closed';
+			const status = m.open ? (lang === 'zh' ? '开市' : 'Open') : lang === 'zh' ? '休市' : 'Closed';
 			return `<div style="font:12px system-ui;background:rgba(10,12,16,.9);border:1px solid rgba(148,163,184,.3);border-radius:6px;padding:4px 8px;color:#e2e8f0">
 				<b>${lang === 'zh' ? m.zh : m.name}</b> · <span style="color:${m.open ? OPEN : CLOSED}">${status}</span><br/>${m.hours}</div>`;
 		}
@@ -86,15 +80,20 @@
 			try {
 				const { default: Globe } = await import('globe.gl');
 				if (disposed) return;
+				// Measure BEFORE constructing: new Globe(el) inserts a canvas at
+				// window.innerWidth, which blows out the grid column (min-width:auto)
+				// and would make a later el.clientWidth read the inflated size.
+				const w = el.clientWidth;
+				const h = el.clientHeight;
 				const g = new Globe(el)
+					.width(w)
+					.height(h)
 					.globeImageUrl('/globe/earth-night.jpg')
 					.bumpImageUrl('/globe/earth-topology.png')
 					.backgroundColor('rgba(0,0,0,0)')
 					.showAtmosphere(true)
 					.atmosphereColor('#3b82f6')
 					.atmosphereAltitude(0.18)
-					.width(el.clientWidth)
-					.height(el.clientHeight)
 					.pointAltitude((d) => ((d as Marker).kind === 'exchange' ? 0.02 : 0.015))
 					.pointRadius((d) => {
 						const m = d as Marker;
