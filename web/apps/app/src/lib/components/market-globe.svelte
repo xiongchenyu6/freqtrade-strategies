@@ -14,11 +14,13 @@
 	let {
 		news = [],
 		lang = 'zh',
-		onselectcity
+		onselectcity,
+		onselectexchange
 	}: {
 		news?: NewsItem[];
 		lang?: 'zh' | 'en';
 		onselectcity?: (city: NewsCity | null) => void;
+		onselectexchange?: (id: string) => void;
 	} = $props();
 
 	let container = $state<HTMLDivElement>();
@@ -94,10 +96,11 @@
 					.showAtmosphere(true)
 					.atmosphereColor('#3b82f6')
 					.atmosphereAltitude(0.18)
-					.pointAltitude((d) => ((d as Marker).kind === 'exchange' ? 0.02 : 0.015))
+					.pointAltitude((d) => ((d as Marker).kind === 'exchange' ? 0.025 : 0.02))
 					.pointRadius((d) => {
+						// Generous radii — these are click targets, not just dots.
 						const m = d as Marker;
-						return m.kind === 'exchange' ? 0.45 + m.weight * 0.35 : 0.55;
+						return m.kind === 'exchange' ? 0.6 + m.weight * 0.4 : 0.7;
 					})
 					.pointColor((d) => {
 						const m = d as Marker;
@@ -114,7 +117,16 @@
 								lng: m.lng,
 								sources: m.sources
 							});
+						} else {
+							onselectexchange?.(m.id);
 						}
+					})
+					.onPointHover((d) => {
+						// A moving target is unclickable: freeze rotation while hovering a
+						// pin, and show a pointer so it reads as interactive.
+						const hovering = d !== null;
+						g.controls().autoRotate = !hovering;
+						el.style.cursor = hovering ? 'pointer' : 'grab';
 					})
 					.ringColor(() => (t: number) => `rgba(251,191,36,${1 - t})`)
 					.ringMaxRadius(3.5)
