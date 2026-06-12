@@ -10,6 +10,7 @@
 		Cpu,
 		Boxes,
 		Coins,
+		Globe,
 		LineChart,
 		Layers,
 		Archive,
@@ -48,6 +49,7 @@
 		{ href: '/market', labelKey: 'nav.market', icon: LineChart },
 		{ href: '/semis', labelKey: 'nav.semis', icon: Boxes },
 		{ href: '/commodities', labelKey: 'nav.commodities', icon: Coins },
+		{ href: '/globe', labelKey: 'nav.globe', icon: Globe },
 		{ href: '/strategies', labelKey: 'nav.strategies', icon: Layers },
 		{ href: '/backtest', labelKey: 'nav.backtest', icon: FlaskConical },
 		{ href: '/archive', labelKey: 'nav.archive', icon: Archive }
