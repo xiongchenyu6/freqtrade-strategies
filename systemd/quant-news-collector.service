@@ -1,0 +1,11 @@
+[Unit]
+# Curated market-news RSS collector → quant.news_items (web reads our API; CF/CN-proof).
+Description=Quant market news collector
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/freeman.xiong/Documents/github/public/quant
+EnvironmentFile=%h/.config/quant/backtest-runner.env
+Environment=PATH=/run/current-system/sw/bin:/usr/bin:/bin
+ExecStart=/home/freeman.xiong/Documents/github/public/quant/.venv-bots/bin/python strategies/news_collector.py

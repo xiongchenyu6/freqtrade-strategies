@@ -17,7 +17,8 @@ import type {
 	NautilusBacktest,
 	SemiTicker,
 	SemiGroup,
-	AccountSnapshot
+	AccountSnapshot,
+	NewsItem
 } from './types';
 import { getToken } from './auth';
 
@@ -81,6 +82,17 @@ export const vps = {
 		if (from) params.bucket = `gte.${from}`;
 		if (to) params.and = `(bucket.lt.${to})`;
 		return req<OhlcRow[]>(CONFIG.API_BASE, '/public_ohlc_1d', params, f);
+	},
+
+	// Curated news headlines (anon-accessible; sources: CoinDesk/The Block/… = crypto,
+	// Fed/SEC/ECB = macro, MarketWatch/CNBC = equity). Reposted verbatim, never rewritten.
+	newsItems: (
+		f: Fetch = fetch,
+		{ category, limit = 60 }: { category?: string; limit?: number } = {}
+	) => {
+		const params: Params = { order: 'published_at.desc', limit };
+		if (category) params.category = `eq.${category}`;
+		return req<NewsItem[]>(CONFIG.API_BASE, '/news_items', params, f);
 	},
 
 	publicEventTriggers: (f: Fetch = fetch, { limit = 500 }: { limit?: number } = {}) =>

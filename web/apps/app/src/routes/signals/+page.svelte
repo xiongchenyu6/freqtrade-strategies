@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { EventDcaTrigger, BacktestRun } from '$lib/types';
+	import type { EventDcaTrigger, BacktestRun, NewsItem } from '$lib/types';
 	import { fmtTime, fmtUSD, fmtPct } from '$lib/utils';
 	import { t, type Lang } from '$lib/i18n';
 	import ChartInfo from '$lib/components/chart-info.svelte';
@@ -230,6 +230,37 @@
 		return rows.map(r => ({ ...r, barPct: (r.count / maxCount) * 100 }));
 	});
 
+	// --- 市场快讯 / Market wire (curated headlines, reposted verbatim) ---
+	type NewsCat = 'all' | 'crypto' | 'macro' | 'equity';
+	const NEWS_CATS: { cat: NewsCat; zh: string; en: string }[] = [
+		{ cat: 'all', zh: '全部', en: 'All' },
+		{ cat: 'crypto', zh: '加密', en: 'Crypto' },
+		{ cat: 'macro', zh: '宏观', en: 'Macro' },
+		{ cat: 'equity', zh: '美股', en: 'Equity' }
+	];
+	// Official-source chips (central banks / regulators) get an amber tint.
+	const OFFICIAL_SOURCES = new Set(['Fed', 'SEC', 'ECB']);
+
+	let newsCat = $state<NewsCat>('all');
+	let newsExpanded = $state(false);
+
+	const newsFiltered = $derived(
+		newsCat === 'all' ? data.news : data.news.filter((n: NewsItem) => n.category === newsCat)
+	);
+	const newsShown = $derived(newsFiltered.slice(0, newsExpanded ? 60 : 20));
+
+	/** Relative time (X 分钟/小时前) for fresh items, plain date otherwise. */
+	function newsAgo(iso: string): string {
+		const t = new Date(iso).getTime();
+		if (!Number.isFinite(t)) return iso?.slice(0, 10) ?? '';
+		const mins = Math.floor((Date.now() - t) / 60_000);
+		if (mins < 1) return lang === 'zh' ? '刚刚' : 'just now';
+		if (mins < 60) return lang === 'zh' ? `${mins} 分钟前` : `${mins}m ago`;
+		const hrs = Math.floor(mins / 60);
+		if (hrs < 24) return lang === 'zh' ? `${hrs} 小时前` : `${hrs}h ago`;
+		return iso.slice(0, 10);
+	}
+
 	const stats = $derived.by(() => {
 		const kindCounts: Record<string, number> = {};
 		for (const e of data.events) {
@@ -285,6 +316,64 @@
 				<div class="mt-1 text-xs font-mono text-foreground">{stats.lastActivity ? fmtTime(stats.lastActivity) : '—'}</div>
 			</div>
 		</div>
+	{/if}
+
+	<!-- 市场快讯 / Market wire — curated headlines, reposted verbatim. Renders nothing when empty/failed. -->
+	{#if data.news.length > 0}
+		<section class="mb-6 rounded-xl border border-border bg-card p-4">
+			<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+				<h2 class="text-sm font-semibold">📰 市场快讯 / Market wire</h2>
+				<div class="flex gap-2">
+					{#each NEWS_CATS as c (c.cat)}
+						<button
+							type="button"
+							onclick={() => (newsCat = c.cat)}
+							class="rounded-full px-3 py-1 text-xs font-medium transition-colors"
+							class:bg-primary={newsCat === c.cat}
+							class:text-primary-foreground={newsCat === c.cat}
+							class:bg-secondary={newsCat !== c.cat}
+							class:text-muted-foreground={newsCat !== c.cat}
+							class:border={newsCat !== c.cat}
+							class:border-border={newsCat !== c.cat}
+						>
+							{lang === 'zh' ? c.zh : c.en}
+						</button>
+					{/each}
+				</div>
+			</div>
+			<ul class="divide-y divide-border/60">
+				{#each newsShown as n (n.link)}
+					<li class="flex items-start gap-3 py-2 text-sm">
+						<span class="w-16 shrink-0 pt-0.5 font-mono text-[10px] text-muted-foreground tabular-nums" title={n.published_at}>{newsAgo(n.published_at)}</span>
+						<span
+							class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold {OFFICIAL_SOURCES.has(n.source)
+								? 'bg-amber-950/50 text-amber-400/90 border border-amber-900/50'
+								: 'bg-secondary text-muted-foreground'}"
+						>{n.source}</span>
+						<a
+							href={n.link}
+							target="_blank"
+							rel="noopener"
+							class="min-w-0 leading-snug text-foreground/90 hover:text-primary hover:underline"
+						>{n.title} <span class="text-[10px] text-muted-foreground">↗</span></a>
+					</li>
+				{/each}
+			</ul>
+			{#if !newsExpanded && newsFiltered.length > 20}
+				<button
+					type="button"
+					onclick={() => (newsExpanded = true)}
+					class="mt-2 w-full rounded-lg border border-border bg-secondary py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+				>
+					{lang === 'zh' ? '更多' : 'More'} ({newsFiltered.length - 20})
+				</button>
+			{/if}
+			<p class="mt-3 text-[10px] text-muted-foreground">
+				{lang === 'zh'
+					? '标题原文转载,来源可点击 —— 我们不改写、不解读。'
+					: 'Headlines reposted verbatim, sources clickable — we do not rewrite or editorialize.'}
+			</p>
+		</section>
 	{/if}
 
 	<!-- Sticky search + filter bar -->
