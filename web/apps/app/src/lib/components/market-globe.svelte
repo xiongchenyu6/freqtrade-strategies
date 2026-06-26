@@ -61,8 +61,9 @@
 			return `<div style="font:12px system-ui;background:rgba(10,12,16,.9);border:1px solid rgba(148,163,184,.3);border-radius:6px;padding:4px 8px;color:#e2e8f0">
 				<b>${lang === 'zh' ? m.zh : m.name}</b> · <span style="color:${m.open ? OPEN : CLOSED}">${status}</span><br/>${m.hours}</div>`;
 		}
+		const count = lang === 'zh' ? `${m.headlineCount} 条快讯` : `${m.headlineCount} headlines`;
 		return `<div style="font:12px system-ui;background:rgba(10,12,16,.9);border:1px solid rgba(251,191,36,.35);border-radius:6px;padding:4px 8px;color:#e2e8f0">
-			<b>📰 ${lang === 'zh' ? m.cityZh : m.city}</b><br/>${m.sources.join(' · ')}</div>`;
+			<b>📰 ${lang === 'zh' ? m.cityZh : m.city}</b> · ${count}<br/>${m.sources.join(' · ')}</div>`;
 	}
 
 	function refresh() {
@@ -98,9 +99,12 @@
 					.atmosphereAltitude(0.18)
 					.pointAltitude((d) => ((d as Marker).kind === 'exchange' ? 0.025 : 0.02))
 					.pointRadius((d) => {
-						// Generous radii — these are click targets, not just dots.
+						// Generous radii — these are click targets, not just dots. News pins
+						// grow with headline count, but stay within a readable range.
 						const m = d as Marker;
-						return m.kind === 'exchange' ? 0.6 + m.weight * 0.4 : 0.7;
+						return m.kind === 'exchange'
+							? 0.6 + m.weight * 0.4
+							: Math.min(0.55 + Math.sqrt(m.headlineCount) * 0.09, 1.2);
 					})
 					.pointColor((d) => {
 						const m = d as Marker;
@@ -115,7 +119,8 @@
 								cityZh: m.cityZh,
 								lat: m.lat,
 								lng: m.lng,
-								sources: m.sources
+								sources: m.sources,
+								headlineCount: m.headlineCount
 							});
 						} else {
 							onselectexchange?.(m.id);

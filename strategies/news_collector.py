@@ -25,7 +25,8 @@ import psycopg2
 import requests
 
 FEEDS = [
-    # (source, category, url)
+    # (source, category, url) — every entry tested working before inclusion.
+    # Source names must match SOURCE_HQ in web/.../lib/globe-data.ts for the globe pins.
     ("CoinDesk", "crypto", "https://www.coindesk.com/arc/outboundfeeds/rss/"),
     ("Cointelegraph", "crypto", "https://cointelegraph.com/rss"),
     ("Decrypt", "crypto", "https://decrypt.co/feed"),
@@ -34,8 +35,22 @@ FEEDS = [
     ("Fed", "macro", "https://www.federalreserve.gov/feeds/press_all.xml"),
     ("SEC", "macro", "https://www.sec.gov/news/pressreleases.rss"),
     ("ECB", "macro", "https://www.ecb.europa.eu/rss/press.html"),
+    ("Bank of England", "macro", "https://www.bankofengland.co.uk/rss/news"),
     ("MarketWatch", "equity", "https://feeds.content.dowjones.io/public/rss/mw_topstories"),
     ("CNBC", "equity", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147"),
+    # Global business desks — one per financial hub so the /globe map reflects
+    # the real geography of market news, not just the US east coast.
+    ("BBC Business", "global", "https://feeds.bbci.co.uk/news/business/rss.xml"),
+    ("Guardian Business", "global", "https://www.theguardian.com/uk/business/rss"),
+    ("FT", "global", "https://www.ft.com/rss/home"),
+    ("Nikkei Asia", "global", "https://asia.nikkei.com/rss/feed/nar"),
+    ("SCMP", "global", "https://www.scmp.com/rss/12/feed"),
+    ("Straits Times", "global", "https://www.straitstimes.com/news/business/rss.xml"),
+    ("Economic Times", "global", "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"),
+    ("ABC Business", "global", "https://www.abc.net.au/news/feed/51892/rss.xml"),
+    ("France 24", "global", "https://www.france24.com/en/business/rss"),
+    ("Al Jazeera", "global", "https://www.aljazeera.com/xml/rss/all.xml"),
+    ("DW", "global", "https://rss.dw.com/rdf/rss-en-bus"),
 ]
 _HDRS = {"User-Agent": "Mozilla/5.0 (quant news collector; +https://quant.panda.qzz.io)"}
 KEEP_DAYS = 14
@@ -53,11 +68,19 @@ def _text(el) -> str:
 def parse_feed(xml_text: str) -> list[dict]:
     """RSS 2.0 + Atom tolerant item extraction (title/link/pubDate)."""
     out = []
+    if isinstance(xml_text, str):
+        xml_text = xml_text.lstrip("\ufeff")
+        start = xml_text.find("<?xml")
+        if start > 0:
+            xml_text = xml_text[start:]
     try:
         root = ET.fromstring(xml_text.encode() if isinstance(xml_text, str) else xml_text)
     except ET.ParseError:
         # Some feeds ship stray control chars — strip and retry once.
         cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", xml_text)
+        start = cleaned.find("<?xml")
+        if start > 0:
+            cleaned = cleaned[start:]
         try:
             root = ET.fromstring(cleaned.encode())
         except ET.ParseError:
@@ -69,6 +92,15 @@ def parse_feed(xml_text: str) -> list[dict]:
         pub = _text(item.find("pubDate"))
         if title and link:
             out.append({"title": title, "link": link, "pub": pub})
+    if not out:  # RSS 1.0 / RDF (namespaced items; date lives in dc:date) — Nikkei, DW
+        rss1 = "{http://purl.org/rss/1.0/}"
+        dc = "{http://purl.org/dc/elements/1.1/}"
+        for item in root.iter(f"{rss1}item"):
+            title = _text(item.find(f"{rss1}title"))
+            link = _text(item.find(f"{rss1}link"))
+            pub = _text(item.find(f"{dc}date"))
+            if title and link:
+                out.append({"title": title, "link": link, "pub": pub})
     if not out:  # Atom
         for entry in root.iter("{http://www.w3.org/2005/Atom}entry"):
             title = _text(entry.find("atom:title", ns))
@@ -112,7 +144,9 @@ def main() -> int:
         n = 0
         with conn.cursor() as cur:
             for it in items:
-                pub = parse_date(it["pub"])
+                # Feeds without per-item dates (e.g. Nikkei's RSS 1.0) get first-seen
+                # time, otherwise they'd sort NULLS-LAST forever and never surface.
+                pub = parse_date(it["pub"]) or datetime.now(timezone.utc)
                 cur.execute(
                     """INSERT INTO quant.news_items (published_at, source, category, title, link)
                        VALUES (%s, %s, %s, %s, %s) ON CONFLICT (link) DO NOTHING""",

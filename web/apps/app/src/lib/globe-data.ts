@@ -218,7 +218,11 @@ export function localClock(tz: string, now: Date = new Date()) {
 		else if (p.type === 'minute') m = Number(p.value);
 		else if (p.type === 'weekday') wd = WD[p.value] ?? 0;
 	}
-	return { minutes: h * 60 + m, weekday: wd, hhmm: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}` };
+	return {
+		minutes: h * 60 + m,
+		weekday: wd,
+		hhmm: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+	};
 }
 
 /**
@@ -240,13 +244,23 @@ export interface NewsCity {
 	lat: number;
 	lng: number;
 	sources: string[];
+	headlineCount: number;
 }
 
 const CITY: Record<string, { cityZh: string; lat: number; lng: number }> = {
 	'New York': { cityZh: '纽约', lat: 40.7128, lng: -74.006 },
 	Nashville: { cityZh: '纳什维尔', lat: 36.1627, lng: -86.7816 },
 	'Washington DC': { cityZh: '华盛顿', lat: 38.8951, lng: -77.0364 },
-	Frankfurt: { cityZh: '法兰克福', lat: 50.1109, lng: 8.6821 }
+	Frankfurt: { cityZh: '法兰克福', lat: 50.1109, lng: 8.6821 },
+	London: { cityZh: '伦敦', lat: 51.5074, lng: -0.1278 },
+	Tokyo: { cityZh: '东京', lat: 35.6762, lng: 139.6503 },
+	'Hong Kong': { cityZh: '香港', lat: 22.3193, lng: 114.1694 },
+	Singapore: { cityZh: '新加坡', lat: 1.3521, lng: 103.8198 },
+	Mumbai: { cityZh: '孟买', lat: 19.076, lng: 72.8777 },
+	Sydney: { cityZh: '悉尼', lat: -33.8688, lng: 151.2093 },
+	Paris: { cityZh: '巴黎', lat: 48.8566, lng: 2.3522 },
+	Doha: { cityZh: '多哈', lat: 25.2854, lng: 51.531 },
+	Bonn: { cityZh: '波恩', lat: 50.7374, lng: 7.0982 }
 };
 
 /** source name (as stored in quant.news_items) → HQ city key. */
@@ -262,7 +276,19 @@ export const SOURCE_HQ: Record<string, string> = {
 	MarketWatch: 'New York',
 	// CNBC HQ is Englewood Cliffs, NJ — metro New York; grouped under the
 	// New York pin, source label stays "CNBC".
-	CNBC: 'New York'
+	CNBC: 'New York',
+	'Bank of England': 'London',
+	'BBC Business': 'London',
+	'Guardian Business': 'London',
+	FT: 'London',
+	'Nikkei Asia': 'Tokyo',
+	SCMP: 'Hong Kong',
+	'Straits Times': 'Singapore',
+	'Economic Times': 'Mumbai',
+	'ABC Business': 'Sydney',
+	'France 24': 'Paris',
+	'Al Jazeera': 'Doha',
+	DW: 'Bonn'
 };
 
 /** Group news sources into HQ city pins (only sources we can place honestly). */
@@ -274,10 +300,18 @@ export function newsCities(sources: Iterable<string>): NewsCity[] {
 		let c = byCity.get(cityKey);
 		if (!c) {
 			const geo = CITY[cityKey];
-			c = { city: cityKey, cityZh: geo.cityZh, lat: geo.lat, lng: geo.lng, sources: [] };
+			c = {
+				city: cityKey,
+				cityZh: geo.cityZh,
+				lat: geo.lat,
+				lng: geo.lng,
+				sources: [],
+				headlineCount: 0
+			};
 			byCity.set(cityKey, c);
 		}
+		c.headlineCount += 1;
 		if (!c.sources.includes(s)) c.sources.push(s);
 	}
-	return [...byCity.values()];
+	return [...byCity.values()].sort((a, b) => b.headlineCount - a.headlineCount);
 }

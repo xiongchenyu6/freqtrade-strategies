@@ -11,6 +11,37 @@
 	const tr = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
 	const news = $derived<NewsItem[]>(data.news ?? []);
+	type NewsCat = 'all' | 'crypto' | 'macro' | 'equity' | 'global';
+	const NEWS_CATS: { cat: NewsCat; zh: string; en: string }[] = [
+		{ cat: 'all', zh: '全部', en: 'All' },
+		{ cat: 'crypto', zh: 'Crypto', en: 'Crypto' },
+		{ cat: 'macro', zh: '宏观', en: 'Macro' },
+		{ cat: 'equity', zh: '股票', en: 'Equity' },
+		{ cat: 'global', zh: '全球', en: 'Global' }
+	];
+
+	const newsStats = $derived.by(() => {
+		const cutoff = Date.now() - 24 * 3600_000;
+		const sources = new Set<string>();
+		const cities = new Set<string>();
+		const cats: Record<string, number> = {};
+		let fresh = 0;
+		for (const n of news) {
+			sources.add(n.source);
+			const city = SOURCE_HQ[n.source];
+			if (city) cities.add(city);
+			if (new Date(n.published_at).getTime() > cutoff) fresh += 1;
+			cats[n.category] = (cats[n.category] ?? 0) + 1;
+		}
+		return { total: news.length, sources: sources.size, cities: cities.size, fresh, cats };
+	});
+
+	let newsCat = $state<NewsCat>('all');
+	let newsExpanded = $state(false);
+	const newsFiltered = $derived(
+		newsCat === 'all' ? news : news.filter((n) => n.category === newsCat)
+	);
+	const newsShown = $derived(newsFiltered.slice(0, newsExpanded ? 120 : 32));
 
 	// Tick once a minute so open/closed chips + local clocks stay current.
 	let now = $state(new Date());
@@ -20,14 +51,17 @@
 	});
 
 	let selectedCity = $state<NewsCity | null>(null);
-	const cityNews = $derived.by(() => {
+	let cityExpanded = $state(false);
+	const cityNewsAll = $derived.by(() => {
 		const c = selectedCity;
 		if (!c) return [];
-		return news.filter((n) => SOURCE_HQ[n.source] === c.city).slice(0, 12);
+		return news.filter((n) => SOURCE_HQ[n.source] === c.city);
 	});
+	const cityNews = $derived(cityNewsAll.slice(0, cityExpanded ? 60 : 16));
 
 	function selectCity(c: NewsCity | null) {
 		selectedCity = c;
+		cityExpanded = false;
 		// The result lands in the side panel — below the fold on mobile. Bring it
 		// into view so the click visibly does something.
 		if (c) {
@@ -64,6 +98,10 @@
 		if (hrs < 24) return tr(`${hrs} 小时前`, `${hrs}h ago`);
 		return iso.slice(0, 10);
 	}
+
+	function catCount(cat: NewsCat): number {
+		return cat === 'all' ? newsStats.total : (newsStats.cats[cat] ?? 0);
+	}
 </script>
 
 <svelte:head>
@@ -89,6 +127,20 @@
 				'Live exchange open/closed status + market-wire headlines pinned to source HQ cities. Drag to rotate; click an amber pin for that city’s headlines.'
 			)}
 		</p>
+		<div class="mt-3 flex flex-wrap gap-2 text-xs">
+			<span class="rounded-md border border-border bg-card px-2 py-1 text-foreground"
+				>{newsStats.total} {tr('条快讯', 'headlines')}</span
+			>
+			<span class="rounded-md border border-border bg-card px-2 py-1 text-muted-foreground"
+				>{newsStats.sources} {tr('个来源', 'sources')}</span
+			>
+			<span class="rounded-md border border-border bg-card px-2 py-1 text-muted-foreground"
+				>{newsStats.cities} {tr('座城市', 'cities')}</span
+			>
+			<span class="rounded-md border border-amber-900/40 bg-amber-500/10 px-2 py-1 text-amber-300"
+				>{newsStats.fresh} {tr('条 24h 内', 'fresh in 24h')}</span
+			>
+		</div>
 	</header>
 
 	<div class="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -121,6 +173,75 @@
 
 		<!-- Side panel -->
 		<aside class="flex flex-col gap-4">
+			<section class="rounded-xl border border-border bg-card p-4">
+				<div class="mb-3 flex items-start justify-between gap-3">
+					<div>
+						<h2 class="text-sm font-semibold">{tr('最新市场快讯', 'Latest market wire')}</h2>
+						<p class="mt-0.5 text-[11px] text-muted-foreground">
+							{tr(
+								'按发布时间排序,标题原文转载。',
+								'Sorted by publish time, titles reposted verbatim.'
+							)}
+						</p>
+					</div>
+					<span class="shrink-0 rounded bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground"
+						>{newsFiltered.length}</span
+					>
+				</div>
+				<div class="mb-3 flex flex-wrap gap-1.5">
+					{#each NEWS_CATS as c (c.cat)}
+						<button
+							type="button"
+							onclick={() => {
+								newsCat = c.cat;
+								newsExpanded = false;
+							}}
+							class="rounded-md px-2 py-1 text-[11px] font-medium transition-colors {newsCat ===
+							c.cat
+								? 'bg-primary text-primary-foreground'
+								: 'border border-border bg-secondary text-muted-foreground hover:text-foreground'}"
+						>
+							{lang === 'zh' ? c.zh : c.en}
+							<span class="ml-1 opacity-70">{catCount(c.cat)}</span>
+						</button>
+					{/each}
+				</div>
+				{#if newsShown.length === 0}
+					<p class="text-xs text-muted-foreground">{tr('暂无快讯。', 'No headlines available.')}</p>
+				{:else}
+					<ul class="divide-y divide-border/60">
+						{#each newsShown as n (n.link)}
+							<li class="py-2 text-sm">
+								<div class="mb-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+									<span class="rounded bg-secondary px-1.5 py-0.5 font-semibold text-foreground/80"
+										>{n.source}</span
+									>
+									<span>{n.category}</span>
+									<span>·</span>
+									<span>{newsAgo(n.published_at)}</span>
+								</div>
+								<a
+									href={n.link}
+									target="_blank"
+									rel="noopener"
+									class="line-clamp-2 leading-snug text-foreground/90 hover:text-primary hover:underline"
+									>{n.title}</a
+								>
+							</li>
+						{/each}
+					</ul>
+					{#if !newsExpanded && newsFiltered.length > newsShown.length}
+						<button
+							type="button"
+							class="mt-3 w-full rounded-md border border-border bg-secondary px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+							onclick={() => (newsExpanded = true)}
+						>
+							{tr('展开更多', 'Show more')} ({newsFiltered.length - newsShown.length})
+						</button>
+					{/if}
+				{/if}
+			</section>
+
 			<section class="rounded-xl border border-border bg-card p-4">
 				<h2 class="mb-3 text-sm font-semibold">{tr('交易时段', 'Trading sessions')}</h2>
 				<ul class="divide-y divide-border/60">
@@ -184,7 +305,8 @@
 						<h2 class="text-sm font-semibold">
 							📰 {lang === 'zh' ? selectedCity.cityZh : selectedCity.city}
 							<span class="ml-1 text-[10px] font-normal text-muted-foreground"
-								>{selectedCity.sources.join(' · ')}</span
+								>{selectedCity.headlineCount}
+								{tr('条', 'items')} · {selectedCity.sources.join(' · ')}</span
 							>
 						</h2>
 						<button
@@ -215,6 +337,16 @@
 								</li>
 							{/each}
 						</ul>
+						{#if !cityExpanded && cityNewsAll.length > cityNews.length}
+							<button
+								type="button"
+								class="mt-3 w-full rounded-md border border-amber-900/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-200 hover:bg-amber-500/15"
+								onclick={() => (cityExpanded = true)}
+							>
+								{tr('展开该城市更多快讯', 'Show more from this city')} ({cityNewsAll.length -
+									cityNews.length})
+							</button>
+						{/if}
 					{/if}
 				</section>
 			{:else}
