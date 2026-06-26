@@ -15,9 +15,12 @@ for stage status and `STRATEGY_LEADERBOARD.md` for the strategy research log.
   `kelly_sizer.py`, `risk_manager.py`, `dca_executor.py`, `deribit_monitor.py`.
 - `scripts/` — `sync_local_state_to_timescale.py` (wf → TimescaleDB), `download_binance.py` (ccxt
   data refresh, replaced freqtrade download-data), `md_http_server.py` (localhost :3001 dashboard).
-- `web/apps/app/` — SvelteKit dashboard on Cloudflare Workers. Deploy: `pnpm run deploy` (NOT
-  `pnpm deploy`). The `/nautilus` route shows live execution from `quant.nautilus_trades`.
+- `web/apps/app/` — SvelteKit dashboard on Cloudflare Workers (one route dir per page under
+  `src/routes/`). Deploy: `pnpm run deploy` (NOT `pnpm deploy`). The `/nautilus` route shows live
+  execution from `quant.nautilus_trades`. `web/apps/docs/` is the Astro docs site (built into
+  `web/apps/app/static/docs/` — those generated files show as diffs, don't hand-edit them).
 - `migrations/` — TimescaleDB schema (db `api`, schema `quant`, served via PostgREST `api.*`).
+  `supabase/` is a separate Supabase project (auth + Realtime), not the trade DB.
 
 ## venvs (uv; symlink to external python so they survive dir moves)
 - `.venv-bots` — the standalone bots' interpreter (ccxt/websockets/psycopg2/pandas/requests). NO
@@ -41,6 +44,22 @@ Web dashboard (`cd web/apps/app`, pnpm):
 - `pnpm run dev` — local dev server.   `pnpm run check` — svelte-check typecheck.
 - `pnpm run lint` — prettier --check + eslint.   `pnpm run format` — prettier --write.
 - `pnpm run deploy` — `vite build && wrangler deploy` (NOT `pnpm deploy`, which is a different pnpm builtin).
+- Svelte 5 runes (`$state`/`$derived`/`$props`); zh-default bilingual via `$lib/i18n` (`en.ts`/`zh.ts`).
+
+## Web data flow (the load-bearing architecture)
+**External market APIs are never called from the browser/Cloudflare — collectors write to
+TimescaleDB and the web reads only our own APIs.** Binance blocks both Cloudflare egress AND
+mainland browsers, so a SvelteKit `load` that hit Binance directly would fail in prod. Instead:
+- Collectors (`strategies/*_collector.py`, `stress_index.py`, `scripts/`) fetch upstream data and
+  `INSERT` into `quant.*` on TimescaleDB@oracle-arm-002.
+- Each table is exposed as a read-only PostgREST `api.*` view (anon-selectable). The web reads them
+  through the single `vps` client in `src/lib/api.ts`; backend URLs live in `src/lib/config.ts`
+  (`API_BASE`=api.panda.qzz.io PostgREST, `AUTH_BASE`=gotrue, `SUPABASE_*`, `REALTIME_URL`=WS).
+  The lone deliberate exception is the topbar BTC ticker, which calls Binance client-side only.
+- **Adding a data-backed page** = migration (new `quant` table + `api` view) → collector or writer →
+  a `vps.*` helper in `api.ts` + a `+page.server.ts` `load`. Apply a migration to prod with
+  `ssh oracle-arm-002 "sudo runuser -u postgres -- psql -d api -v ON_ERROR_STOP=1" < migrations/NNN.sql`
+  then `psql … -c "NOTIFY pgrst, 'reload schema'"` so PostgREST picks up the new view.
 
 ## Deploy (oracle-arm-002, NixOS)
 - Live crypto runs as **system services on oracle-arm-002**: `nautilus-accumulator`, `nautilus-trend`,
@@ -71,11 +90,18 @@ Web dashboard (`cd web/apps/app`, pnpm):
 
 ## Local services (game box, `~/.config/systemd/user/quant-*`)
 Monitoring/reporting on `.venv-bots`: `quant-ts-sync` (wf sync), `quant-alerts` (telegram),
-`quant-deribit`, `quant-risk-monitor`, `quant-daily-report`, `quant-dashboard` (md_http :3001).
+`quant-deribit`, `quant-risk-monitor`, `quant-daily-report`, `quant-dashboard` (md_http :3001),
+`quant-testnet-recycler` (hourly `:50`) — keeps the arm-002 accumulator soak funded: the
+one-directional smart-DCA drains testnet USDT → `-2010`, so `scripts/testnet_usdt_recycler.py`
+sells a slice of the accumulated BTC back to USDT when buying power drops below the floor
+(idempotent no-op otherwise; testnet has no faucet REST endpoint). Testnet key in
+`~/.config/quant/backtest-runner.env` (`BINANCE_TESTNET_KEY`/`_SECRET_B64` = base64 of the Ed25519 PEM).
 On `nautilus_equity/.venv` (needs nautilus_trader): `quant-backtest-runner` (playground compute)
 and **`quant-equity`** — the US-equity LIVE node (`live_honest_equity.py`, IB paper, persists to
 `quant.nautilus_trades` asset_class='equity' via in-node TradeLedger). Env in
 `~/.config/quant/equity.env` (IB_* + EQ_QUOTE_PER_BASE_FX=0.74 for the SGD-base account + TIMESCALE_URL).
+A **paper** IB account has no real-time US-equity data sub, so the node defaults to
+`EQ_MARKET_DATA_TYPE=DELAYED_FROZEN` (free delayed feed); REALTIME just yields error 162 + zero bars.
 The crypto bots `quant-event-dca`/`quant-reactor`/`quant-dca` were **retired** (moved to Nautilus@oracle-arm-002).
 
 ## Guardrails (hard)

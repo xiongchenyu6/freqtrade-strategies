@@ -48,6 +48,7 @@ import os
 import sys
 from pathlib import Path
 
+from ibapi.common import MarketDataTypeEnum as IBMarketDataTypeEnum
 from nautilus_trader.adapters.interactive_brokers.common import IB_VENUE
 from nautilus_trader.adapters.interactive_brokers.config import (
     InteractiveBrokersDataClientConfig,
@@ -72,6 +73,19 @@ INSTRUMENTS = ["NVDA.NASDAQ", "AMD.NASDAQ", "QQQ.NASDAQ"]
 # Default IB paper account (the exec client REQUIRES an account id; the adapter does NOT
 # auto-discover the logged-in account). HARD GUARDRAIL: this MUST be a paper account (DU*).
 _DEFAULT_PAPER_ACCOUNT = "DUQ654554"
+
+# IB market-data type. A PAPER account has no real-time US-equity data subscription, so
+# the default REALTIME stream returns nothing (the node subscribes, IB answers with
+# error 162 "…connected from a different IP address" / no ticks, and the strategy starves
+# — zero bars, never trades). DELAYED_FROZEN uses IB's free 15-min delayed feed which needs
+# no subscription — correct for the paper soak. Override EQ_MARKET_DATA_TYPE=REALTIME once a
+# live market-data subscription is attached to the account. (per IB adapter config docs.)
+_MD_TYPES = {
+    "REALTIME": IBMarketDataTypeEnum.REALTIME,
+    "FROZEN": IBMarketDataTypeEnum.FROZEN,
+    "DELAYED": IBMarketDataTypeEnum.DELAYED,
+    "DELAYED_FROZEN": IBMarketDataTypeEnum.DELAYED_FROZEN,
+}
 
 # Recommended live config (see STRATEGY_LEADERBOARD.md US Equity section): 1h EMA 50/100.
 _DEFAULT_BAR = "1-HOUR-LAST-EXTERNAL"
@@ -109,6 +123,13 @@ def build_node() -> TradingNode:
     instrument_ids = frozenset(InstrumentId.from_str(s) for s in INSTRUMENTS)
     provider = InteractiveBrokersInstrumentProviderConfig(load_ids=instrument_ids)
 
+    md_type_name = os.environ.get("EQ_MARKET_DATA_TYPE", "DELAYED_FROZEN").upper()
+    if md_type_name not in _MD_TYPES:
+        raise SystemExit(
+            f"EQ_MARKET_DATA_TYPE={md_type_name!r} invalid; choose one of {sorted(_MD_TYPES)}"
+        )
+    market_data_type = _MD_TYPES[md_type_name]
+
     config = TradingNodeConfig(
         trader_id="HONEST-EQUITY-001",
         logging=LoggingConfig(log_level="INFO"),
@@ -119,6 +140,7 @@ def build_node() -> TradingNode:
                 ibg_client_id=client_id,
                 instrument_provider=provider,
                 use_regular_trading_hours=True,
+                market_data_type=market_data_type,
             )
         },
         exec_clients={
