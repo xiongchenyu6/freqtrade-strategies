@@ -15,6 +15,7 @@ export default {
 	'nav.globe': 'Global Markets',
 	'nav.strategies': 'Strategies',
 	'nav.backtest': 'Backtest',
+	'nav.quantLab': 'Quant Lab',
 	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': 'Archive',

@@ -29,7 +29,13 @@ type Params = Record<string, string | number>;
  * in the browser the default `vpsAuth()` reads localStorage. */
 type WithAuth = { authHeader?: string };
 
-async function req<T>(base: string, path: string, params?: Params, f: Fetch = fetch, extraHeaders?: HeadersInit): Promise<T> {
+async function req<T>(
+	base: string,
+	path: string,
+	params?: Params,
+	f: Fetch = fetch,
+	extraHeaders?: HeadersInit
+): Promise<T> {
 	const url = new URL(path, base);
 	if (params) for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
 	const headers: HeadersInit = { Accept: 'application/json', ...extraHeaders };
@@ -52,8 +58,7 @@ function vpsAuth(explicit?: string): HeadersInit {
 
 export const vps = {
 	// ---- public-preview endpoints (anon-accessible) ----
-	publicStats: (f: Fetch = fetch) =>
-		req<PublicStats[]>(CONFIG.API_BASE, '/public_stats', {}, f),
+	publicStats: (f: Fetch = fetch) => req<PublicStats[]>(CONFIG.API_BASE, '/public_stats', {}, f),
 
 	// Honest current numbers: aggregates over quant.nautilus_backtests (re-run on Nautilus),
 	// NOT the retired freqtrade backtest_runs. Same shape as PublicStats (superset).
@@ -66,8 +71,7 @@ export const vps = {
 	// NVDA-centric semiconductor supply-chain analysis (real Yahoo data).
 	semiUniverse: (f: Fetch = fetch) =>
 		req<SemiTicker[]>(CONFIG.API_BASE, '/semi_universe', { order: 'ret_3m.desc.nullslast' }, f),
-	semiGroups: (f: Fetch = fetch) =>
-		req<SemiGroup[]>(CONFIG.API_BASE, '/semi_groups', {}, f),
+	semiGroups: (f: Fetch = fetch) => req<SemiGroup[]>(CONFIG.API_BASE, '/semi_groups', {}, f),
 
 	// Daily NetLiq snapshots of our own paper/testnet accounts (public — the verifiable
 	// equity-curve artifact; see migration 022 + strategies/account_snapshot.py).
@@ -89,7 +93,7 @@ export const vps = {
 	// Fed/SEC/ECB = macro, MarketWatch/CNBC = equity). Reposted verbatim, never rewritten.
 	newsItems: (
 		f: Fetch = fetch,
-		{ category, limit = 60 }: { category?: string; limit?: number } = {}
+		{ category, limit = 120 }: { category?: string; limit?: number } = {}
 	) => {
 		const params: Params = { order: 'published_at.desc', limit };
 		if (category) params.category = `eq.${category}`;
@@ -135,7 +139,12 @@ export const vps = {
 	ohlcDaily: (
 		f: Fetch = fetch,
 		pair: string,
-		{ from, to, limit = 3000, authHeader }: { from?: string; to?: string; limit?: number } & WithAuth = {}
+		{
+			from,
+			to,
+			limit = 3000,
+			authHeader
+		}: { from?: string; to?: string; limit?: number } & WithAuth = {}
 	) => {
 		const params: Params = { pair: `eq.${pair}`, order: 'bucket.asc', limit };
 		if (from) params.bucket = `gte.${from}`;
@@ -146,7 +155,12 @@ export const vps = {
 	ohlcHourly: (
 		f: Fetch = fetch,
 		pair: string,
-		{ from, to, limit = 3000, authHeader }: { from?: string; to?: string; limit?: number } & WithAuth = {}
+		{
+			from,
+			to,
+			limit = 3000,
+			authHeader
+		}: { from?: string; to?: string; limit?: number } & WithAuth = {}
 	) => {
 		const params: Params = { pair: `eq.${pair}`, order: 'bucket.asc', limit };
 		if (from) params.bucket = `gte.${from}`;
@@ -157,7 +171,12 @@ export const vps = {
 	ohlc15m: (
 		f: Fetch = fetch,
 		pair: string,
-		{ from, to, limit = 3000, authHeader }: { from?: string; to?: string; limit?: number } & WithAuth = {}
+		{
+			from,
+			to,
+			limit = 3000,
+			authHeader
+		}: { from?: string; to?: string; limit?: number } & WithAuth = {}
 	) => {
 		const params: Params = { pair: `eq.${pair}`, order: 'bucket.asc', limit };
 		if (from) params.bucket = `gte.${from}`;
@@ -169,7 +188,12 @@ export const vps = {
 	async ohlcAuto(
 		f: Fetch,
 		pair: string,
-		{ from, to, maxPoints = 2000, authHeader }: { from: Date; to: Date; maxPoints?: number } & WithAuth
+		{
+			from,
+			to,
+			maxPoints = 2000,
+			authHeader
+		}: { from: Date; to: Date; maxPoints?: number } & WithAuth
 	): Promise<{ rows: OhlcRow[]; source: string }> {
 		const spanMin = (to.getTime() - from.getTime()) / 60_000;
 		const target = spanMin / maxPoints;
@@ -201,7 +225,13 @@ export const vps = {
 		const params: Params = { order: 'open_date.desc', limit };
 		if (environment) params.environment = `eq.${environment}`;
 		if (assetClass) params.asset_class = `eq.${assetClass}`;
-		return req<NautilusTrade[]>(CONFIG.API_BASE, '/nautilus_trades', params, f, vpsAuth(authHeader));
+		return req<NautilusTrade[]>(
+			CONFIG.API_BASE,
+			'/nautilus_trades',
+			params,
+			f,
+			vpsAuth(authHeader)
+		);
 	},
 
 	walkForward: (
@@ -237,7 +267,13 @@ export const vps = {
 		const params: Params = { order: 'loss.asc', limit };
 		if (strategy) params.strategy = `eq.${strategy}`;
 		if (onlyBest) params.is_best = 'eq.true';
-		return req<HyperoptEpoch[]>(CONFIG.API_BASE, '/hyperopt_epochs', params, f, vpsAuth(authHeader));
+		return req<HyperoptEpoch[]>(
+			CONFIG.API_BASE,
+			'/hyperopt_epochs',
+			params,
+			f,
+			vpsAuth(authHeader)
+		);
 	}
 };
 

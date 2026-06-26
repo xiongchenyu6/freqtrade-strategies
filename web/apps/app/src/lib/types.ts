@@ -205,7 +205,7 @@ export interface EventDcaTrigger {
 export interface NewsItem {
 	published_at: string;
 	source: string;
-	category: 'crypto' | 'macro' | 'equity' | string;
+	category: 'crypto' | 'macro' | 'equity' | 'global' | string;
 	title: string;
 	link: string;
 }
