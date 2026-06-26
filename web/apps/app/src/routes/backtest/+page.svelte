@@ -216,7 +216,8 @@
 	async function refresh() {
 		if (!$user) return;
 		try {
-			jobs = await myJobs();
+			// Quant Lab jobs surface on /quant-lab, not in the regular backtest list.
+			jobs = (await myJobs()).filter((j) => j.strategy !== 'quant_lab');
 			for (const j of jobs) {
 				if (j.status === 'done' && !results[j.id]) {
 					const r = await jobResult(j.id);

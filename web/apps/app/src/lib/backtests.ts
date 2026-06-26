@@ -5,7 +5,12 @@
 import { CONFIG } from './config';
 import { getToken } from './auth';
 
-export type Strategy = 'honest_trend' | 'accumulator' | 'donchian' | 'master_portfolio';
+export type Strategy =
+	| 'honest_trend'
+	| 'accumulator'
+	| 'donchian'
+	| 'master_portfolio'
+	| 'quant_lab';
 export type JobStatus = 'queued' | 'running' | 'done' | 'error';
 
 export interface BacktestJob {
@@ -47,8 +52,8 @@ export interface BacktestResult {
 	user_id: string;
 	metrics: {
 		return_pct: number;
-		max_dd_pct: number;
-		sharpe: number;
+		max_dd_pct: number | null;
+		sharpe: number | null;
 		calmar: number | null;
 		trades: number;
 		// Data window the run actually covered (ISO dates). Legacy rows lack these.
@@ -57,10 +62,28 @@ export interface BacktestResult {
 		// master_portfolio only: final holdings + the full rebalance journal.
 		holdings?: PortfolioHolding[];
 		trade_log?: PortfolioTradeEvent[];
+		// quant_lab only: model diagnostics rendered by /quant-lab.
+		kind?: 'quant_lab' | string;
+		model?: string;
+		assets?: string[];
+		summary?: QuantLabSummaryRow[];
+		tables?: QuantLabTable[];
+		notes?: string[];
 		[k: string]: unknown;
 	};
 	equity_curve: number[] | null; // downsampled equity values (~80 pts) for a sparkline
 	created_at: string;
+}
+
+export interface QuantLabSummaryRow {
+	label: string;
+	value: string | number | null;
+	unit?: string;
+}
+
+export interface QuantLabTable {
+	name: string;
+	rows: Record<string, string | number | null>[];
 }
 
 // Predefined strategies + their param domains — keep in lockstep with backtest_runner.py.
@@ -133,19 +156,31 @@ export const STRATEGIES = {
 			'Buy the golden cross, sell the death cross. Rides trends; chops sideways. For testing long-trend ideas.'
 		] as const,
 		paramHints: {
-			ema_fast: ['短期均线长度 — 越小越灵敏、信号越多', 'short EMA length — smaller = more sensitive'],
+			ema_fast: [
+				'短期均线长度 — 越小越灵敏、信号越多',
+				'short EMA length — smaller = more sensitive'
+			],
 			ema_slow: ['长期均线长度 — 定义"趋势"的尺度', 'long EMA — defines the trend scale']
 		},
-		blurb: ['EMA 金叉/死叉趋势跟随，支持任意美股代码及商品（黄金/原油等，日线 10 年历史），NVDA/AMD/QQQ 另有小时线', 'EMA cross trend-following — any US ticker plus commodities (gold/oil etc., 10y daily history); hourly for NVDA/AMD/QQQ'] as const,
+		blurb: [
+			'EMA 金叉/死叉趋势跟随，支持任意美股代码及商品（黄金/原油等，日线 10 年历史），NVDA/AMD/QQQ 另有小时线',
+			'EMA cross trend-following — any US ticker plus commodities (gold/oil etc., 10y daily history); hourly for NVDA/AMD/QQQ'
+		] as const,
 		// `assets` are SUGGESTIONS only — anyUsSymbol opens the field to any US ticker;
 		// COMMODITY_ASSETS adds continuous futures. The runner validates against its ~9.5k
 		// US-symbol list + the commodity set server-side; hourly bars exist only for the
 		// suggested trio, everything else is daily.
 		assets: ['NVDA', 'AMD', 'QQQ'],
 		anyUsSymbol: true,
-		note: ['非目录股票及商品（黄金/原油等）仅支持日线（10 年历史）', 'Non-catalog tickers and commodities (gold/oil etc.): daily only (10y history)'] as const,
+		note: [
+			'非目录股票及商品（黄金/原油等）仅支持日线（10 年历史）',
+			'Non-catalog tickers and commodities (gold/oil etc.): daily only (10y history)'
+		] as const,
 		timeframes: ['1h', '1d'],
-		params: { ema_fast: { min: 5, max: 400, default: 50 }, ema_slow: { min: 5, max: 400, default: 100 } }
+		params: {
+			ema_fast: { min: 5, max: 400, default: 50 },
+			ema_slow: { min: 5, max: 400, default: 100 }
+		}
 	},
 	// Donchian breakout — crypto trend, real Binance 1h bars. Honest equity-curve maxDD.
 	donchian: {
@@ -157,11 +192,17 @@ export const STRATEGIES = {
 			'Buy fresh N-bar highs, exit on M-bar lows. Feasts in trends, bleeds in chop — backtest tells you which.'
 		] as const,
 		paramHints: {
-			entry_lb: ['突破窗口:过去多少根 K 线的最高点算"新高"(168 根 1h ≈ 7 天)', 'breakout window in bars (168×1h ≈ 7 days)'],
+			entry_lb: [
+				'突破窗口:过去多少根 K 线的最高点算"新高"(168 根 1h ≈ 7 天)',
+				'breakout window in bars (168×1h ≈ 7 days)'
+			],
 			exit_lb: ['离场窗口:跌破多少根 K 线的最低点就卖', 'exit window in bars'],
 			risk_frac: ['每次入场动用资金的比例', 'fraction of equity per entry']
 		},
-		blurb: ['唐奇安通道突破做多，真实币安 1h K 线，诚实净值回撤', 'Donchian channel breakout long, real Binance 1h bars, honest drawdown'] as const,
+		blurb: [
+			'唐奇安通道突破做多，真实币安 1h K 线，诚实净值回撤',
+			'Donchian channel breakout long, real Binance 1h bars, honest drawdown'
+		] as const,
 		assets: CRYPTO_ASSETS,
 		timeframes: ['1h'],
 		params: {
@@ -190,7 +231,10 @@ export const STRATEGIES = {
 				'smart = double at lows (crypto: fear; commodities/stocks: below 200d SMA) / naive = fixed'
 			]
 		},
-		blurb: ['定投，越跌越买，只买不卖 —— 加密按恐慌加倍，黄金/美股按 200 日均线加倍', 'DCA that buys more at the lows, never sells — crypto doubles on fear, gold/US stocks double below the 200d SMA'] as const,
+		blurb: [
+			'定投，越跌越买，只买不卖 —— 加密按恐慌加倍，黄金/美股按 200 日均线加倍',
+			'DCA that buys more at the lows, never sells — crypto doubles on fear, gold/US stocks double below the 200d SMA'
+		] as const,
 		// Suggestions only — anyAsset opens the field to any commodity sym (GC/SI/CL/…)
 		// or US ticker; the runner validates server-side.
 		assets: CRYPTO_ASSETS,
@@ -235,7 +279,11 @@ export const STRATEGIES = {
 function authHeaders(): HeadersInit {
 	const t = getToken();
 	if (!t) throw new Error('not authenticated');
-	return { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json', Accept: 'application/json' };
+	return {
+		Authorization: `Bearer ${t}`,
+		'Content-Type': 'application/json',
+		Accept: 'application/json'
+	};
 }
 
 /**
@@ -259,16 +307,23 @@ export async function submitBacktest(
 }
 
 /** The current user's jobs, newest first (RLS scopes to them). */
-export async function myJobs(f: typeof fetch = fetch): Promise<BacktestJob[]> {
-	const r = await f(`${CONFIG.API_BASE}/backtest_jobs?select=*&order=created_at.desc&limit=50`, {
-		headers: authHeaders()
-	});
+export async function myJobs(f: typeof fetch = fetch, strategy?: Strategy): Promise<BacktestJob[]> {
+	const filter = strategy ? `&strategy=eq.${encodeURIComponent(strategy)}` : '';
+	const r = await f(
+		`${CONFIG.API_BASE}/backtest_jobs?select=*&order=created_at.desc&limit=50${filter}`,
+		{
+			headers: authHeaders()
+		}
+	);
 	if (!r.ok) throw new Error(`jobs ${r.status}`);
 	return (await r.json()) as BacktestJob[];
 }
 
 /** Result for one job, or null if not finished yet. */
-export async function jobResult(jobId: string, f: typeof fetch = fetch): Promise<BacktestResult | null> {
+export async function jobResult(
+	jobId: string,
+	f: typeof fetch = fetch
+): Promise<BacktestResult | null> {
 	const r = await f(`${CONFIG.API_BASE}/backtest_results?job_id=eq.${jobId}&select=*`, {
 		headers: authHeaders()
 	});

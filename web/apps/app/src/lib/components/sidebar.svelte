@@ -56,6 +56,7 @@
 		{ href: '/globe', labelKey: 'nav.globe', icon: Globe },
 		{ href: '/strategies', labelKey: 'nav.strategies', icon: Layers },
 		{ href: '/backtest', labelKey: 'nav.backtest', icon: FlaskConical },
+		{ href: '/quant-lab', labelKey: 'nav.quantLab', icon: Sparkles },
 		{ href: '/archive', labelKey: 'nav.archive', icon: Archive }
 	]);
 	const SECONDARY_NAV = $derived<NavItem[]>([

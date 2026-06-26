@@ -10,9 +10,10 @@ submit code. One job at a time, FOR UPDATE SKIP LOCKED so multiple runners are s
 Run:  TIMESCALE_URL=postgres://… nautilus_equity/.venv/bin/python nautilus_equity/backtest_runner.py
 Env:  TIMESCALE_URL (required), POLL_SEC (default 5), JOB_TIMEOUT_SEC (default 120)
 
-STATUS: honest_trend (equity) + accumulator/donchian (crypto) are wired. The crypto paths reuse
-the proven engines in nautilus_crypto/backtest_stats.py (run_accumulator / run_donchian_portfolio,
-honest EquityRecorder drawdown). NOT YET DEPLOYED — pending owner sign-off (see PLAYGROUND_PLAN.md).
+STATUS: honest_trend (equity) + accumulator/donchian (crypto) + quant_lab research models are
+wired. The crypto paths reuse the proven engines in nautilus_crypto/backtest_stats.py
+(run_accumulator / run_donchian_portfolio, honest EquityRecorder drawdown). NOT YET DEPLOYED —
+pending owner sign-off (see PLAYGROUND_PLAN.md).
 """
 
 from __future__ import annotations
@@ -390,11 +391,20 @@ def run_donchian(params: dict) -> dict:
     }
 
 
+def run_quant_lab(params: dict) -> dict:
+    """Research-only quant models. This shares the backtest job queue for auth, RLS, and
+    result storage, but it does not create orders, trades, or live signal mappings."""
+    from quant_lab import run_quant_lab as _run
+
+    return _run(params)
+
+
 DISPATCH = {
     "honest_trend": run_honest_trend,
     "master_portfolio": run_master_portfolio,
     "accumulator": run_accumulator,
     "donchian": run_donchian,
+    "quant_lab": run_quant_lab,
 }
 
 

@@ -15,6 +15,7 @@ export default {
 	'nav.globe': '全球市场',
 	'nav.strategies': '策略',
 	'nav.backtest': '回测',
+	'nav.quantLab': '量化实验室',
 	'nav.dca': 'DCA',
 	'nav.chart': 'Chart',
 	'nav.archive': '档案',
