@@ -73,6 +73,14 @@ UNIVERSE = [
     ("AMZN", "Amazon", "downstream", "Hyperscaler — AWS capex", "hyperscaler", ["capex", "custom-ASIC"]),
     ("META", "Meta", "downstream", "Hyperscaler — largest AI capex ramp", "hyperscaler", ["capex", "custom-ASIC"]),
     ("ORCL", "Oracle", "downstream", "Cloud / OCI AI capex", "hyperscaler", ["capex", "datacenter-power"]),
+    # 11) System power & thermal — the "can the whole AI server ship" layer (bottleneck matrix:
+    #     liquid cooling, VRM/VPD, datacenter power & grid). System-level, not chip-level.
+    ("VRT", "Vertiv", "downstream", "Liquid cooling + datacenter power infrastructure", "power-thermal", ["liquid-cooling", "datacenter-power"]),
+    ("MPWR", "Monolithic Power", "peer", "VRM / power-management silicon", "power", ["VRM", "power-integrity"]),
+    ("VICR", "Vicor", "peer", "Vertical power delivery modules", "power", ["VRM", "vertical-power"]),
+    ("LITE", "Lumentum", "downstream", "Optical components / lasers for transceivers", "networking", ["optical", "CPO"]),
+    ("GEV", "GE Vernova", "downstream", "Grid + power equipment for datacenters", "power-grid", ["datacenter-power", "grid"]),
+    ("ETN", "Eaton", "downstream", "Electrical / power management for datacenters", "power-grid", ["datacenter-power", "grid"]),
     # Benchmarks.
     ("SMH", "VanEck Semis ETF", "benchmark", "Semiconductor sector benchmark", "benchmark", []),
     ("SPY", "S&P 500", "benchmark", "Broad market benchmark", "benchmark", []),
