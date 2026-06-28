@@ -528,6 +528,30 @@
 								{@render meter(tr('替代险', 'Sub-risk'), seg.sub_risk)}
 							</div>
 						</div>
+						{#if seg.status_2026}
+							<div
+								class="mt-2.5 rounded-md border border-[color-mix(in_oklab,var(--gold-500)_25%,transparent)] bg-[color-mix(in_oklab,var(--gold-500)_7%,transparent)] p-2"
+							>
+								<div class="flex items-start gap-1.5">
+									<span
+										class="shrink-0 rounded bg-[var(--gold-500)] px-1 py-px text-[9px] font-bold text-[#0C0B1A]"
+										>2026</span
+									>
+									<p class="text-[11px] leading-relaxed text-foreground/85">{seg.status_2026}</p>
+								</div>
+								{#if seg.source_url}
+									<a
+										href={seg.source_url}
+										target="_blank"
+										rel="noopener"
+										class="mt-1 inline-block text-[10px] text-muted-foreground hover:text-[var(--gold-500)]"
+										>{tr('来源', 'source')} · {seg.source_url
+											.replace(/^https?:\/\/(www\.)?/, '')
+											.split('/')[0]} ↗</a
+									>
+								{/if}
+							</div>
+						{/if}
 						{#if lang === 'zh'}
 							<p class="mt-2 text-xs leading-relaxed text-muted-foreground">{seg.note_zh}</p>
 							<div class="mt-1.5 text-[11px] text-muted-foreground">
