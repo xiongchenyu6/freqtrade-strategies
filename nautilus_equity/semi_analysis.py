@@ -25,54 +25,57 @@ import requests
 # (symbol, name, tier, role). DB tier (coarse): core | upstream | peer | downstream | benchmark.
 # The fine 9-stage value chain (materials → demand) is laid out in the frontend.
 UNIVERSE = [
+    # (symbol, name, tier, role, stage, trends). tier = coarse DB bucket (legacy); stage = fine
+    # value-chain step; trends = technology-trend tags (map to the /semis bottleneck matrix).
     # 1) Raw materials — wafers, gases, electronic chemicals (consumed in the fab).
-    ("ENTG", "Entegris", "upstream", "Advanced materials & purity / filtration"),
-    ("DD", "DuPont", "upstream", "Electronic materials & chemicals"),
-    ("LIN", "Linde", "upstream", "Industrial & specialty gases for fabs"),
+    ("ENTG", "Entegris", "upstream", "Advanced materials & purity / filtration", "materials", ["materials", "advanced-packaging"]),
+    ("DD", "DuPont", "upstream", "Electronic materials & chemicals", "materials", ["materials"]),
+    ("LIN", "Linde", "upstream", "Industrial & specialty gases for fabs", "materials", ["materials"]),
     # 2) Equipment — the machines inside the fab.
-    ("ASML", "ASML", "upstream", "EUV lithography — prints the chips"),
-    ("AMAT", "Applied Materials", "upstream", "Deposition / wafer-fab equipment"),
-    ("LRCX", "Lam Research", "upstream", "Etch & deposition equipment"),
-    ("KLAC", "KLA", "upstream", "Process control / inspection"),
-    ("TER", "Teradyne", "upstream", "Automated test equipment"),
-    ("MKSI", "MKS Instruments", "upstream", "Process subsystems & control"),
+    ("ASML", "ASML", "upstream", "EUV lithography — prints the chips", "equipment", ["EUV", "High-NA", "advanced-node"]),
+    ("AMAT", "Applied Materials", "upstream", "Deposition / wafer-fab equipment", "equipment", ["advanced-node", "advanced-packaging"]),
+    ("LRCX", "Lam Research", "upstream", "Etch & deposition equipment", "equipment", ["advanced-node", "3D-NAND"]),
+    ("KLAC", "KLA", "upstream", "Process control / inspection", "equipment", ["advanced-node", "process-control"]),
+    ("TER", "Teradyne", "upstream", "Automated test equipment", "equipment", ["test", "advanced-packaging"]),
+    ("MKSI", "MKS Instruments", "upstream", "Process subsystems & control", "equipment", ["advanced-node"]),
     # 3) EDA / IP — design the chips before they exist.
-    ("ARM", "Arm Holdings", "upstream", "CPU IP / architecture licensing"),
-    ("SNPS", "Synopsys", "upstream", "EDA chip-design software"),
-    ("CDNS", "Cadence", "upstream", "EDA chip-design software"),
-    # 4) Foundry & memory — manufacturing.
-    ("TSM", "TSMC", "upstream", "Foundry — fabricates the GPUs"),
-    ("GFS", "GlobalFoundries", "upstream", "Specialty foundry"),
-    ("UMC", "United Microelectronics", "upstream", "Foundry"),
-    ("MU", "Micron", "upstream", "HBM high-bandwidth memory for AI GPUs"),
-    # 5) OSAT — packaging & test (advanced packaging is the AI bottleneck).
-    ("AMKR", "Amkor", "upstream", "OSAT — assembly & test / advanced packaging"),
-    ("ASX", "ASE Technology", "upstream", "OSAT — assembly & test"),
-    # 6) Chip designers — the AI / compute silicon.
-    ("NVDA", "NVIDIA", "core", "AI accelerator leader — the hub of the AI build-out"),
-    ("AVGO", "Broadcom", "peer", "Custom AI ASICs + networking silicon"),
-    ("AMD", "AMD", "peer", "GPU competitor (MI300) + CPUs"),
-    ("MRVL", "Marvell", "peer", "Custom AI silicon / interconnect"),
-    ("QCOM", "Qualcomm", "peer", "Mobile / edge-AI SoCs"),
-    ("TXN", "Texas Instruments", "peer", "Analog & embedded"),
-    ("INTC", "Intel", "peer", "CPU + foundry challenger"),
-    # 7) Interconnect / networking — the AI-cluster fabric.
-    ("ANET", "Arista Networks", "downstream", "AI-cluster Ethernet switching"),
-    ("CRDO", "Credo", "downstream", "High-speed connectivity (AECs)"),
-    ("COHR", "Coherent", "downstream", "Optical interconnect / transceivers"),
-    # 8) Systems — AI servers / integrators.
-    ("DELL", "Dell", "downstream", "AI server systems"),
-    ("SMCI", "Supermicro", "downstream", "AI server systems integrator"),
-    ("HPE", "HPE", "downstream", "AI servers (incl. Cray)"),
-    # 9) Demand — hyperscaler capex.
-    ("MSFT", "Microsoft", "downstream", "Hyperscaler — Azure AI capex"),
-    ("GOOGL", "Alphabet", "downstream", "Hyperscaler — TPU + GPU buyer"),
-    ("AMZN", "Amazon", "downstream", "Hyperscaler — AWS capex"),
-    ("META", "Meta", "downstream", "Hyperscaler — largest AI capex ramp"),
-    ("ORCL", "Oracle", "downstream", "Cloud / OCI AI capex"),
+    ("ARM", "Arm Holdings", "upstream", "CPU IP / architecture licensing", "eda-ip", ["cpu-ip", "edge-AI"]),
+    ("SNPS", "Synopsys", "upstream", "EDA chip-design software", "eda-ip", ["EDA", "AI-design"]),
+    ("CDNS", "Cadence", "upstream", "EDA chip-design software", "eda-ip", ["EDA", "AI-design"]),
+    # 4) Foundry — manufacturing.
+    ("TSM", "TSMC", "upstream", "Foundry — fabricates the GPUs", "foundry", ["advanced-node", "2nm", "CoWoS", "advanced-packaging"]),
+    ("GFS", "GlobalFoundries", "upstream", "Specialty foundry", "foundry", ["mature-node", "specialty"]),
+    ("UMC", "United Microelectronics", "upstream", "Foundry", "foundry", ["mature-node", "specialty"]),
+    # 5) Memory — HBM is the AI bottleneck.
+    ("MU", "Micron", "upstream", "HBM high-bandwidth memory for AI GPUs", "memory", ["HBM", "memory-wall", "DRAM-NAND"]),
+    # 6) OSAT — packaging & test (advanced packaging is the AI bottleneck).
+    ("AMKR", "Amkor", "upstream", "OSAT — assembly & test / advanced packaging", "osat", ["advanced-packaging", "CoWoS"]),
+    ("ASX", "ASE Technology", "upstream", "OSAT — assembly & test", "osat", ["advanced-packaging", "CoWoS"]),
+    # 7) Chip designers — the AI / compute silicon.
+    ("NVDA", "NVIDIA", "core", "AI accelerator leader — the hub of the AI build-out", "accelerator", ["accelerator", "CoWoS", "HBM", "NVLink"]),
+    ("AVGO", "Broadcom", "peer", "Custom AI ASICs + networking silicon", "accelerator", ["custom-ASIC", "optical", "networking"]),
+    ("AMD", "AMD", "peer", "GPU competitor (MI300) + CPUs", "accelerator", ["accelerator", "chiplet", "HBM"]),
+    ("MRVL", "Marvell", "peer", "Custom AI silicon / interconnect", "accelerator", ["custom-ASIC", "optical", "CXL"]),
+    ("QCOM", "Qualcomm", "peer", "Mobile / edge-AI SoCs", "processor", ["edge-AI", "mobile"]),
+    ("TXN", "Texas Instruments", "peer", "Analog & embedded", "analog", ["analog", "power-integrity"]),
+    ("INTC", "Intel", "peer", "CPU + foundry challenger", "processor", ["advanced-node", "foundry", "CPU"]),
+    # 8) Interconnect / networking — the AI-cluster fabric.
+    ("ANET", "Arista Networks", "downstream", "AI-cluster Ethernet switching", "networking", ["networking", "800G-1.6T", "ethernet"]),
+    ("CRDO", "Credo", "downstream", "High-speed connectivity (AECs)", "networking", ["optical", "AEC", "800G-1.6T"]),
+    ("COHR", "Coherent", "downstream", "Optical interconnect / transceivers", "networking", ["optical", "CPO", "silicon-photonics"]),
+    # 9) Systems — AI servers / integrators.
+    ("DELL", "Dell", "downstream", "AI server systems", "systems", ["systems", "liquid-cooling"]),
+    ("SMCI", "Supermicro", "downstream", "AI server systems integrator", "systems", ["systems", "liquid-cooling"]),
+    ("HPE", "HPE", "downstream", "AI servers (incl. Cray)", "systems", ["systems"]),
+    # 10) Demand — hyperscaler capex.
+    ("MSFT", "Microsoft", "downstream", "Hyperscaler — Azure AI capex", "hyperscaler", ["capex", "datacenter-power"]),
+    ("GOOGL", "Alphabet", "downstream", "Hyperscaler — TPU + GPU buyer", "hyperscaler", ["capex", "custom-ASIC"]),
+    ("AMZN", "Amazon", "downstream", "Hyperscaler — AWS capex", "hyperscaler", ["capex", "custom-ASIC"]),
+    ("META", "Meta", "downstream", "Hyperscaler — largest AI capex ramp", "hyperscaler", ["capex", "custom-ASIC"]),
+    ("ORCL", "Oracle", "downstream", "Cloud / OCI AI capex", "hyperscaler", ["capex", "datacenter-power"]),
     # Benchmarks.
-    ("SMH", "VanEck Semis ETF", "benchmark", "Semiconductor sector benchmark"),
-    ("SPY", "S&P 500", "benchmark", "Broad market benchmark"),
+    ("SMH", "VanEck Semis ETF", "benchmark", "Semiconductor sector benchmark", "benchmark", []),
+    ("SPY", "S&P 500", "benchmark", "Broad market benchmark", "benchmark", []),
 ]
 
 _YF = "https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=2y&interval=1d"
@@ -153,7 +156,7 @@ def analyze() -> list[dict]:
     smh_3m = _ret(smh, 63) if smh is not None else None
 
     rows = []
-    for sym, name, tier, role in UNIVERSE:
+    for sym, name, tier, role, stage, trends in UNIVERSE:
         s = closes.get(sym)
         if s is None:
             continue
@@ -174,6 +177,7 @@ def analyze() -> list[dict]:
         from_high = round(float(s.iloc[-1] / peak - 1) * 100, 1) if peak else None
         rows.append({
             "symbol": sym, "name": name, "tier": tier, "role": role,
+            "stage": stage, "trends": trends,
             "market_cap": caps.get(sym),
             "last_price": round(float(s.iloc[-1]), 2),
             "ret_1w": _ret(s, 5), "ret_1m": _ret(s, 21), "ret_3m": r3,
@@ -239,9 +243,9 @@ def load_rows(rows: list[dict]) -> int:
         sys.exit("TIMESCALE_URL not set (run via sops exec-env secrets.env '... --load')")
     conn = psycopg2.connect(url)
     conn.autocommit = True
-    cols = ["symbol", "name", "tier", "role", "market_cap", "last_price", "ret_1w", "ret_1m", "ret_3m",
-            "ret_6m", "ret_1y", "ret_ytd", "rs_vs_nvda", "rs_vs_smh", "corr_nvda", "beta_nvda",
-            "vol_annual", "from_52w_high", "mom_score", "alpha_score", "alpha_note"]
+    cols = ["symbol", "name", "tier", "role", "stage", "trends", "market_cap", "last_price",
+            "ret_1w", "ret_1m", "ret_3m", "ret_6m", "ret_1y", "ret_ytd", "rs_vs_nvda", "rs_vs_smh",
+            "corr_nvda", "beta_nvda", "vol_annual", "from_52w_high", "mom_score", "alpha_score", "alpha_note"]
     with conn.cursor() as cur:
         for r in rows:
             vals = {c: r.get(c) for c in cols}

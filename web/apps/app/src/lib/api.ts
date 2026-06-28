@@ -17,6 +17,7 @@ import type {
 	NautilusBacktest,
 	SemiTicker,
 	SemiGroup,
+	SemiSegment,
 	AccountSnapshot,
 	NewsItem,
 	MarketStress
@@ -72,6 +73,9 @@ export const vps = {
 	semiUniverse: (f: Fetch = fetch) =>
 		req<SemiTicker[]>(CONFIG.API_BASE, '/semi_universe', { order: 'ret_3m.desc.nullslast' }, f),
 	semiGroups: (f: Fetch = fetch) => req<SemiGroup[]>(CONFIG.API_BASE, '/semi_groups', {}, f),
+	// System-level AI-server value-chain bottleneck matrix (HBM/CoWoS/substrate/MLCC/VRM/cooling/…).
+	semiSegments: (f: Fetch = fetch) =>
+		req<SemiSegment[]>(CONFIG.API_BASE, '/semi_segments', { order: 'id.asc' }, f),
 
 	// Daily NetLiq snapshots of our own paper/testnet accounts (public — the verifiable
 	// equity-curve artifact; see migration 022 + strategies/account_snapshot.py).

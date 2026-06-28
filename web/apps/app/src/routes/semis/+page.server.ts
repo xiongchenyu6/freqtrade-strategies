@@ -1,11 +1,12 @@
 import type { PageServerLoad } from './$types';
 import { vps } from '$lib/api';
-import type { SemiTicker, SemiGroup } from '$lib/types';
+import type { SemiTicker, SemiGroup, SemiSegment } from '$lib/types';
 
 export const load: PageServerLoad = async ({ fetch }) => {
-	const [universe, groups] = await Promise.all([
+	const [universe, groups, segments] = await Promise.all([
 		vps.semiUniverse(fetch).catch(() => [] as SemiTicker[]),
-		vps.semiGroups(fetch).catch(() => [] as SemiGroup[])
+		vps.semiGroups(fetch).catch(() => [] as SemiGroup[]),
+		vps.semiSegments(fetch).catch(() => [] as SemiSegment[])
 	]);
-	return { universe, groups };
+	return { universe, groups, segments };
 };
