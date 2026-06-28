@@ -23,6 +23,16 @@
 					? 'var(--gold-500)'
 					: 'var(--muted-foreground)';
 
+	// ----- technology-trend lens: click a trend to highlight every stock exposed to it -----
+	let selectedTrend = $state<string | null>(null);
+	const allTrends = $derived.by(() => {
+		const m = new Map<string, number>();
+		for (const t of tradeable) for (const tag of t.trends ?? []) m.set(tag, (m.get(tag) ?? 0) + 1);
+		return [...m.entries()].sort((a, b) => b[1] - a[1]);
+	});
+	const trendDimmed = (sym: string) =>
+		selectedTrend != null && !(bySym.get(sym)?.trends?.includes(selectedTrend) ?? false);
+
 	// ----- value-chain stages (left → right, from raw materials to demand) -----
 	const LAYERS: { title: [string, string]; syms: string[] }[] = [
 		{ title: ['原材料', 'Materials'], syms: ['LIN', 'ENTG', 'DD'] },
@@ -319,6 +329,33 @@
 			</p>{/if}
 	</div>
 
+	<!-- Technology-trend lens -->
+	{#if allTrends.length}
+		<div class="mb-4 flex flex-wrap items-center gap-1.5">
+			<span class="mr-1 text-xs text-muted-foreground">{tr('技术趋势透镜', 'Trend lens')}</span>
+			{#each allTrends as [tag, n] (tag)}
+				<button
+					type="button"
+					onclick={() => (selectedTrend = selectedTrend === tag ? null : tag)}
+					class="rounded-full border px-2 py-0.5 text-[11px] transition-colors {selectedTrend ===
+					tag
+						? 'border-[var(--gold-500)] bg-[color-mix(in_oklab,var(--gold-500)_18%,transparent)] text-[var(--gold-500)]'
+						: 'border-border text-muted-foreground hover:text-foreground'}"
+				>
+					{tag} <span class="opacity-60">{n}</span>
+				</button>
+			{/each}
+			{#if selectedTrend}
+				<button
+					type="button"
+					onclick={() => (selectedTrend = null)}
+					class="ml-1 text-[11px] text-muted-foreground hover:text-foreground"
+					>{tr('清除 ✕', 'clear ✕')}</button
+				>
+			{/if}
+		</div>
+	{/if}
+
 	<!-- Supply-chain network graph -->
 	<section class="relative overflow-x-auto rounded-xl border border-border bg-card p-2 sm:p-4">
 		<!-- relationship info card (shows on edge hover / tap) -->
@@ -410,8 +447,8 @@
 			{#each [...nodes.values()] as n}
 				{@const isNvda = n.t.symbol === 'NVDA'}
 				{@const lit = activeNodes?.has(n.t.symbol)}
-				{@const faded = activeNodes && !lit}
-				<g opacity={faded ? 0.15 : 1} style="transition:opacity .12s">
+				{@const faded = (activeNodes && !lit) || trendDimmed(n.t.symbol)}
+				<g opacity={faded ? 0.12 : 1} style="transition:opacity .12s">
 					<title
 						>{n.t.name} · {cap(n.t.market_cap)} · {pct(n.t.ret_3m)} 3M · ρNVDA {n.t.corr_nvda ??
 							'—'}</title
@@ -511,9 +548,15 @@
 						</div>
 						<div class="mt-1.5 flex flex-wrap gap-1">
 							{#each seg.trend_tags as tag}
-								<span
-									class="rounded-full border border-[color-mix(in_oklab,var(--gold-500)_30%,transparent)] px-1.5 py-px text-[10px] text-[var(--gold-500)]"
-									>{tag}</span
+								<button
+									type="button"
+									onclick={() => (selectedTrend = selectedTrend === tag ? null : tag)}
+									title={tr('用这个趋势透视上方图谱', 'Light up this trend in the graph above')}
+									class="rounded-full border px-1.5 py-px text-[10px] transition-colors {selectedTrend ===
+									tag
+										? 'border-[var(--gold-500)] bg-[color-mix(in_oklab,var(--gold-500)_18%,transparent)] text-[var(--gold-500)]'
+										: 'border-[color-mix(in_oklab,var(--gold-500)_30%,transparent)] text-[var(--gold-500)] hover:bg-[color-mix(in_oklab,var(--gold-500)_12%,transparent)]'}"
+									>{tag}</button
 								>
 							{/each}
 						</div>
