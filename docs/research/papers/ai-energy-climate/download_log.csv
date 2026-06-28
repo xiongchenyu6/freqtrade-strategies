@@ -1,0 +1,14 @@
+id,topic,filename,pdf_url,status,detail
+iea_energy_ai,official_report,iea_energy_and_ai_2025.pdf,https://iea.blob.core.windows.net/assets/86ed1178-4d77-45ac-ab38-28e849f3b93f/EnergyandAI.pdf,exists,8119451 bytes
+lbnl_us_data_center_energy,official_report,lbnl_us_data_center_energy_usage_2024.pdf,https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report_1.pdf,exists,4031183 bytes
+epri_powering_intelligence_2024,official_report,epri_powering_intelligence_2024.pdf,https://www.wpr.org/wp-content/uploads/2024/06/3002028905_Powering-Intelligence_-Analyzing-Artificial-Intelligence-and-Data-Center-Energy-Consumption.pdf,exists,3403046 bytes
+epri_powering_intelligence_2026,official_report,epri_powering_intelligence_updated_us_scenarios_2026.pdf,https://restservice.epri.com/publicattachment/97025,exists,374579 bytes
+iea_4e_data_centre_energy_review,official_report,iea_4e_data_centre_energy_review_2025.pdf,https://www.iea-4e.org/wp-content/uploads/2025/05/Data-Centre-Energy-Use-Critical-Review-of-Models-and-Results.pdf,exists,2985699 bytes
+nrel_edge_data_centers,official_report,nrel_edge_data_centers_der_2026.pdf,,skipped,no_pdf_url
+ai_grid_impacts,grid_paper,ai_data_centers_grid_impacts_2509.07218.pdf,https://arxiv.org/pdf/2509.07218,exists,2947309 bytes
+power_hungry_processing,inference_energy,power_hungry_processing_2311.16863.pdf,https://arxiv.org/pdf/2311.16863,exists,936671 bytes
+ai_less_thirsty,water,making_ai_less_thirsty_2304.03271.pdf,https://arxiv.org/pdf/2304.03271,exists,692291 bytes
+ml_training_carbon_plateau,carbon,ml_training_carbon_plateau_2204.05149.pdf,https://arxiv.org/pdf/2204.05149,exists,523533 bytes
+green_ai,carbon,green_ai_1907.10597.pdf,https://arxiv.org/pdf/1907.10597,exists,1309965 bytes
+energy_policy_deep_learning,carbon,energy_policy_deep_learning_nlp_1906.02243.pdf,https://arxiv.org/pdf/1906.02243,exists,113887 bytes
+bloom_carbon_footprint,carbon,bloom_carbon_footprint_jmlr_2023.pdf,https://www.jmlr.org/papers/volume24/23-0069/23-0069.pdf,exists,249239 bytes

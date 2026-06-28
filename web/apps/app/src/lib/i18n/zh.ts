@@ -23,6 +23,7 @@ export default {
 	'nav.reports': 'Reports',
 	'nav.signals': '信号库',
 	'nav.market': '研究',
+	'nav.aiSemisResearch': 'AI半导体研究',
 	'nav.hyperopt': 'Hyperopt',
 	'nav.factors': '因子分析',
 	'nav.graveyard': '策略墓地',
@@ -145,8 +146,7 @@ export default {
 	'detail.table.sharpe': 'Sharpe',
 	'detail.table.sortino': 'Sortino',
 	'detail.table.pf': 'PF',
-	'detail.empty':
-		'没有已归档的回测。重跑后通过 scripts/import_backtest_zip.py 会自动入库。',
+	'detail.empty': '没有已归档的回测。重跑后通过 scripts/import_backtest_zip.py 会自动入库。',
 	'detail.wf': '🧭 Walk-Forward 稳定性',
 	'detail.wfRunDate': 'run_date {d}',
 	'detail.wfFoot': '每一行是一个 regime 窗口。红条表示该窗口亏损（策略在这个市场环境下站不住）。',
@@ -197,7 +197,8 @@ export default {
 
 	// --- personal DCA plan (post-login) ---
 	'plan.title': '🎯 你的 DCA 计划（个人模拟）',
-	'plan.subtitleAnon': '登录后可保存你自己的 DCA 计划，按同样的事件信号回放历史看假如你跟着买会怎样。',
+	'plan.subtitleAnon':
+		'登录后可保存你自己的 DCA 计划，按同样的事件信号回放历史看假如你跟着买会怎样。',
 	'plan.loginCta': '去登录 →',
 	'plan.loading': '计算中…',
 	'plan.start': '起始日期',
@@ -303,16 +304,21 @@ export default {
 	'metric.tip.started': '回测数据所覆盖的历史起始时间（非回测运行时间）。',
 	'metric.tip.tf': 'K 线周期（15m / 1m / 1h…）。HTF 策略的 informative 不在此列。',
 	'metric.tip.trades': '整个回测里产生的完整 trade 数（开+平算一笔）。',
-	'metric.tip.wr': '胜率 = wins / total_trades × 100。低 WR + 高 PF 的组合（趋势跟随典型）比高 WR 更值得投产。',
+	'metric.tip.wr':
+		'胜率 = wins / total_trades × 100。低 WR + 高 PF 的组合（趋势跟随典型）比高 WR 更值得投产。',
 	'metric.tip.profit': '累计收益率（百分比）：(最终资产 - 初始资产) / 初始资产。已扣交易手续费。',
 	'metric.tip.abs': '累计美元盈亏（按初始 10K USDT 基准）。',
 	'metric.tip.maxDd': '账户峰值回撤百分比。系统 20% kill-switch —— 超过视为策略死亡。',
 	'metric.tip.calmar': 'Calmar = 年化收益 / MaxDD。> 1 是门槛，> 2 优秀。单位风险的回报率。',
-	'metric.tip.sharpe': 'Sharpe = (年化收益 − 无风险) / 年化波动率。> 1 门槛，> 2 优秀。对称惩罚上下波动。',
-	'metric.tip.sortino': 'Sortino = (年化收益 − 无风险) / 下行波动率。只惩罚下行，比 Sharpe 更贴近交易员直觉。> 1.5 门槛。',
-	'metric.tip.pf': 'Profit Factor = 总盈利 / 总亏损。> 1 才有机会盈利，> 2 优秀，< 1.2 通常活不过 drawdown。',
+	'metric.tip.sharpe':
+		'Sharpe = (年化收益 − 无风险) / 年化波动率。> 1 门槛，> 2 优秀。对称惩罚上下波动。',
+	'metric.tip.sortino':
+		'Sortino = (年化收益 − 无风险) / 下行波动率。只惩罚下行，比 Sharpe 更贴近交易员直觉。> 1.5 门槛。',
+	'metric.tip.pf':
+		'Profit Factor = 总盈利 / 总亏损。> 1 才有机会盈利，> 2 优秀，< 1.2 通常活不过 drawdown。',
 	'metric.tip.pairs': '该回测涉及的交易对。期货用 BASE/QUOTE:SETTLE 表示（如 ETH/USDT:USDT）。',
-	'metric.tip.factors': '策略使用的因子标签 (信号/上下文/执行/风险/模式)。在 ingest 时按策略名写入。',
+	'metric.tip.factors':
+		'策略使用的因子标签 (信号/上下文/执行/风险/模式)。在 ingest 时按策略名写入。',
 
 	// --- wf ---
 	'wf.title': 'Walk-Forward 8-Regime 对比',
@@ -349,7 +355,8 @@ export default {
 
 	// --- market research ---
 	'market.title': '市场研究',
-	'market.subtitle': '基于链上数据 + 技术指标的周级量化仪表盘。数据来自 Binance + Alternative.me（全部免费公开接口）。',
+	'market.subtitle':
+		'基于链上数据 + 技术指标的周级量化仪表盘。数据来自 Binance + Alternative.me（全部免费公开接口）。',
 	'market.currentPrice': '当前价格',
 	'market.dataSource': '数据来源',
 	'market.signal': '信号',
@@ -361,7 +368,8 @@ export default {
 	'market.section.sentiment': '情绪 Sentiment',
 	'market.section.leverage': '杠杆 Leverage',
 	'market.card.ma4y.title': '4年均线倍数',
-	'market.card.ma4y.desc': '当前价格 / 208周简单移动均线。< 0.8 历史低估区，> 1.5 历史偏高区。长期持有者的参考锚。',
+	'market.card.ma4y.desc':
+		'当前价格 / 208周简单移动均线。< 0.8 历史低估区，> 1.5 历史偏高区。长期持有者的参考锚。',
 	'market.card.ma5w.title': '5周均线方向',
 	'market.card.ma5w.desc': '5周 SMA 斜率方向。上升 = 短期趋势多头，下降 = 趋势转弱。',
 	'market.card.macd.title': 'MACD 柱状图',
@@ -369,13 +377,16 @@ export default {
 	'market.card.rsi.title': 'RSI(14) 周线',
 	'market.card.rsi.desc': '相对强弱指数，周线。< 35 超卖（潜在入场），> 70 超买（谨慎追高）。',
 	'market.card.stochrsi.title': 'StochRSI K值',
-	'market.card.stochrsi.desc': 'RSI 的随机指标，周线。< 20 超卖，> 80 超买。比 RSI 更灵敏的动能信号。',
+	'market.card.stochrsi.desc':
+		'RSI 的随机指标，周线。< 20 超卖，> 80 超买。比 RSI 更灵敏的动能信号。',
 	'market.card.fng.title': '恐惧贪婪指数',
-	'market.card.fng.desc': 'Alternative.me 综合指数（0–100）。极度恐惧（< 25）= 历史最佳买入窗口；极度贪婪（> 75）= 风险上升。',
+	'market.card.fng.desc':
+		'Alternative.me 综合指数（0–100）。极度恐惧（< 25）= 历史最佳买入窗口；极度贪婪（> 75）= 风险上升。',
 	'market.card.funding.title': '资金费率 APR',
 	'market.card.funding.desc': '永续合约资金费率年化。> 15% 多头过热；< -5% 空头主导，可能反弹。',
 	'market.card.oi.title': '未平仓合约 (USD)',
-	'market.card.oi.desc': '当前永续合约未平仓总量，美元计价。突然大幅下降代表多/空头平仓，可能触发价格剧烈波动。',
+	'market.card.oi.desc':
+		'当前永续合约未平仓总量，美元计价。突然大幅下降代表多/空头平仓，可能触发价格剧烈波动。',
 	'market.derivatives.title': '衍生品情绪',
 	'market.ls.title': '多空账户比',
 	'market.taker.title': '主动买卖比',
@@ -398,7 +409,7 @@ export default {
 	'hyperopt.subtitle': '各 epoch 的损失曲线与参数分布',
 	'hyperopt.noData.title': '暂无 Hyperopt 数据',
 	'hyperopt.noData.body':
-		'先用 sops exec-env secrets.env \'python scripts/sync_hyperopt_to_db.py\' 同步数据。',
+		"先用 sops exec-env secrets.env 'python scripts/sync_hyperopt_to_db.py' 同步数据。",
 	'hyperopt.bestLoss': '当前最优 Loss',
 	'hyperopt.chart.title': 'Loss 曲线',
 	'hyperopt.table.title': 'Top 20 Epochs（按 Loss 升序）',

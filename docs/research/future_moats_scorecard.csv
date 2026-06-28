@@ -1,0 +1,17 @@
+dimension,weight,indicator,question,score_0,score_3,score_5
+philosophy,30,problem_definition,Does it define a truly important problem?,Follows trends,Solves a clear pain point,Defines a new paradigm
+philosophy,30,world_model,Does it have a coherent model of users costs power and constraints?,Fragmented story,Basic strategic logic,Explains industry migration
+philosophy,30,anti_bubble_judgment,Can it distinguish structural change from narrative hype?,Price-led narrative,Some evidence discipline,Strong causal framework
+philosophy,30,value_alignment,Are product strategy and business model internally consistent?,Contradictory,Mostly aligned,Mutually reinforcing
+aesthetics,25,user_experience,Does the experience turn complexity into trust?,Confusing,Usable,Trust-building habit
+aesthetics,25,information_architecture,Can users quickly know what matters and what action to take?,Feature pile,Structured view,Immediate state comprehension
+aesthetics,25,language_and_brand,Does the language create clarity rather than noise?,Generic jargon,Clear copy,Distinctive worldview
+aesthetics,25,workflow_feel,Does the product feel natural in repeated use?,Friction-heavy,Acceptable,Ergonomic and sticky
+deep_reconstruction,35,workflow_rewrite,Does it replace old workflows instead of adding a tool?,Single-point tool,Partial workflow change,New operating system
+deep_reconstruction,35,cost_curve_shift,Does it move the cost curve meaningfully?,Marginal savings,Clear efficiency gain,Industry repricing
+deep_reconstruction,35,system_boundary,Does it redraw the boundary between product organization supply chain and infrastructure?,Old boundary,Some integration,New system architecture
+deep_reconstruction,35,ecosystem_standard,Can it create interfaces standards or ecosystem leverage?,No ecosystem,Integrates with ecosystem,Becomes a standard
+traction,10,production_usage,Is it used in real production rather than demos?,Demo only,Early customer use,Mission-critical production
+traction,10,economic_feedback,Does usage convert into revenue margin or cash recovery?,No monetization,Partial monetization,Strong unit economics
+traction,10,data_feedback,Does usage improve the system through data or learning loops?,No loop,Manual feedback,Compounding data loop
+traction,10,capital_or_supply_feedback,Does capital supply policy or procurement reinforce the system?,No reinforcement,Some support,Self-reinforcing flywheel

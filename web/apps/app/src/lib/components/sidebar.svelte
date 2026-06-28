@@ -52,6 +52,7 @@
 		{ href: '/signals', labelKey: 'nav.signals', icon: Radio },
 		{ href: '/market', labelKey: 'nav.market', icon: LineChart },
 		{ href: '/semis', labelKey: 'nav.semis', icon: Boxes },
+		{ href: '/research/ai-semis-liquidity', labelKey: 'nav.aiSemisResearch', icon: FileText },
 		{ href: '/commodities', labelKey: 'nav.commodities', icon: Coins },
 		{ href: '/globe', labelKey: 'nav.globe', icon: Globe },
 		{ href: '/strategies', labelKey: 'nav.strategies', icon: Layers },
@@ -95,6 +96,7 @@
 	}
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
 <!-- Mobile scrim -->
 {#if open}
 	<button
