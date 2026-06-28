@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org)
 [![NautilusTrader 1.227](https://img.shields.io/badge/NautilusTrader-1.227-green.svg)](https://nautilustrader.io)
-[![Dashboard](https://img.shields.io/badge/live-quant.panda.qzz.io-8a5cf6.svg)](https://quant.panda.qzz.io)
+[![Dashboard](https://img.shields.io/badge/live-starslab.qzz.io-8a5cf6.svg)](https://starslab.qzz.io)
 
 > **History:** this repo began as a freqtrade strategy collection; it migrated fully to a single NautilusTrader stack in 2026 (freqtrade removed). Some legacy directories remain for historical data/reports.
 
@@ -30,7 +30,7 @@
 - **Options research** (`nautilus_options/`) — Deribit cash-secured-put backtests (researched, not deployed).
 - **Standalone bots & collectors** (`strategies/`) — Kelly sizing, risk manager (drawdown kill-switch), DCA executor, Deribit monitor, Telegram alert dispatcher, plus data collectors that feed the dashboard (market, curated global news, market-stress index).
 - **Quant Lab** (`strategies/quant_lab.py`, `quant_models.py`) — dependency-light research models (BSM, cointegration, GARCH, HMM, Markowitz, PCA, …) runnable from the dashboard.
-- **Live public dashboard** — [quant.panda.qzz.io](https://quant.panda.qzz.io): live execution, backtest playground, semiconductor supply-chain view, a 3D market globe, market-stress index, and a self-service backtest runner. SvelteKit on Cloudflare Workers, zh-default bilingual.
+- **Live public dashboard** — [starslab.qzz.io](https://starslab.qzz.io): live execution, backtest playground, semiconductor supply-chain view, a 3D market globe, market-stress index, and a self-service backtest runner. SvelteKit on Cloudflare Workers, zh-default bilingual.
 
 ---
 
@@ -41,7 +41,7 @@ External market APIs are **never called from the browser/Cloudflare** (Binance b
 ```
 collectors (Python)            TimescaleDB @ oracle-arm-002          web (Cloudflare Workers)
 strategies/*_collector.py  ──▶  quant.*  ──(PostgREST api.* views)──▶  SvelteKit reads api.panda.qzz.io
-nautilus live nodes            (+ Supabase: auth + realtime)          quant.panda.qzz.io
+nautilus live nodes            (+ Supabase: auth + realtime)          starslab.qzz.io
 ```
 
 - **Live trading nodes** run as system services on **oracle-arm-002** (crypto: accumulator / trend / signal, all testnet) and on a local box (the US-equity IB-paper node + monitoring timers).

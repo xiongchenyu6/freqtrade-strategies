@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org)
 [![NautilusTrader 1.227](https://img.shields.io/badge/NautilusTrader-1.227-green.svg)](https://nautilustrader.io)
-[![Dashboard](https://img.shields.io/badge/在线-quant.panda.qzz.io-8a5cf6.svg)](https://quant.panda.qzz.io)
+[![Dashboard](https://img.shields.io/badge/在线-starslab.qzz.io-8a5cf6.svg)](https://starslab.qzz.io)
 
 > **沿革：** 本仓库最初是一套 freqtrade 策略集，2026 年完整迁移到单一 NautilusTrader 技术栈（freqtrade 已移除）。部分历史目录保留作历史数据/报告。
 
@@ -30,7 +30,7 @@
 - **期权研究**（`nautilus_options/`）—— Deribit 现金担保看跌（CSP）回测（已研究，未部署）。
 - **独立机器人与采集器**（`strategies/`）—— Kelly 仓位、风控管理器（回撤 kill-switch）、DCA 执行器、Deribit 监控、Telegram 告警分发，以及给仪表盘供数的采集器（行情、精选全球快讯、市场压力指数）。
 - **量化实验室**（`strategies/quant_lab.py`、`quant_models.py`）—— 依赖极轻的研究模型（BSM、协整、GARCH、HMM、Markowitz、PCA…），可从仪表盘运行。
-- **在线公开仪表盘** —— [quant.panda.qzz.io](https://quant.panda.qzz.io)：实时执行、回测沙盒、半导体供应链视图、3D 市场地球、市场压力指数、自助回测运行器。SvelteKit 跑在 Cloudflare Workers，中文默认双语。
+- **在线公开仪表盘** —— [starslab.qzz.io](https://starslab.qzz.io)：实时执行、回测沙盒、半导体供应链视图、3D 市场地球、市场压力指数、自助回测运行器。SvelteKit 跑在 Cloudflare Workers，中文默认双语。
 
 ---
 
@@ -41,7 +41,7 @@
 ```
 采集器 (Python)                 TimescaleDB @ oracle-arm-002          网页 (Cloudflare Workers)
 strategies/*_collector.py  ──▶  quant.*  ──(PostgREST api.* 视图)──▶  SvelteKit 只读 api.panda.qzz.io
-nautilus 实时节点               (+ Supabase：认证 + 实时)              quant.panda.qzz.io
+nautilus 实时节点               (+ Supabase：认证 + 实时)              starslab.qzz.io
 ```
 
 - **实时交易节点**以系统服务跑在 **oracle-arm-002**（加密：accumulator / trend / signal，全 testnet）和一台本地机（美股 IB 模拟盘节点 + 监控定时器）。
