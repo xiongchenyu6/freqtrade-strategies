@@ -7,14 +7,14 @@
         "index.html",
         "multiplier_distribution.html"
       ],
-      "updated": "2026-06-08T15:00:20.620Z"
+      "updated": "2026-06-28T08:47:32.159Z"
     },
     {
       "folder": "event_dca",
       "pages": [
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:20.620Z"
+      "updated": "2026-06-28T08:47:32.161Z"
     },
     {
       "folder": "full_history_btceth",
@@ -29,7 +29,7 @@
         "09_btc_candles_with_trades.html",
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:20.829Z"
+      "updated": "2026-06-28T08:47:33.015Z"
     },
     {
       "folder": "full_history_btceth_pyramid",
@@ -43,7 +43,7 @@
         "07_rolling_winrate.html",
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:21.141Z"
+      "updated": "2026-06-28T08:47:33.355Z"
     },
     {
       "folder": "hyperopted_full_history",
@@ -57,7 +57,7 @@
         "07_rolling_winrate.html",
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:21.268Z"
+      "updated": "2026-06-28T08:47:33.424Z"
     },
     {
       "folder": "pyramid",
@@ -71,14 +71,14 @@
         "07_rolling_winrate.html",
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:21.634Z"
+      "updated": "2026-06-28T08:47:33.723Z"
     },
     {
       "folder": "walk_forward",
       "pages": [
         "index.html"
       ],
-      "updated": "2026-06-08T15:00:21.635Z"
+      "updated": "2026-06-28T08:47:33.726Z"
     }
   ],
   "skipped": [
