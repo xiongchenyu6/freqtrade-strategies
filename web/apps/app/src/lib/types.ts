@@ -133,6 +133,8 @@ export interface SemiTicker {
 	symbol: string;
 	name: string;
 	tier: 'core' | 'upstream' | 'peer' | 'downstream' | 'benchmark';
+	stage: string | null; // fine value-chain step (materials … hyperscaler)
+	trends: string[] | null; // technology-trend tags (HBM, CoWoS, EUV, optical, VRM, …)
 	role: string | null;
 	market_cap: number | null;
 	last_price: number | null;
@@ -162,6 +164,21 @@ export interface SemiGroup {
 	avg_ret_1y: number | null;
 	avg_corr_nvda: number | null;
 	updated_at: string;
+}
+
+// System-level AI-server value-chain bottleneck matrix (api.semi_segments).
+// Scores 1-5; seeded from docs/research/AI_HARDWARE_BOTTLENECK_MATRIX_2026.md.
+export interface SemiSegment {
+	id: number;
+	segment: string; // en key
+	segment_zh: string;
+	bottleneck: number; // 瓶颈强度 1-5
+	pricing_power: number; // 定价权 1-5
+	sub_risk: number; // 技术替代风险 1-5
+	note_zh: string; // 关键证据
+	track_metric: string; // 读者跟踪指标
+	tickers: string[]; // representative public tickers
+	trend_tags: string[];
 }
 
 // Daily NetLiq snapshot of our own paper/testnet accounts (api.account_snapshots —
