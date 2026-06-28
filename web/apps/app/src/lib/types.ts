@@ -179,6 +179,8 @@ export interface SemiSegment {
 	track_metric: string; // 读者跟踪指标
 	tickers: string[]; // representative public tickers
 	trend_tags: string[];
+	status_2026: string | null; // verified current data point (null = open gap)
+	source_url: string | null;
 }
 
 // Daily NetLiq snapshot of our own paper/testnet accounts (api.account_snapshots —
