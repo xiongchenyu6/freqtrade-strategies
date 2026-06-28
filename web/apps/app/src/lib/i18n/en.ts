@@ -23,6 +23,7 @@ export default {
 	'nav.reports': 'Reports',
 	'nav.signals': 'Signals',
 	'nav.market': 'Research',
+	'nav.aiSemisResearch': 'AI Semis Research',
 	'nav.hyperopt': 'Hyperopt',
 	'nav.factors': 'Factors',
 	'nav.graveyard': 'Graveyard',
@@ -106,7 +107,8 @@ export default {
 	'home.anonGate.body':
 		'Aggregate stats (left) are public. Logging in unlocks the full archive, strategy factors, every trade, the Walk-Forward matrix, and the live feed.',
 	'home.anonGate.cta': 'Sign in →',
-	'home.footer': 'Built with SvelteKit · Live data · Updated daily · Deployed on Cloudflare Workers',
+	'home.footer':
+		'Built with SvelteKit · Live data · Updated daily · Deployed on Cloudflare Workers',
 
 	// --- strategies index ---
 	'strategies.title': '📚 Strategy catalog',
@@ -303,19 +305,29 @@ export default {
 	'archive.equity.empty': 'No closed trades',
 
 	// --- metric tooltips (shared across archive / home / strategy detail) ---
-	'metric.tip.started': "Start of the historical window the backtest covers (not the run's wall-clock start).",
-	'metric.tip.tf': 'Candle timeframe (15m / 1m / 1h…). HTF informative feeds aren\'t listed here.',
+	'metric.tip.started':
+		"Start of the historical window the backtest covers (not the run's wall-clock start).",
+	'metric.tip.tf': "Candle timeframe (15m / 1m / 1h…). HTF informative feeds aren't listed here.",
 	'metric.tip.trades': 'Number of complete trades (open + close counts as one).',
-	'metric.tip.wr': 'Win rate = wins / total_trades × 100. A low WR with a high PF (typical trend-following) can still beat a high-WR strategy.',
-	'metric.tip.profit': 'Cumulative return (%). (Final equity − starting equity) / starting equity. Trading fees already netted out.',
+	'metric.tip.wr':
+		'Win rate = wins / total_trades × 100. A low WR with a high PF (typical trend-following) can still beat a high-WR strategy.',
+	'metric.tip.profit':
+		'Cumulative return (%). (Final equity − starting equity) / starting equity. Trading fees already netted out.',
 	'metric.tip.abs': 'Cumulative USD PnL, against the 10K USDT starting equity baseline.',
-	'metric.tip.maxDd': 'Peak-to-trough account drawdown (%). The 20% kill-switch here means anything above 20% is treated as strategy death.',
-	'metric.tip.calmar': 'Calmar = annualised return / MaxDD. > 1 is the bar, > 2 is excellent. Return per unit of drawdown.',
-	'metric.tip.sharpe': 'Sharpe = (annualised return − risk-free) / annualised vol. > 1 bar, > 2 excellent. Punishes up-volatility and down-volatility equally.',
-	'metric.tip.sortino': 'Sortino = (annualised return − risk-free) / downside volatility. Only penalises downside — closer to how traders actually think about risk. > 1.5 is the bar.',
-	'metric.tip.pf': 'Profit factor = gross profit / gross loss. > 1 to make money at all, > 2 is excellent, < 1.2 usually dies in the next drawdown.',
-	'metric.tip.pairs': 'Pairs traded in this run. Futures use BASE/QUOTE:SETTLE (e.g. ETH/USDT:USDT).',
-	'metric.tip.factors': 'Factor tags for this strategy (signal / context / execution / risk / mode). Written at ingest based on strategy name.',
+	'metric.tip.maxDd':
+		'Peak-to-trough account drawdown (%). The 20% kill-switch here means anything above 20% is treated as strategy death.',
+	'metric.tip.calmar':
+		'Calmar = annualised return / MaxDD. > 1 is the bar, > 2 is excellent. Return per unit of drawdown.',
+	'metric.tip.sharpe':
+		'Sharpe = (annualised return − risk-free) / annualised vol. > 1 bar, > 2 excellent. Punishes up-volatility and down-volatility equally.',
+	'metric.tip.sortino':
+		'Sortino = (annualised return − risk-free) / downside volatility. Only penalises downside — closer to how traders actually think about risk. > 1.5 is the bar.',
+	'metric.tip.pf':
+		'Profit factor = gross profit / gross loss. > 1 to make money at all, > 2 is excellent, < 1.2 usually dies in the next drawdown.',
+	'metric.tip.pairs':
+		'Pairs traded in this run. Futures use BASE/QUOTE:SETTLE (e.g. ETH/USDT:USDT).',
+	'metric.tip.factors':
+		'Factor tags for this strategy (signal / context / execution / risk / mode). Written at ingest based on strategy name.',
 
 	// --- wf ---
 	'wf.title': 'Walk-Forward 8-regime comparison',
@@ -338,7 +350,8 @@ export default {
 		'Subscribes to CDC for 3 tables via wss://quant.realtime.panda.qzz.io. New backtests / trades / event DCA triggers get pushed here the instant they happen.',
 	'live.wsStatus': 'WS',
 	'live.feed.title': '📡 Event feed (last 100)',
-	'live.feed.empty': 'Waiting for events… this scrolls in real time when backtests, trades, or DCA triggers happen.',
+	'live.feed.empty':
+		'Waiting for events… this scrolls in real time when backtests, trades, or DCA triggers happen.',
 	'live.backtests.title': '📦 Recent backtests',
 	'live.trades.title': '💼 Recent trades',
 	'live.trades.empty': 'Bots are on dry-run; nothing closed yet.',
@@ -352,33 +365,43 @@ export default {
 
 	// --- market research ---
 	'market.title': 'Market Research',
-	'market.subtitle': 'Weekly quant dashboard combining on-chain data and technical indicators. Data from Binance + Alternative.me (all free public APIs).',
+	'market.subtitle':
+		'Weekly quant dashboard combining on-chain data and technical indicators. Data from Binance + Alternative.me (all free public APIs).',
 	'market.currentPrice': 'Current Price',
 	'market.dataSource': 'Data source',
 	'market.signal': 'Signal',
 	'market.signal.info': 'Info',
 	'market.error': 'Failed to load market data. Please try again later.',
-	'market.footer': 'Sources: Binance REST API · Alternative.me Fear & Greed · Computed on each request',
+	'market.footer':
+		'Sources: Binance REST API · Alternative.me Fear & Greed · Computed on each request',
 	'market.section.valuation': 'Valuation',
 	'market.section.technicals': 'Technicals',
 	'market.section.sentiment': 'Sentiment',
 	'market.section.leverage': 'Leverage',
 	'market.card.ma4y.title': '4-Year MA Multiple',
-	'market.card.ma4y.desc': 'Current price / 208-week SMA. < 0.8 historically undervalued; > 1.5 historically expensive. Long-term holder anchor.',
+	'market.card.ma4y.desc':
+		'Current price / 208-week SMA. < 0.8 historically undervalued; > 1.5 historically expensive. Long-term holder anchor.',
 	'market.card.ma5w.title': '5-Week MA Direction',
-	'market.card.ma5w.desc': 'Slope direction of the 5-week SMA. Up = short-term bullish momentum; Down = trend weakening.',
+	'market.card.ma5w.desc':
+		'Slope direction of the 5-week SMA. Up = short-term bullish momentum; Down = trend weakening.',
 	'market.card.macd.title': 'MACD Histogram',
-	'market.card.macd.desc': 'MACD(12,26,9) histogram value. Positive = fast line above slow (bullish momentum); negative = bearish.',
+	'market.card.macd.desc':
+		'MACD(12,26,9) histogram value. Positive = fast line above slow (bullish momentum); negative = bearish.',
 	'market.card.rsi.title': 'RSI(14) Weekly',
-	'market.card.rsi.desc': 'Relative Strength Index on weekly candles. < 35 oversold (potential entry); > 70 overbought (caution).',
+	'market.card.rsi.desc':
+		'Relative Strength Index on weekly candles. < 35 oversold (potential entry); > 70 overbought (caution).',
 	'market.card.stochrsi.title': 'StochRSI K',
-	'market.card.stochrsi.desc': 'Stochastic of RSI on weekly candles. < 20 oversold; > 80 overbought. More sensitive than raw RSI.',
+	'market.card.stochrsi.desc':
+		'Stochastic of RSI on weekly candles. < 20 oversold; > 80 overbought. More sensitive than raw RSI.',
 	'market.card.fng.title': 'Fear & Greed Index',
-	'market.card.fng.desc': 'Alternative.me composite index (0–100). Extreme fear (< 25) = historically best buy windows; extreme greed (> 75) = elevated risk.',
+	'market.card.fng.desc':
+		'Alternative.me composite index (0–100). Extreme fear (< 25) = historically best buy windows; extreme greed (> 75) = elevated risk.',
 	'market.card.funding.title': 'Funding Rate APR',
-	'market.card.funding.desc': 'Annualised perpetual funding rate. > 15% longs overheated; < -5% shorts dominant, potential squeeze rally.',
+	'market.card.funding.desc':
+		'Annualised perpetual funding rate. > 15% longs overheated; < -5% shorts dominant, potential squeeze rally.',
 	'market.card.oi.title': 'Open Interest (USD)',
-	'market.card.oi.desc': 'Total outstanding perpetual futures positions in USD. Sudden sharp drop signals mass liquidation and potential high volatility.',
+	'market.card.oi.desc':
+		'Total outstanding perpetual futures positions in USD. Sudden sharp drop signals mass liquidation and potential high volatility.',
 	'market.derivatives.title': 'Derivatives Sentiment',
 	'market.ls.title': 'L/S Account Ratio',
 	'market.taker.title': 'Taker Buy/Sell',
@@ -423,7 +446,7 @@ export default {
 	'login.password': 'Password',
 	'login.submit': 'Log in',
 	'login.signup': 'Sign up',
-	'login.toggleSignup': "No account? Sign up",
+	'login.toggleSignup': 'No account? Sign up',
 	'login.toggleLogin': 'Have an account? Log in',
 	'login.loading': 'Submitting...',
 	'login.google': 'Sign in with Google',
@@ -432,6 +455,7 @@ export default {
 	'login.cbBody':
 		'Got the Google authorisation, storing your session locally. You will be redirected shortly.',
 	'login.cbError': 'Sign-in failed: {msg}',
-	'login.why': 'Log in to access {path} — strategy details, backtest archive, and the live feed are for signed-in users only.',
+	'login.why':
+		'Log in to access {path} — strategy details, backtest archive, and the live feed are for signed-in users only.',
 	'login.publicHint': 'Free to browse: home · DCA simulator · docs'
 };

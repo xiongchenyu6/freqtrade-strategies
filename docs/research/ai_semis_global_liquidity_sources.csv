@@ -1,0 +1,52 @@
+category,source_name,url,primary_use,priority
+industry,WSTS Recent News Release,https://www.wsts.org/76/Recent-News-Release,Global semiconductor forecast and product split,high
+industry,SIA Q1 2026 Sales,https://www.semiconductors.org/global-semiconductor-sales-increase-25-from-q4-2025-to-q1-2026/,Monthly and quarterly semiconductor sales,high
+industry,SIA-Deloitte Powering AI,https://www.semiconductors.org/new-report-finds-semiconductors-account-for-95-of-an-ai-data-server-racks-value-encompassing-the-full-stack-of-chip-technologies/,AI data center rack semiconductor content,high
+equipment,SEMI 2025 Equipment Billings,https://www.semi.org/en/SEMI-Reports-Global-Semiconductor-Equipment-Billings-Reached-135-Billion-in-2025,Equipment billings by segment and region,high
+equipment,SEMI 300mm Fab Outlook,https://www.semi.org/en/semi-press-release/semi-projects-double-digit-growth-in-global-300mm-fab-equipment-spending-for-2026-and-2027,300mm fab equipment spending outlook,high
+accelerator,NVIDIA FY2026 10-K,https://investor.nvidia.com/files/doc_financials/2026/q4/10K-NVDA.pdf,AI accelerator and data center revenue baseline,high
+foundry,TSMC Annual Reports,https://investor.tsmc.com/english/annual-reports,Advanced node and CoWoS references,high
+lithography,ASML 2025 Annual Report,https://www.asml.com/investors/annual-report/2025,EUV and High-NA roadmap,high
+memory,Micron Investor Relations,https://investors.micron.com/,HBM DRAM NAND supply and capex commentary,high
+memory,Samsung FY2025 Results,https://news.samsung.com/global/samsung-electronics-announces-fourth-quarter-and-fy-2025-results,HBM4 delivery and AI memory prioritization,high
+custom_silicon,Broadcom Q1 FY2026 Results,https://www.broadcom.com/company/news/financial-releases/63976,Custom AI accelerator and AI networking revenue,high
+accelerator,AMD Q1 2026 10-Q,https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000076/amd-20260328.htm,Instinct MI350 and data center segment economics,high
+hyperscaler,Microsoft FY2026 Q3,https://www.microsoft.com/en-us/investor/events/fy-2026/earnings-fy-2026-q3,Cloud and AI capex mix,high
+hyperscaler,Alphabet Q1 2026,https://abc.xyz/investor/events/event-details/2026/2026-Q1-Earnings-Call-2026-nW8kCrBAKS/default.aspx,Technical infrastructure capex and TPU/GPU demand,high
+hyperscaler,Amazon Q1 2026,https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-First-Quarter-Results/default.aspx,AWS growth and AI-driven property and equipment spend,high
+hyperscaler,Amazon 2025 Shareholder Letter,https://ir.aboutamazon.com/files/doc_financials/2026/ar/2025-Shareholder-Letter-Final.pdf,Trainium and AWS power/capex constraints,high
+hyperscaler,Meta Q1 2026,https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-First-Quarter-2026-Results/default.aspx,AI infrastructure capex range and component pricing,high
+liquidity,BIS Global Liquidity Indicators,https://www.bis.org/statistics/gli2604.htm,Dollar and euro foreign currency credit,high
+liquidity,Federal Reserve H.4.1,https://www.federalreserve.gov/releases/h41/current/,Fed balance sheet and reserve conditions,high
+liquidity,ECB Weekly Financial Statements,https://www.ecb.europa.eu/press/annual-reports-financial-statements/wfs/html/index.en.html,Eurosystem balance sheet,high
+liquidity,People's Daily PBOC TSF report,https://paper.people.com.cn/rmrb/pc/content/202606/15/content_30163056.html,China TSF and credit growth,medium
+policy,BIS Advanced Computing Controls,https://www.bis.gov/press-release/bis-updated-public-information-page-export-controls-imposed-advanced-computing-semiconductor,US AI chip and semiconductor equipment controls,high
+policy,BIS 2024 Semiconductor Package,https://www.bis.gov/press-release/commerce-strengthens-export-controls-restrict-chinas-capability-produce-advanced-semiconductors-military,HBM equipment software and entity list controls,high
+policy,BIS AI Diffusion Rescission,https://www.bis.gov/press-release/department-commerce-announces-rescission-biden-era-artificial-intelligence-diffusion-rule-strengthens,US AI chip export policy direction,high
+policy,BIS China License Review Policy,https://www.bis.gov/press-release/department-commerce-revises-license-review-policy-semiconductors-exported-china,Case-by-case China export license framework,high
+policy,Netherlands Semiconductor Export Controls,https://www.government.nl/latest/news/2025/01/15/klever-export-controls-on-advanced-semiconductor-manufacturing-equipment-to-be-tightened,Dutch advanced equipment authorization requirements,high
+policy,MOFCOM Gallium Germanium Remarks,https://english.mofcom.gov.cn/News/PressConference/art/2023/art_36fb2d80e4b4453891bb8fc83e2b3c4e.html,China critical mineral license control baseline,medium
+packaging,ASE 310mm Panel-Level Packaging,https://www.aseglobal.com/press-room/310x310,Panel-level advanced packaging for AI scale,high
+packaging,Amkor AI ML Packaging,https://amkor.com/applications/artificial-intelligence/,Chiplet and HBM package integration,high
+passives,Murata IR Day 2025 MLCC AI Servers,https://corporate.murata.com/-/media/corporate/about/newsroom/news/irnews/irnews/2025/1201/2512-e-speach.ashx?cvid=20251204015903000000&la=en,AI server baseboard capacitor count and MLCC demand CAGR,high
+passives,TDK Data Center PSU MLCC Solutions,https://product.tdk.com/en/techlibrary/applicationnote/mlcc-solution-for-data-center-psu.html,AI data center PSU power architecture and MLCC requirements,high
+passives,Samsung High Voltage C0G MLCC for AI PSU,https://www.samsungsem.com/global/newsroom/news/view.do?id=8802,AI server PSU high-voltage MLCC demand,high
+passives,Samsung High Capacitance MLCC for Power,https://weblib.samsungsem.com/product-news/view.do?idx=3722&language=en,High capacitance MLCC for AI server power modules,medium
+substrate,Ibiden High-Performance IC Package Substrate Investment,https://www.ibiden.com/company/2026/02/notice-regarding-capital-investment-plan-for-high-performance-ic-package-substrates.html,JPY 500 billion FY2026-FY2028 AI server substrate capacity expansion,high
+substrate,Ibiden FY2025 Financial Results,https://www.ibiden.com/ir/items/en_kessannsetsumeiFY2025.pdf,AI server substrate production load and Cell6 Cell8 expansion plan,high
+pcb,Taiwan Q1 2026 PCB Output Survey,https://iconnect007.com/article/150517/taiwan-q1-2026-pcb-output-hits-record-nt2456-billion-on-ai-server-demand/150514/aep,Taiwan PCB output and AI server demand with material tightness,medium
+power,Infineon AI Data Center VRM Modules,https://www.infineon.com/technology/ai/we-power-ai/vrm,Vertical power delivery 280A modules and power density for AI data centers,high
+cooling,Vertiv 2026 AI Liquid Cooling Outlook,https://www.vertiv.com/en-emea/about/news-and-events/news-releases/2026/vertiv-expects-powering-up-for-ai-digital-twins-and-adaptive-liquid-cooling-to-shape-data-center-design-and-operations/,Adaptive liquid cooling and AI data center design trends,medium
+cooling,Schneider Direct-to-Chip Cooling,https://blog.se.com/datacenter/2026/01/16/rethinking-data-center-cooling-ai-direct-to-chip-liquid-cooling/,Single-phase direct-to-chip liquid cooling for AI and HPC,medium
+networking,Arista 1.6T AI Fabric Portfolio,https://www.arista.com/en/company/news/press-release/24102-pr-20260609,Rack-scale AI fabric and Ethernet roadmap,high
+optics,Coherent OFC 2026 Optical Portfolio,https://www.coherent.com/news/press-releases/coherent-demonstrates-next-gen-pluggable-transceiver-ofc-2026,1.6T 3.2T and 12.8T optical roadmap,high
+policy,CHIPS for America,https://www.chips.gov/,US semiconductor incentives and advanced packaging programs,medium
+benchmark,MLPerf Inference v5.0,https://mlcommons.org/2025/04/mlperf-inference-v5-0-results/,Generative AI inference benchmark direction,high
+energy,IEA Energy and AI,https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai,Data center electricity demand scenarios,high
+energy,IEA AI and Energy Security,https://www.iea.org/reports/energy-and-ai/ai-and-energy-security,Grid connection delay and energy security constraints,high
+liquidity,BIS Financing the AI Boom,https://www.bis.org/publ/bisbull120.pdf,AI financing shift from cash flow to debt and private credit,high
+paper,ICLR 2025 Test-Time Compute,https://proceedings.iclr.cc/paper_files/paper/2025/file/1b623663fd9b874366f3ce019fdfdd44-Paper-Conference.pdf,Inference-time scaling and compute demand,high
+paper,FlashAttention-3,https://arxiv.org/abs/2407.08608,Attention memory traffic and FP8 efficiency,high
+paper,DeepSeek-V3 Technical Report,https://arxiv.org/abs/2412.19437,MoE MLA FP8 and cost-effective training,high
+paper,KIVI KV Cache Quantization,https://arxiv.org/abs/2402.02750,KV cache compression and HBM pressure,high
+paper,vLLM PagedAttention,https://arxiv.org/abs/2309.06180,LLM serving memory management and throughput,high

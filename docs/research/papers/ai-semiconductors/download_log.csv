@@ -1,0 +1,30 @@
+id,topic,filename,pdf_url,status,detail
+memory_wall,challenges_llm_inference_processors,challenges_llm_inference_processors_2601.05047.pdf,https://arxiv.org/pdf/2601.05047,downloaded,962695 bytes
+memory_wall,mind_the_memory_gap,mind_the_memory_gap_2503.08311.pdf,https://arxiv.org/pdf/2503.08311,downloaded,700455 bytes
+agentic_inference,optimization_pathways_agentic_llm,optimization_pathways_agentic_llm_2509.09505.pdf,https://arxiv.org/pdf/2509.09505,downloaded,1997101 bytes
+kv_cache,turboquant,turboquant_openreview_2026.pdf,https://openreview.net/pdf?id=tO3ASKZlok,downloaded,687259 bytes
+kv_cache,kivi,kivi_kv_cache_quantization_2402.02750.pdf,https://arxiv.org/pdf/2402.02750,downloaded,2194402 bytes
+kv_cache,kvquant,kvquant_neurips_2024.pdf,https://www.stat.berkeley.edu/~mmahoney/pubs/neurips-2024-kvquant.pdf,downloaded,2084523 bytes
+kv_cache,xquant,xquant_2508.10395.pdf,https://arxiv.org/pdf/2508.10395,downloaded,9858194 bytes
+kv_cache,saw_int4,saw_int4_2604.19157.pdf,https://arxiv.org/pdf/2604.19157,downloaded,16408942 bytes
+kv_cache,fier,fier_kv_retrieval_emnlp_2025.pdf,https://aclanthology.org/2025.findings-emnlp.515.pdf,downloaded,4987568 bytes
+serving,vllm_pagedattention,vllm_pagedattention_2309.06180.pdf,https://arxiv.org/pdf/2309.06180,downloaded,1459631 bytes
+attention,flashattention3,flashattention3_2407.08608.pdf,https://arxiv.org/pdf/2407.08608,downloaded,1096663 bytes
+architecture,deepseek_v3,deepseek_v3_2412.19437.pdf,https://arxiv.org/pdf/2412.19437,downloaded,1887366 bytes
+architecture,transmla,transmla_2502.07864.pdf,https://arxiv.org/pdf/2502.07864,downloaded,1795292 bytes
+architecture,kimi_linear,kimi_linear_2510.26692.pdf,https://arxiv.org/pdf/2510.26692,downloaded,1354769 bytes
+architecture,minimax_01,minimax_01_2501.08313.pdf,https://arxiv.org/pdf/2501.08313,downloaded,5552980 bytes
+architecture,minimax_m1,minimax_m1_2506.13585.pdf,https://arxiv.org/pdf/2506.13585,downloaded,1584812 bytes
+architecture,mamba,mamba_2312.00752.pdf,https://arxiv.org/pdf/2312.00752,downloaded,1168615 bytes
+architecture,mamba2,mamba2_2405.21060.pdf,https://arxiv.org/pdf/2405.21060,downloaded,3209170 bytes
+architecture,gated_deltanet,gated_deltanet_openreview_2025.pdf,https://openreview.net/pdf?id=r8H7xhYPwz,downloaded,472214 bytes
+architecture,gated_deltanet2,gated_deltanet2_2605.22791.pdf,https://arxiv.org/pdf/2605.22791,downloaded,567107 bytes
+cxl,beluga,beluga_cxl_kvcache_2511.20172.pdf,https://arxiv.org/pdf/2511.20172,downloaded,2471421 bytes
+cxl,cxl_pnm,cxl_enabled_kv_cache_management_2511.00321.pdf,https://arxiv.org/pdf/2511.00321,downloaded,4268478 bytes
+cxl,tract,tract_cxl_shared_memory_kv_cache_2512.18194.pdf,https://arxiv.org/pdf/2512.18194,downloaded,697023 bytes
+compute_in_memory,cim_transformers,cim_transformer_survey_2406.08413.pdf,https://arxiv.org/pdf/2406.08413,downloaded,3527800 bytes
+chiplet,mozart,mozart_chiplet_codesign_2510.08873.pdf,https://arxiv.org/pdf/2510.08873,downloaded,1535806 bytes
+interconnect,photonic_rails_opus,photonic_rails_opus_2602.12521.pdf,https://arxiv.org/pdf/2602.12521,downloaded,1203226 bytes
+interconnect,infinite_hbd,infinite_hbd_2502.03885.pdf,https://arxiv.org/pdf/2502.03885,downloaded,11932636 bytes
+interconnect,photonics_scale_ai_dc,photonics_to_scale_ai_datacenters_npj_2025.pdf,,skipped,no_pdf_url
+hardware,rpu,rpu_reasoning_processing_unit_2602.18568.pdf,https://arxiv.org/pdf/2602.18568,downloaded,16149603 bytes

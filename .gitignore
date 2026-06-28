@@ -63,3 +63,6 @@ venv/
 .direnv/
 .DS_Store
 .venv-bots/
+
+# Downloaded research papers (reproducible via scripts/download_ai_*.py from the manifests)
+docs/research/papers/**/*.pdf
