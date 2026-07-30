@@ -18,16 +18,22 @@
 		{
 			"pattern": "starslab.qzz.io",
 			"custom_domain": true
+		},
+		{
+			"pattern": "quant.starslab.qzz.io",
+			"custom_domain": true
 		}
 	],
 
 	"vars": {
 		"API_BASE": "https://api.panda.qzz.io",
-		"AUTH_BASE": "https://auth.panda.qzz.io",
+		"AUTH0_DOMAIN": "autolife.jp.auth0.com",
+		"AUTH0_CLIENT_ID": "8aAbuMhZlFa94TbPozNZIKSxfSlv0B4r",
+		"AUTH0_AUDIENCE": "https://api.panda.qzz.io",
 		"SUPABASE_URL": "https://rhweqsxothaezsbxjwaj.supabase.co",
 		"SUPABASE_ANON": "sb_publishable_RRSWxhXvvaUqk3S9nF7m9A_loMqoxxw",
 		"REALTIME_URL": "wss://quant.realtime.panda.qzz.io/socket",
-		"REALTIME_ANON_JWT": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJlZiI6InF1YW50IiwiaWF0IjoxNzc2OTM2NDk1LCJleHAiOjIwOTIyOTY0OTV9.rAObAeT1xqGAJncGoyVD_6GqGwjFVSUSE48dC-gWTSU"
+		"REALTIME_ANON_JWT": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJlZiI6InF1YW50IiwiaWF0IjoxNzc2OTM2NDk1LCJleHAiOjIwOTIyOTY0OTV9.aC_P6oyLp42zVbdWCMjd0Kw3EOpPUT2LuqEBmQi9d8c"
 	},
 
 	"observability": {

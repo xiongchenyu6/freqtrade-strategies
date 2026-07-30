@@ -40,13 +40,10 @@ function b64encode(u: Uint8Array): string {
 }
 
 async function importKek(kekB64: string): Promise<CryptoKey> {
-	return crypto.subtle.importKey(
-		'raw',
-		b64decode(kekB64),
-		{ name: 'AES-GCM' },
-		false,
-		['encrypt', 'decrypt']
-	);
+	return crypto.subtle.importKey('raw', b64decode(kekB64), { name: 'AES-GCM' }, false, [
+		'encrypt',
+		'decrypt'
+	]);
 }
 
 async function encryptSecret(plaintext: string, kekB64: string): Promise<string> {
@@ -156,7 +153,10 @@ function jwtSubject(authHeader: string): string | null {
 		const tok = authHeader.replace(/^Bearer\s+/, '');
 		const [, p] = tok.split('.');
 		const payload = JSON.parse(atob(p.replace(/-/g, '+').replace(/_/g, '/')));
-		return payload.sub ?? null;
+		// Auth0 tokens carry the stable UUID in the namespaced claim; the raw
+		// `sub` (auth0|…) is not what RLS keys on. Legacy fallback kept for the
+		// cutover window.
+		return payload['https://panda.qzz.io/uid'] ?? payload.sub ?? null;
 	} catch {
 		return null;
 	}
@@ -280,10 +280,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	});
 	if (!upsert.ok) {
 		const t = await upsert.text().catch(() => '');
-		return new Response(JSON.stringify({ error: `save failed ${upsert.status}: ${t.slice(0, 200)}` }), {
-			status: 500,
-			headers: { 'content-type': 'application/json' }
-		});
+		return new Response(
+			JSON.stringify({ error: `save failed ${upsert.status}: ${t.slice(0, 200)}` }),
+			{
+				status: 500,
+				headers: { 'content-type': 'application/json' }
+			}
+		);
 	}
 	return new Response(JSON.stringify({ connected: true }), {
 		headers: { 'content-type': 'application/json' }
