@@ -48,19 +48,45 @@ function startStatusPolling() {
 	_statusTimer = setInterval(tick, 500);
 }
 
+/** Swap the channel-level token for a realtime-shaped authenticated one.
+ * Auth0 access tokens lack the top-level `role` claim realtime needs for CDC
+ * RLS, so /api/realtime-token re-mints one from the same shared secret. The
+ * socket itself always connects with the anon apikey (valid role claim);
+ * setAuth() upgrades what RLS sees on the channels. */
+async function upgradeAuth(c: RealtimeClient) {
+	const auth0Tok = getToken();
+	if (!auth0Tok) return;
+	try {
+		const r = await fetch('/api/realtime-token', {
+			headers: { Authorization: `Bearer ${auth0Tok}` }
+		});
+		if (!r.ok) return;
+		const { token } = (await r.json()) as { token: string };
+		await c.setAuth(token);
+	} catch {
+		// stay on the anon channel token — public streams still work
+	}
+}
+
+/** Resolves once the auth upgrade attempt finished (either way). Channel
+ * joins must wait on this: a postgres_changes subscription snapshots its RLS
+ * role at join time, so joining before setAuth() lands would pin the channel
+ * to anon — which the quant.* tables reject — and no rows would ever arrive. */
+let _ready: Promise<void> | null = null;
+
 function client(): RealtimeClient {
 	if (_client) return _client;
-	const jwt = getToken() ?? CONFIG.REALTIME_ANON_JWT;
 	// eslint-disable-next-line no-console
 	console.info('[realtime] creating client →', CONFIG.REALTIME_URL);
 	_client = new RealtimeClient(CONFIG.REALTIME_URL, {
-		params: { apikey: jwt },
+		params: { apikey: CONFIG.REALTIME_ANON_JWT },
 		transport: typeof WebSocket !== 'undefined' ? WebSocket : undefined,
 		timeout: 20_000
 	});
 	_status.set('connecting');
 	_client.connect();
 	startStatusPolling();
+	_ready = upgradeAuth(_client);
 	return _client;
 }
 
@@ -72,19 +98,24 @@ export function subscribeTo<T = Record<string, unknown>>(
 	if (!browser) return () => {};
 	const { event = '*', schema = 'quant' } = opts;
 	const topic = `realtime:${schema}:${table}`;
-	const channel = client().channel(topic, { config: { broadcast: { self: false } } });
-	channel
-		.on(
-			'postgres_changes' as never,
-			{ event, schema, table },
-			(payload: unknown) => handler(payload as ChangePayload<T>)
-		)
-		.subscribe((status: string, err?: Error) => {
-			// eslint-disable-next-line no-console
-			console.info(`[realtime] channel ${topic} → ${status}`, err ?? '');
-		});
+	const c = client();
+	let channel: ReturnType<RealtimeClient['channel']> | null = null;
+	let cancelled = false;
+	void (_ready ?? Promise.resolve()).then(() => {
+		if (cancelled) return;
+		channel = c.channel(topic, { config: { broadcast: { self: false } } });
+		channel
+			.on('postgres_changes' as never, { event, schema, table }, (payload: unknown) =>
+				handler(payload as ChangePayload<T>)
+			)
+			.subscribe((status: string, err?: Error) => {
+				// eslint-disable-next-line no-console
+				console.info(`[realtime] channel ${topic} → ${status}`, err ?? '');
+			});
+	});
 	return () => {
-		channel.unsubscribe();
+		cancelled = true;
+		channel?.unsubscribe();
 	};
 }
 
