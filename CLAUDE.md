@@ -8,19 +8,31 @@ for stage status and `STRATEGY_LEADERBOARD.md` for the strategy research log.
 - `nautilus_crypto/` — crypto engine (Nautilus). `accumulator.py` (FNG smart-DCA), `donchian.py`
   (trend), `signal_detect.py`/`signal_alerter.py`/`telegram_notifier.py` (signal layer),
   `trade_ledger.py` (writes `quant.nautilus_trades`), `live_*.py`/`run_*.py` (live nodes + backtests).
-- `nautilus_equity/` — US-equity engine via IB (own `.venv`, has `nautilus_trader[ib]`). Built,
-  not yet live (blocked on IB Gateway + paper account).
+- `nautilus_equity/` — US-equity engine via IB (own `.venv`, has `nautilus_trader[ib]`). LIVE on
+  IB paper via `quant-equity.service` (see Local services).
 - `nautilus_options/` — Deribit CSP backtests (verdict: not deployed).
-- `strategies/` — standalone bots/helpers (NOT freqtrade strategies anymore): `telegram_alerts.py`,
-  `kelly_sizer.py`, `risk_manager.py`, `dca_executor.py`, `deribit_monitor.py`.
-- `scripts/` — `sync_local_state_to_timescale.py` (wf → TimescaleDB), `download_binance.py` (ccxt
-  data refresh, replaced freqtrade download-data), `md_http_server.py` (localhost :3001 dashboard).
+- `strategies/` — standalone bots/helpers (NOT freqtrade strategies anymore), ~30 modules:
+  `telegram_alerts.py`, `kelly_sizer.py`, `risk_manager.py`, `dca_executor.py`, `deribit_monitor.py`,
+  plus the collectors/evaluators the services run (`news_collector.py`, `stress_index.py`,
+  `market_collector.py`, `alert_dispatcher.py`, `signal_evaluator.py`, `quant_lab.py`, …).
+- `scripts/` — `sync_local_state_to_timescale.py` (wf → TimescaleDB), `md_http_server.py`
+  (localhost :3001 dashboard), `testnet_usdt_recycler.py`, misc backtest/sync/report helpers.
+  (`download_binance.py` lives in `nautilus_crypto/`, not here.)
 - `web/apps/app/` — SvelteKit dashboard on Cloudflare Workers (one route dir per page under
   `src/routes/`). Deploy: `pnpm run deploy` (NOT `pnpm deploy`). The `/nautilus` route shows live
   execution from `quant.nautilus_trades`. `web/apps/docs/` is the Astro docs site (built into
   `web/apps/app/static/docs/` — those generated files show as diffs, don't hand-edit them).
-- `migrations/` — TimescaleDB schema (db `api`, schema `quant`, served via PostgREST `api.*`).
-  `supabase/` is a separate Supabase project (auth + Realtime), not the trade DB.
+- `migrations/` — TimescaleDB schema, numbered `NNN_*.sql` (db `api`, schema `quant`, served via
+  PostgREST `api.*`). `supabase/` holds two schema dumps for the separate Supabase project
+  (auth + Realtime), not the trade DB.
+- `systemd/` — source copies of the game-box user units (`quant-*.{service,timer}` incl.
+  `quant-equity-watchdog.*`); the installed copies live in `~/.config/systemd/user/` — keep in sync.
+- `docs/` — runbooks/checklists (`GO_LIVE_CHECKLIST.md`, `DRYRUN_HANDBOOK.md`,
+  `RETIRED_STRATEGIES.md`) and `docs/research/` (AI-semis research data behind `/research`, `/semis`).
+- Legacy, do-not-touch: `web-vanilla/`, `dashboard/`, `configs/`, `user_data/`, `freqaimodels/`,
+  `tradesv3_*.sqlite`, root `start_*.sh` — freqtrade/pre-Nautilus era, kept for history only.
+- `AGENTS.md` duplicates part of this file for other agents — update both when commands change.
+- `flake.nix` + `.envrc` provide the direnv/Nix dev shell.
 
 ## venvs (uv; symlink to external python so they survive dir moves)
 - `.venv-bots` — the standalone bots' interpreter (ccxt/websockets/psycopg2/pandas/requests). NO
@@ -38,12 +50,17 @@ Python (no Makefile/pytest — invoke the venv interpreter directly; `P=nautilus
 - Run one test module (no pytest collector — drive the `test_*` funcs with a one-liner):
   `$P -c "import sys; sys.path.insert(0,'nautilus_crypto'); import test_signal_detect as t; [getattr(t,n)() for n in dir(t) if n.startswith('test_')]; print('ok')"`
   (swap the dir/module to target another file; run a single test by naming just that one function).
-- `tests/test_kelly_sizer.py` imports from `strategies/` via `sys.path`; same harness pattern.
+- `tests/` (`test_kelly_sizer.py`, `test_quant_models.py`) imports from `strategies/` via
+  `sys.path`; same harness pattern. Other tests sit next to their module
+  (`nautilus_crypto/test_*.py`, `nautilus_equity/test_*.py`).
 
 Web dashboard (`cd web/apps/app`, pnpm):
 - `pnpm run dev` — local dev server.   `pnpm run check` — svelte-check typecheck.
+  (`dev`/`build` first run `scripts/sync-reports.mjs` — and `build` also `sync-starlight.mjs`,
+  which copies the Astro docs build into `static/docs/`.)
 - `pnpm run lint` — prettier --check + eslint.   `pnpm run format` — prettier --write.
-- `pnpm run deploy` — `vite build && wrangler deploy` (NOT `pnpm deploy`, which is a different pnpm builtin).
+- `pnpm run deploy` — `vite build && wrangler deploy` (NOT `pnpm deploy`, which is a different pnpm
+  builtin). Deploys to the tron.network Cloudflare account, host `starslab.qzz.io` (migrated 2026-07).
 - Svelte 5 runes (`$state`/`$derived`/`$props`); zh-default bilingual via `$lib/i18n` (`en.ts`/`zh.ts`).
 
 ## Web data flow (the load-bearing architecture)
@@ -65,9 +82,12 @@ mainland browsers, so a SvelteKit `load` that hit Binance directly would fail in
 - Live crypto runs as **system services on oracle-arm-002**: `nautilus-accumulator`, `nautilus-trend`,
   `nautilus-signal` (all testnet/data-only). Packaged in `github:xiongchenyu6/nur-packages`
   (`modules/nautilus-*`, `pkgs/nautilus-trader`), wired in `dotfiles/nixos-configurations/oracle-arm-002/nautilus.nix`.
-- Also on arm-002: `quant-news-collector` + `quant-stress-index` timers (nur `modules/quant-collectors`,
-  vendored copies of `strategies/news_collector.py`/`stress_index.py` — keep both copies in sync when
-  editing). Moved off the game box 2026-06-12 so 快讯/压力指数 run 7×24 next to the DB.
+- Also on arm-002 (nur `modules/quant-collectors`, vendored copies of the `strategies/*.py` sources —
+  keep both copies in sync when editing): timers `quant-news-collector`, `quant-stress-index`,
+  `quant-market-collector`; long-running `quant-signal-evaluator` + `quant-alert-dispatcher`
+  (dispatcher = the ONLY Telegram getUpdates consumer — never start a second copy). market/signal/alert
+  moved off the game box 2026-07-29; `findata.py` is vendored too (cache at
+  `/var/lib/quant-collectors/findata-cache` via `FINDATA_CACHE_DIR`).
 - Module changes need: commit+push nur-packages → `nix flake update xiongchenyu6` in dotfiles →
   `NIXPKGS_ALLOW_INSECURE=1 nixos-rebuild switch --flake .#oracle-arm-002 --build-host root@oracle-arm-002 --target-host root@oracle-arm-002 --impure`.
 - The nur overlay is NOT global on hosts → reference packages as
@@ -89,8 +109,11 @@ mainland browsers, so a SvelteKit `load` that hit Binance directly would fail in
   they share IB client id 8 on the one paper account.
 
 ## Local services (game box, `~/.config/systemd/user/quant-*`)
-Monitoring/reporting on `.venv-bots`: `quant-ts-sync` (wf sync), `quant-alerts` (telegram),
-`quant-deribit`, `quant-risk-monitor`, `quant-daily-report`, `quant-dashboard` (md_http :3001),
+Monitoring/reporting on `.venv-bots`: `quant-ts-sync` (wf sync, reads local wf files), `quant-alerts`
+(telegram reports), `quant-deribit`, `quant-risk-monitor`, `quant-daily-report`, `quant-dashboard`
+(md_http :3001), `quant-account-snapshot` (needs the equity IB venv). The game-box copies of
+`quant-market-collector`/`quant-signal-evaluator`/`quant-alert-dispatcher` are STOPPED+disabled
+(moved to arm-002 2026-07-29 — do not re-enable, the dispatcher must stay single-instance),
 `quant-testnet-recycler` (hourly `:50`) — keeps the arm-002 accumulator soak funded: the
 one-directional smart-DCA drains testnet USDT → `-2010`, so `scripts/testnet_usdt_recycler.py`
 sells a slice of the accumulated BTC back to USDT when buying power drops below the floor

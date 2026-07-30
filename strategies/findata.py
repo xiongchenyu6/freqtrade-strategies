@@ -23,7 +23,12 @@ from pathlib import Path
 import requests
 
 _BASE = "https://financialdata.net/api/v1"
-_CACHE_DIR = Path(__file__).resolve().parent.parent / "user_data" / "data" / "findata"
+# Cache defaults to the repo checkout; FINDATA_CACHE_DIR overrides it for
+# deployments where the script lives in a read-only store (NixOS collectors).
+_CACHE_DIR = Path(
+    os.environ.get("FINDATA_CACHE_DIR")
+    or Path(__file__).resolve().parent.parent / "user_data" / "data" / "findata"
+)
 _BUDGET_FILE = _CACHE_DIR / "_budget.json"
 SOFT_LIMIT = 280  # keep headroom under the 300/day cap
 
